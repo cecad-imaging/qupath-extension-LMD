@@ -1,8 +1,5 @@
 package org.dgsob;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-
 import org.controlsfx.control.action.Action;
 import qupath.lib.common.Version;
 import qupath.lib.gui.ActionTools;
@@ -11,22 +8,19 @@ import qupath.lib.gui.ActionTools.ActionMenu;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.extensions.QuPathExtension;
 import qupath.lib.gui.dialogs.Dialogs;
-import qupath.lib.gui.viewer.QuPathViewer;
 import qupath.lib.objects.PathObject;
 import qupath.lib.images.ImageData;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 
-import static java.awt.SystemColor.infoText;
 import static org.dgsob.GeoJSON_to_XML.shapeType.CELL;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 
 public class ExportToLMDExtension implements QuPathExtension {
-    private final String pathGeoJSON = "./test.geojson";
-    private final String pathXML = "./test_output.xml";
     @Override
     public void installExtension(QuPathGUI qupath) {
         qupath.installActions(ActionTools.getAnnotatedActions(new ExportToLMDAction(qupath)));
@@ -48,13 +42,12 @@ public class ExportToLMDExtension implements QuPathExtension {
     }
 
     @ActionMenu("Extensions>Export to LMD")
-    public class ExportToLMDAction {
+    public static class ExportToLMDAction {
         private final QuPathGUI qupath;
-
         @ActionMenu("Export all objects")
         @ActionDescription("Export all objects to LMD format.")
         public final Action actionExportAll;
-        public void exportAll() throws IOException {
+        public void exportAll(String pathGeoJSON, String pathXML) throws IOException {
             // 1. Convert all to GeoJSON and save it to temp location.
             // 2. Run GeoJSON_to_XML.
             ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
@@ -63,12 +56,12 @@ public class ExportToLMDExtension implements QuPathExtension {
 
             GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
             converter.convertGeoJSONtoXML();
-            Dialogs.showConfirmDialog("Done","Export all to LMD completed.");
+            Dialogs.showInfoNotification("Done","Export all to LMD completed.");
         }
 
         @ActionMenu("Export selected objects")
         public final Action actionExportSelected;
-        public void exportSelected() throws IOException {
+        public void exportSelected(String pathGeoJSON, String pathXML) throws IOException {
             // 1. Convert selections to GeoJSON and save it to temp location with exportObjectsToGeoJson(selections, path, "FEATURE_COLLECTION")
             // 2. Run GeoJSON_to_XML(inputPath, outputPath, CELL); //CELL is not important right now
             ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
@@ -78,25 +71,45 @@ public class ExportToLMDExtension implements QuPathExtension {
             GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
             converter.convertGeoJSONtoXML();
 
-            Dialogs.showConfirmDialog("Done","Export selected to LMD completed.");
+            Dialogs.showInfoNotification("Done","Export selected to LMD completed.");
         }
         private ExportToLMDAction(QuPathGUI qupath) {
+            this.qupath = qupath;
             actionExportAll = new Action(event -> {
                 try {
-                    exportAll();
+                    // These two should probably be placed somewhere else, but it works for now.
+                    final String pathGeoJSON = getProjectDirectory(qupath).resolve("test.geojson").toString();
+                    final String pathXML = getProjectDirectory(qupath).resolve("test_output.xml").toString();
+                    exportAll(pathGeoJSON, pathXML);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
             actionExportSelected = new Action(event -> {
                 try {
-                    exportSelected();
+                    final String pathGeoJSON = getProjectDirectory(qupath).resolve("test.geojson").toString();
+                    final String pathXML = getProjectDirectory(qupath).resolve("test_output.xml").toString();
+                    exportSelected(pathGeoJSON, pathXML);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
-            this.qupath = qupath;
 
+        }
+        private Path getProjectDirectory(QuPathGUI qupath) {
+
+            // Get the current project.qpproj file path
+            Path projectFilePath = qupath.getProject().getPath();
+
+            // Return the path to the project directory
+            if (projectFilePath != null) {
+                return projectFilePath.getParent();
+            }
+            // If the project is null, return the current working directory.
+            // This should probably naturally never happen but idk.
+            Dialogs.showErrorMessage("Warning","Couldn't access your project location. " +
+                    "Check your home directory for the output file.");
+            return Paths.get(System.getProperty("user.dir"));
         }
     }
 
