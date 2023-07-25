@@ -13,6 +13,7 @@ import qupath.lib.images.ImageData;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -53,7 +54,6 @@ public class ExportToLMDExtension implements QuPathExtension {
 
             GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
             converter.convertGeoJSONtoXML();
-            Dialogs.showInfoNotification("Done","Export all to LMD completed.");
         }
 
         @ActionMenu("Export selected objects")
@@ -64,8 +64,6 @@ public class ExportToLMDExtension implements QuPathExtension {
 
             GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
             converter.convertGeoJSONtoXML();
-
-            Dialogs.showInfoNotification("Done","Export selected to LMD completed.");
         }
         private ExportToLMDAction(QuPathGUI qupath) {
             this.qupath = qupath;
@@ -80,6 +78,9 @@ public class ExportToLMDExtension implements QuPathExtension {
 
 
                     exportAll(pathGeoJSON, pathXML, imageData);
+                    deleteTemporaryGeoJSON(pathGeoJSON);
+
+                    Dialogs.showInfoNotification("Done","Export all to LMD completed.");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -94,6 +95,9 @@ public class ExportToLMDExtension implements QuPathExtension {
                     final String pathXML = getProjectDirectory(qupath).resolve(defaultXMLName).toString();
 
                     exportSelected(pathGeoJSON, pathXML, imageData);
+                    deleteTemporaryGeoJSON(pathGeoJSON);
+
+                    Dialogs.showInfoNotification("Done","Export selected to LMD completed.");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -114,6 +118,14 @@ public class ExportToLMDExtension implements QuPathExtension {
             Dialogs.showErrorMessage("Warning","Couldn't access your project location. " +
                     "Check your home directory for the output file.");
             return Paths.get(System.getProperty("user.dir"));
+        }
+        private void deleteTemporaryGeoJSON(String pathGeoJSON) {
+            try {
+                Path geoJSONPath = Path.of(pathGeoJSON);
+                Files.deleteIfExists(geoJSONPath);
+            } catch (IOException e) {
+                // Well, I guess it doesn't matter if it fails or not.
+            }
         }
     }
 
