@@ -48,8 +48,6 @@ public class ExportToLMDExtension implements QuPathExtension {
         @ActionDescription("Export all objects to LMD format.")
         public final Action actionExportAll;
         public void exportAll(String pathGeoJSON, String pathXML) throws IOException {
-            // 1. Convert all to GeoJSON and save it to temp location.
-            // 2. Run GeoJSON_to_XML.
             ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
             Collection<PathObject> allObjects = imageData.getHierarchy().getAllObjects(false);
             exportObjectsToGeoJson(allObjects, pathGeoJSON, "FEATURE_COLLECTION");
@@ -62,8 +60,6 @@ public class ExportToLMDExtension implements QuPathExtension {
         @ActionMenu("Export selected objects")
         public final Action actionExportSelected;
         public void exportSelected(String pathGeoJSON, String pathXML) throws IOException {
-            // 1. Convert selections to GeoJSON and save it to temp location with exportObjectsToGeoJson(selections, path, "FEATURE_COLLECTION")
-            // 2. Run GeoJSON_to_XML(inputPath, outputPath, CELL); //CELL is not important right now
             ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
             Collection<PathObject> selectedObjects = imageData.getHierarchy().getSelectionModel().getSelectedObjects();
             exportObjectsToGeoJson(selectedObjects, pathGeoJSON, "FEATURE_COLLECTION");
