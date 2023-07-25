@@ -88,8 +88,10 @@ public class ExportToLMDExtension implements QuPathExtension {
                 try {
                     // These should probably be placed somewhere else, but it works for now.
                     ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
-                    final String pathGeoJSON = getProjectDirectory(qupath).resolve("test.geojson").toString();
-                    final String pathXML = getProjectDirectory(qupath).resolve("test_output.xml").toString();
+                    String defaultGeoJSONNAME = "temp.geojson";
+                    String defaultXMLName = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
+                    final String pathGeoJSON = getProjectDirectory(qupath).resolve(defaultGeoJSONNAME).toString();
+                    final String pathXML = getProjectDirectory(qupath).resolve(defaultXMLName).toString();
 
                     exportSelected(pathGeoJSON, pathXML, imageData);
                 } catch (IOException e) {
