@@ -73,8 +73,8 @@ public class ExportToLMDExtension implements QuPathExtension {
                     ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
                     String defaultGeoJSONNAME = "temp.geojson";
                     String defaultXMLName = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
-                    final String pathGeoJSON = getProjectDirectory(qupath).resolve(defaultGeoJSONNAME).toString();
-                    final String pathXML = getProjectDirectory(qupath).resolve(defaultXMLName).toString();
+                    final String pathGeoJSON = getProjectDirectory(qupath, ".temp").resolve(defaultGeoJSONNAME).toString();
+                    final String pathXML = getProjectDirectory(qupath, "LMD data").resolve(defaultXMLName).toString();
 
 
                     exportAll(pathGeoJSON, pathXML, imageData);
@@ -91,8 +91,8 @@ public class ExportToLMDExtension implements QuPathExtension {
                     ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
                     String defaultGeoJSONNAME = "temp.geojson";
                     String defaultXMLName = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
-                    final String pathGeoJSON = getProjectDirectory(qupath).resolve(defaultGeoJSONNAME).toString();
-                    final String pathXML = getProjectDirectory(qupath).resolve(defaultXMLName).toString();
+                    final String pathGeoJSON = getProjectDirectory(qupath, ".temp").resolve(defaultGeoJSONNAME).toString();
+                    final String pathXML = getProjectDirectory(qupath, "LMD data").resolve(defaultXMLName).toString();
 
                     exportSelected(pathGeoJSON, pathXML, imageData);
                     deleteTemporaryGeoJSON(pathGeoJSON);
@@ -104,20 +104,29 @@ public class ExportToLMDExtension implements QuPathExtension {
             });
 
         }
-        private Path getProjectDirectory(QuPathGUI qupath) {
+        private Path getProjectDirectory(QuPathGUI qupath, String subdirectory) {
 
             // Get the current project.qpproj file path
             Path projectFilePath = qupath.getProject().getPath();
 
             // Return the path to the project directory
             if (projectFilePath != null) {
-                return projectFilePath.getParent();
+                Path projectDirectory = projectFilePath.getParent();
+                if (projectDirectory != null) {
+                    Path subdirectoryPath = projectDirectory.resolve(subdirectory);
+                    try {
+                        Files.createDirectories(subdirectoryPath); // Create the directory if it doesn't exist
+                    } catch (IOException e) {
+                        // Handle the exception if necessary
+                    }
+                    return subdirectoryPath;
+                }
             }
-            // If the project is null, return the current working directory.
-            // This should probably naturally never happen but idk.
-            Dialogs.showErrorMessage("Warning","Couldn't access your project location. " +
-                    "Check your home directory for the output file.");
-            return Paths.get(System.getProperty("user.dir"));
+                // If the project is null, return the current working directory.
+                // This should probably naturally never happen but idk.
+                Dialogs.showErrorMessage("Warning", "Couldn't access your project location. " +
+                        "Check your home directory for the output file.");
+                return Paths.get(System.getProperty("user.dir"));
         }
         private void deleteTemporaryGeoJSON(String pathGeoJSON) {
             try {
