@@ -48,6 +48,7 @@ public class ExportToLMDExtension implements QuPathExtension {
         @ActionMenu("Export all objects")
         @ActionDescription("Export all objects to LMD format.")
         public final Action actionExportAll;
+        //TODO: Add abstraction exportObjects() with flags ALL, SELECTED instead of exportALL, exportSelected methods
         public void exportAll(String pathGeoJSON, String pathXML, ImageData<BufferedImage> imageData) throws IOException {
             Collection<PathObject> allObjects = imageData.getHierarchy().getAllObjects(false);
             exportObjectsToGeoJson(allObjects, pathGeoJSON, "FEATURE_COLLECTION");
@@ -65,22 +66,31 @@ public class ExportToLMDExtension implements QuPathExtension {
             GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
             converter.convertGeoJSONtoXML();
         }
+
         private ExportToLMDAction(QuPathGUI qupath) {
             this.qupath = qupath;
             actionExportAll = new Action(event -> {
                 try {
                     // These should probably be placed somewhere else, but it works for now.
+                    //TODO: Catch if imageData in null, then prompt an error.
                     ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
+                    //TODO: Enclose these in the setDefaultPaths() method
                     String defaultGeoJSONNAME = "temp.geojson";
                     String defaultXMLName = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
                     final String pathGeoJSON = getProjectDirectory(qupath, ".temp").resolve(defaultGeoJSONNAME).toString();
                     final String pathXML = getProjectDirectory(qupath, "LMD data").resolve(defaultXMLName).toString();
 
-
+                    //TODO: Add abstraction exportObjects() with flags ALL, SELECTED instead of exportALL, exportSelected methods
                     exportAll(pathGeoJSON, pathXML, imageData);
                     deleteTemporaryGeoJSON(pathGeoJSON);
 
                     Dialogs.showInfoNotification("Done","Export all to LMD completed.");
+
+                    // the end goal look in here:
+                    // ImageData
+                    // setDefaultPaths()
+                    // exportObjects()
+                    // deleteTemporaryGeoJSON()
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
