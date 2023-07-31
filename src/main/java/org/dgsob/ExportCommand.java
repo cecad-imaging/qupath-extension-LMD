@@ -25,11 +25,9 @@ public class ExportCommand {
     }
 
     public static void runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
-        // ImageData<BufferedImage> imageData = qupath.getImageData();
-        // ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
-//        if (imageData == null)
-//            return false;
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
+
+        // Provide exactly the same options of export as native exporting to geojson
         String allObjects = "All objects";
         String selectedObjects = "Selected objects";
         String defaultObjects = hierarchy.getSelectionModel().noSelection() ? allObjects : selectedObjects;
@@ -44,6 +42,7 @@ public class ExportCommand {
             Dialogs.showErrorMessage("Error", e);
         }
 
+        // The user chooses objects
         Collection<PathObject> chosenObjects;
         var comboChoice = parametersList.getChoiceParameterValue("exportOptions");
         if (comboChoice.equals("Selected objects")) {
@@ -54,18 +53,20 @@ public class ExportCommand {
         } else
             chosenObjects = hierarchy.getAllObjects(false);
 
-
-        String defaultGeoJSONNAME = "temp.geojson";
-        String defaultXMLName = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
+        // Set default names for geojson and xml files
+        String default_GeoJSON_Name = "temp.geojson";
+        String default_XML_Name = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
 
         // Get the current project.qpproj file path
         Path projectFilePath = qupath.getProject().getPath();
 
-        final String pathGeoJSON = getProjectDirectory(qupath, projectFilePath, ".temp").resolve(defaultGeoJSONNAME).toString();
-        final String pathXML = getProjectDirectory(qupath, projectFilePath, "LMD data").resolve(defaultXMLName).toString();
+        // Set files' default paths
+        final String pathGeoJSON = getProjectDirectory(qupath, projectFilePath, ".temp").resolve(default_GeoJSON_Name).toString();
+        final String pathXML = getProjectDirectory(qupath, projectFilePath, "LMD data").resolve(default_XML_Name).toString();
 
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
+        // TODO: This might as well be static.
         GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
         converter.convertGeoJSONtoXML();
 
