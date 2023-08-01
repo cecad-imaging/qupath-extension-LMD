@@ -85,7 +85,8 @@ public class ExpandObjectsCommand {
 
                 ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
-                // Create a new annotation, with properties based on the original
+                // Create a new object, with properties based on the original
+                // TODO: check in geojson properties of DetectionObject, maybe change createDetectionObject to CellObject with null nuclei or something else
                 PathObject detection2 = PathObjects.createDetectionObject(roi2, pathObject.getPathClass());
                 detection2.setName(pathObject.getName());
                 detection2.setColor(pathObject.getColor());
