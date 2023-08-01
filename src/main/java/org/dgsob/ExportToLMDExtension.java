@@ -32,16 +32,18 @@ public class ExportToLMDExtension implements QuPathExtension {
     @ActionMenu("Extensions>Export to LMD")
     public static class ExportToLMDAction {
         private final QuPathGUI qupath;
-        @ActionMenu("Utilities")
-        public final Action actionLaunchUtils;
+        @ActionMenu("Utilities>Expand selected objects")
+        public final Action actionExpandObjects;
         @ActionMenu("Export options")
         public final Action actionExport;
 
         private ExportToLMDAction(QuPathGUI qupath) {
             this.qupath = qupath;
-            actionLaunchUtils = new Action((event -> {
 
-            }));
+            actionExpandObjects = qupath.createImageDataAction(imageData -> {
+                ExpandObjectsCommand.runObjectsExpansion(imageData);
+            });
+
             actionExport = qupath.createImageDataAction(imageData -> {
                 try {
                     ExportCommand.runExport(qupath, imageData);
