@@ -41,25 +41,25 @@ public class ExpandObjectsCommand {
         assert pathObjects != null;
         ParameterList params = new ParameterList()
                 .addDoubleParameter("radiusMicrons", "Expansion radius", 10, GeneralTools.micrometerSymbol(), "Distance to expand ROI")
-                .addBooleanParameter("removeInterior", "Delete original object", false, "Create annotation containing only the expanded region, with the original ROI removed")
+                .addBooleanParameter("removeOriginal", "Delete original object", false, "Create annotation containing only the expanded region, with the original ROI removed")
                 .addBooleanParameter("constrainToParent", "Constrain to parent", false, "Constrain ROI to fit inside the ROI of the parent object")
                 ;
-
-        boolean constrainToParent = params.getBooleanParameterValue("constrainToParent");
-        boolean removeInterior = params.getBooleanParameterValue("removeInterior");
-
-        double radiusPixels;
-        PixelCalibration cal = server.getPixelCalibration();
-        if (cal.hasPixelSizeMicrons())
-            radiusPixels = params.getDoubleParameterValue("radiusMicrons") / cal.getAveragedPixelSizeMicrons();
-        else
-            radiusPixels = params.getDoubleParameterValue("radiusPixels");
 
         try{
             Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
         } catch (Exception e){
             Dialogs.showErrorMessage("Error", e);
         }
+
+        boolean constrainToParent = params.getBooleanParameterValue("constrainToParent");
+        boolean removeOriginal = params.getBooleanParameterValue("removeOriginal");
+
+        double radiusPixels;
+        PixelCalibration cal = server.getPixelCalibration();
+        if (cal.hasPixelSizeMicrons())
+            radiusPixels = params.getDoubleParameterValue("radiusMicrons") / cal.getAveragedPixelSizeMicrons();
+        else
+            radiusPixels = params.getDoubleParameterValue("radiusMicrons");
 
         for (PathObject pathObject : pathObjects) {
 
@@ -81,32 +81,24 @@ public class ExpandObjectsCommand {
                 geometry2 = geometry2.intersection(parentShape);
             }
 
-            // TODO: This doeasn't work. The original object is not deleted. Make it work.
-            if (removeInterior) {
-                // Difference isn't supported for GeometryCollections
-                if (isErosion) {
-                    geometry = GeometryTools.homogenizeGeometryCollection(geometry);
-                    geometry2 = geometry.difference(geometry2);
-                } else {
-                    if (geometry.getArea() == 0.0)
-                        geometry = geometry.buffer(0.5);
-                    geometry2 = GeometryTools.homogenizeGeometryCollection(geometry2);
-                    geometry = GeometryTools.homogenizeGeometryCollection(geometry);
-                    geometry2 = geometry2.difference(geometry);
-                }
-            }
-
             ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
             // Create a new annotation, with properties based on the original
-            PathObject annotation2 = PathObjects.createAnnotationObject(roi2, pathObject.getPathClass());
-            annotation2.setName(pathObject.getName());
-            annotation2.setColor(pathObject.getColor());
+            PathObject detection2 = PathObjects.createDetectionObject(roi2, pathObject.getPathClass());
+            detection2.setName(pathObject.getName());
+            detection2.setColor(pathObject.getColor());
 
             if (constrainToParent || isErosion)
-                hierarchy.addObjectBelowParent(parent, annotation2, true);
+                hierarchy.addObjectBelowParent(parent, detection2, true);
             else
-                hierarchy.addObject(annotation2);
+                hierarchy.addObject(detection2);
+        }
+        if (removeOriginal){
+            hierarchy.removeObjects(pathObjects, false);
+            hierarchy.getSelectionModel().clearSelection();
+        }
+        else{
+            hierarchy.getSelectionModel().clearSelection();
         }
 
     }
