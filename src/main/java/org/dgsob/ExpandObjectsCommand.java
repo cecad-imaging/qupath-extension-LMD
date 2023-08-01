@@ -39,66 +39,68 @@ public class ExpandObjectsCommand {
         Collection<PathObject> pathObjects = getSelected(hierarchy);
 
         assert pathObjects != null;
+
+        int objectsNumber = pathObjects.size();
+        if(objectsNumber>100)
+            Dialogs.showInfoNotification("EtLMD notification", "You've chosen " + objectsNumber + " objects. This may take a while.");
+
         ParameterList params = new ParameterList()
                 .addDoubleParameter("radiusMicrons", "Expansion radius", 10, GeneralTools.micrometerSymbol(), "Distance to expand ROI")
                 .addBooleanParameter("removeOriginal", "Delete original object", false, "Create annotation containing only the expanded region, with the original ROI removed")
                 .addBooleanParameter("constrainToParent", "Constrain to parent", false, "Constrain ROI to fit inside the ROI of the parent object")
                 ;
 
-        try{
-            Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
-        } catch (Exception e){
-            Dialogs.showErrorMessage("Error", e);
-        }
+        boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
-        boolean constrainToParent = params.getBooleanParameterValue("constrainToParent");
-        boolean removeOriginal = params.getBooleanParameterValue("removeOriginal");
+        if(confirmed) {
+            boolean constrainToParent = params.getBooleanParameterValue("constrainToParent");
+            boolean removeOriginal = params.getBooleanParameterValue("removeOriginal");
 
-        double radiusPixels;
-        PixelCalibration cal = server.getPixelCalibration();
-        if (cal.hasPixelSizeMicrons())
-            radiusPixels = params.getDoubleParameterValue("radiusMicrons") / cal.getAveragedPixelSizeMicrons();
-        else
-            radiusPixels = params.getDoubleParameterValue("radiusMicrons");
-
-        for (PathObject pathObject : pathObjects) {
-
-            ROI roi = pathObject.getROI();
-
-            Geometry geometry = roi.getGeometry();
-
-            Geometry geometry2 = BufferOp.bufferOp(geometry, radiusPixels, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
-
-            // If the radius is negative (i.e. an erosion), then the parent will be the original object itself
-            boolean isErosion = radiusPixels < 0;
-            PathObject parent = isErosion ? pathObject : pathObject.getParent();
-            if (constrainToParent && !isErosion) {
-                Geometry parentShape;
-                if (parent == null || parent.getROI() == null)
-                    parentShape = ROIs.createRectangleROI(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), ImagePlane.getPlane(roi)).getGeometry();
-                else
-                    parentShape = parent.getROI().getGeometry();
-                geometry2 = geometry2.intersection(parentShape);
-            }
-
-            ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
-
-            // Create a new annotation, with properties based on the original
-            PathObject detection2 = PathObjects.createDetectionObject(roi2, pathObject.getPathClass());
-            detection2.setName(pathObject.getName());
-            detection2.setColor(pathObject.getColor());
-
-            if (constrainToParent || isErosion)
-                hierarchy.addObjectBelowParent(parent, detection2, true);
+            double radiusPixels;
+            PixelCalibration cal = server.getPixelCalibration();
+            if (cal.hasPixelSizeMicrons())
+                radiusPixels = params.getDoubleParameterValue("radiusMicrons") / cal.getAveragedPixelSizeMicrons();
             else
-                hierarchy.addObject(detection2);
-        }
-        if (removeOriginal){
-            hierarchy.removeObjects(pathObjects, false);
-            hierarchy.getSelectionModel().clearSelection();
-        }
-        else{
-            hierarchy.getSelectionModel().clearSelection();
+                radiusPixels = params.getDoubleParameterValue("radiusMicrons");
+
+            for (PathObject pathObject : pathObjects) {
+
+                ROI roi = pathObject.getROI();
+
+                Geometry geometry = roi.getGeometry();
+
+                Geometry geometry2 = BufferOp.bufferOp(geometry, radiusPixels, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
+
+                // If the radius is negative (i.e. an erosion), then the parent will be the original object itself
+                boolean isErosion = radiusPixels < 0;
+                PathObject parent = isErosion ? pathObject : pathObject.getParent();
+                if (constrainToParent && !isErosion) {
+                    Geometry parentShape;
+                    if (parent == null || parent.getROI() == null)
+                        parentShape = ROIs.createRectangleROI(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), ImagePlane.getPlane(roi)).getGeometry();
+                    else
+                        parentShape = parent.getROI().getGeometry();
+                    geometry2 = geometry2.intersection(parentShape);
+                }
+
+                ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
+
+                // Create a new annotation, with properties based on the original
+                PathObject detection2 = PathObjects.createDetectionObject(roi2, pathObject.getPathClass());
+                detection2.setName(pathObject.getName());
+                detection2.setColor(pathObject.getColor());
+
+                if (constrainToParent || isErosion)
+                    hierarchy.addObjectBelowParent(parent, detection2, true);
+                else
+                    hierarchy.addObject(detection2);
+            }
+            if (removeOriginal) {
+                hierarchy.removeObjects(pathObjects, false);
+                hierarchy.getSelectionModel().clearSelection();
+            } else {
+                hierarchy.getSelectionModel().clearSelection();
+            }
         }
 
     }
