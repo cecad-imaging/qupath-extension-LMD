@@ -45,7 +45,7 @@ public class ExpandObjectsCommand {
             Dialogs.showInfoNotification("EtLMD notification", "You've chosen " + objectsNumber + " objects. This may take a while.");
 
         ParameterList params = new ParameterList()
-                .addDoubleParameter("radiusMicrons", "Expansion radius", 10, GeneralTools.micrometerSymbol(), "Distance to expand ROI")
+                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(), "Distance to expand ROI")
                 .addBooleanParameter("removeOriginal", "Delete original object", false, "Create annotation containing only the expanded region, with the original ROI removed")
                 .addBooleanParameter("constrainToParent", "Constrain to parent", false, "Constrain ROI to fit inside the ROI of the parent object")
                 ;
