@@ -25,11 +25,9 @@ public class ExportCommand {
     }
 
     public static void runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
-        // ImageData<BufferedImage> imageData = qupath.getImageData();
-        // ImageData<BufferedImage> imageData = qupath.getViewer().imageDataProperty().get();
-//        if (imageData == null)
-//            return false;
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
+
+        // Provide exactly the same options of export as native exporting to geojson
         String allObjects = "All objects";
         String selectedObjects = "Selected objects";
         String defaultObjects = hierarchy.getSelectionModel().noSelection() ? allObjects : selectedObjects;
@@ -38,71 +36,71 @@ public class ExportCommand {
                 .addChoiceParameter("exportOptions", "Export", defaultObjects, Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.");
 
-        try{
-            Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(parametersList).getPane());
-        } catch (Exception e){
-            Dialogs.showErrorMessage("Error", e);
-        }
+        boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(parametersList).getPane());
 
-        Collection<PathObject> toProcess;
-        var comboChoice = parametersList.getChoiceParameterValue("exportOptions");
-        if (comboChoice.equals("Selected objects")) {
-            if (hierarchy.getSelectionModel().noSelection()) {
-                Dialogs.showErrorMessage("No selection", "No selection detected!");
-            }
-            toProcess = hierarchy.getSelectionModel().getSelectedObjects();
-        } else
-            toProcess = hierarchy.getAllObjects(false);
-
-
-        String defaultGeoJSONNAME = "temp.geojson";
-        String defaultXMLName = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
-
-        // Get the current project.qpproj file path
-        Path projectFilePath = qupath.getProject().getPath();
-
-        final String pathGeoJSON = getProjectDirectory(qupath, projectFilePath, ".temp").resolve(defaultGeoJSONNAME).toString();
-        final String pathXML = getProjectDirectory(qupath, projectFilePath, "LMD data").resolve(defaultXMLName).toString();
-
-        exportObjectsToGeoJson(toProcess, pathGeoJSON, "FEATURE_COLLECTION");
-
-        GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
-        converter.convertGeoJSONtoXML();
-
-        deleteTemporaryGeoJSON(pathGeoJSON);
-
-        if(projectFilePath != null) {
-            Dialogs.showInfoNotification("Export successful", "Check for 'LMD data' in your project's directory");
-        }
-        else {
-            Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
-                    "Check your home folder for the output files.");
-        }
-    }
-    private static Path getProjectDirectory(QuPathGUI qupath, Path projectFilePath, String subdirectory) {
-        // Return the path to the project directory, i.e. projectFilePath's parent.
-        if (projectFilePath != null) {
-            Path projectDirectory = projectFilePath.getParent();
-            if (projectDirectory != null) {
-                Path subdirectoryPath = projectDirectory.resolve(subdirectory);
-                try {
-                    Files.createDirectories(subdirectoryPath); // Create the directory if it doesn't exist
-                } catch (IOException e) {
-                    // Handle the exception if necessary
+        if (confirmed) {
+            // The user chooses objects
+            Collection<PathObject> chosenObjects;
+            var comboChoice = parametersList.getChoiceParameterValue("exportOptions");
+            if (comboChoice.equals("Selected objects")) {
+                if (hierarchy.getSelectionModel().noSelection()) {
+                    Dialogs.showErrorMessage("No selection", "No selection detected!");
                 }
-                return subdirectoryPath;
+                chosenObjects = hierarchy.getSelectionModel().getSelectedObjects();
+            } else
+                chosenObjects = hierarchy.getAllObjects(false);
+
+            // Set default names for geojson and xml files
+            String default_GeoJSON_Name = "temp.geojson";
+            String default_XML_Name = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
+
+            // Get the current project.qpproj file path
+            Path projectFilePath = qupath.getProject().getPath();
+
+            // Set files' default paths
+            final String pathGeoJSON = getProjectDirectory(qupath, projectFilePath, ".temp").resolve(default_GeoJSON_Name).toString();
+            final String pathXML = getProjectDirectory(qupath, projectFilePath, "LMD data").resolve(default_XML_Name).toString();
+
+            exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
+
+            // TODO: This might as well be static.
+            GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, CELL);
+            converter.convertGeoJSONtoXML();
+
+            deleteTemporaryGeoJSON(pathGeoJSON);
+
+            if (projectFilePath != null) {
+                Dialogs.showInfoNotification("Export successful", "Check for 'LMD data' in your project's directory");
+            } else {
+                Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
+                        "Check your home folder for the output files.");
             }
         }
-        // If the project is null, return the current working directory.
-        // This should probably naturally never happen but idk.
-        return Paths.get(System.getProperty("user.dir"));
     }
-    private static void deleteTemporaryGeoJSON(String pathGeoJSON) {
-        try {
-            Path geoJSONPath = Path.of(pathGeoJSON);
-            Files.deleteIfExists(geoJSONPath);
-        } catch (IOException e) {
-            // Well, I guess it doesn't matter if it fails or not.
+        private static Path getProjectDirectory (QuPathGUI qupath, Path projectFilePath, String subdirectory){
+            // Return the path to the project directory, i.e. projectFilePath's parent.
+            if (projectFilePath != null) {
+                Path projectDirectory = projectFilePath.getParent();
+                if (projectDirectory != null) {
+                    Path subdirectoryPath = projectDirectory.resolve(subdirectory);
+                    try {
+                        Files.createDirectories(subdirectoryPath); // Create the directory if it doesn't exist
+                    } catch (IOException e) {
+                        // Handle the exception if necessary
+                    }
+                    return subdirectoryPath;
+                }
+            }
+            // If the project is null, return the current working directory.
+            // This should probably naturally never happen but idk.
+            return Paths.get(System.getProperty("user.dir"));
+        }
+        private static void deleteTemporaryGeoJSON (String pathGeoJSON){
+            try {
+                Path geoJSONPath = Path.of(pathGeoJSON);
+                Files.deleteIfExists(geoJSONPath);
+            } catch (IOException e) {
+                // Well, I guess it doesn't matter if it fails or not.
+            }
         }
     }
-}
