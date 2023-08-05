@@ -44,11 +44,11 @@ public class ExpandObjectsCommand {
 
         int objectsNumber = pathObjects.size();
         if(objectsNumber>100)
-            Dialogs.showInfoNotification("LMD Notification", "You've chosen " + objectsNumber + " objects.");
+            Dialogs.showInfoNotification("EtLMD notification", "You've chosen " + objectsNumber + " objects.");
 
         ParameterList params = new ParameterList()
-                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(),
-                        "Distance to expand ROI");
+                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(), "Distance to expand ROI")
+                ;
 
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
@@ -90,15 +90,6 @@ public class ExpandObjectsCommand {
         }
         return hierarchy.getSelectionModel().getSelectedObjects();
     }
-
-    /**
-     *
-     * @param hierarchy
-     * @param newObjects
-     * @param alreadyExistingObjects
-     * @param objectsToAdd
-     * @return
-     */
     private static Collection<PathObject> detectAndMergeOverlappingObjects(final PathObjectHierarchy hierarchy,
                                                                            Collection<PathObject> newObjects,
                                                                            Collection<PathObject> alreadyExistingObjects,
@@ -130,12 +121,6 @@ public class ExpandObjectsCommand {
         }
         return remainingObjects;
     }
-
-    /**
-     *
-     * @param object
-     * @return
-     */
     private static Polygon convertRoiToGeometry(PathObject object){
         List<Point2> points = object.getROI().getAllPoints();
 
@@ -150,20 +135,13 @@ public class ExpandObjectsCommand {
         LinearRing linearRing = geomFactory.createLinearRing(coords);
         return geomFactory.createPolygon(linearRing, null);
     }
-
-    /**
-     *
-     * @param hierarchy
-     * @param objects
-     * @return
-     */
     private static PathObject mergeObjects(final PathObjectHierarchy hierarchy, final Collection<PathObject> objects) {
         ROI shapeNew = null;
         List<PathObject> merged = new ArrayList<>();
         for (PathObject object : objects) {
             if (object.hasROI() && object.getROI().isArea()) {
                 if (shapeNew == null)
-                    shapeNew = object.getROI();
+                    shapeNew = object.getROI();//.duplicate();
                 else if (shapeNew.getImagePlane().equals(object.getROI().getImagePlane()))
                     shapeNew = RoiTools.combineROIs(shapeNew, object.getROI(), RoiTools.CombineOp.ADD);
                 else {
