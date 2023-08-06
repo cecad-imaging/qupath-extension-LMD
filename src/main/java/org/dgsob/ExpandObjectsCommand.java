@@ -73,13 +73,14 @@ public class ExpandObjectsCommand {
                 detection2.setColor(pathObject.getColor());
                 newObjects.add(detection2);
             }
-                hierarchy.removeObjects(pathObjects, false);
-                hierarchy.getSelectionModel().clearSelection();
+            hierarchy.removeObjects(pathObjects, false);
+            hierarchy.getSelectionModel().clearSelection();
 
-                // Merge overlapping objects
+            // Merge overlapping objects
+            Collection<PathObject> allExistingDetections = hierarchy.getDetectionObjects();
             Collection<PathObject> objectsToAdd = new ArrayList<>();
             while(!newObjects.isEmpty()) {
-                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects, hierarchy.getDetectionObjects(), objectsToAdd);
+                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects, allExistingDetections, objectsToAdd);
             }
             hierarchy.addObjects(objectsToAdd);
         }
