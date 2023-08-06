@@ -43,12 +43,14 @@ public class ExpandObjectsCommand {
         Collection<PathObject> newObjects = new ArrayList<>();
 
         int objectsNumber = pathObjects.size();
-        if(objectsNumber>100)
-            Dialogs.showInfoNotification("EtLMD notification", "You've chosen " + objectsNumber + " objects.");
+        if(objectsNumber>200)
+            Dialogs.showInfoNotification("LMD Notification", "Objects to expand: " + objectsNumber + ". This may take a while.");
+        else
+            Dialogs.showInfoNotification("LMD Notification", "Objects to expand: " + objectsNumber + ".");
 
         ParameterList params = new ParameterList()
-                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(), "Distance to expand ROI")
-                ;
+                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(),
+                        "Distance to expand ROI");
 
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
