@@ -43,7 +43,7 @@ public class ExpandObjectsCommand {
         Collection<PathObject> newObjects = new ArrayList<>();
 
         int objectsNumber = pathObjects.size();
-        if(objectsNumber>200)
+        if(objectsNumber>500)
             Dialogs.showInfoNotification("LMD Notification", "Objects to expand: " + objectsNumber + ". This may take a while.");
         else
             Dialogs.showInfoNotification("LMD Notification", "Objects to expand: " + objectsNumber + ".");
