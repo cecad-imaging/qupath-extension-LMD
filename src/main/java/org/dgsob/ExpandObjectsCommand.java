@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+//import static qupath.lib.analysis.DistanceTools.computeDistance;
+
 public class ExpandObjectsCommand {
     private ExpandObjectsCommand(){
 
@@ -44,9 +46,7 @@ public class ExpandObjectsCommand {
 
         int objectsNumber = pathObjects.size();
         if(objectsNumber>500)
-            Dialogs.showInfoNotification("LMD Notification", "Objects to expand: " + objectsNumber + ". This may take a while.");
-        else
-            Dialogs.showInfoNotification("LMD Notification", "Objects to expand: " + objectsNumber + ".");
+            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand. This may take a while.");
 
         ParameterList params = new ParameterList()
                 .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(),
@@ -77,10 +77,11 @@ public class ExpandObjectsCommand {
             hierarchy.getSelectionModel().clearSelection();
 
             // Merge overlapping objects
-            Collection<PathObject> allExistingDetections = hierarchy.getDetectionObjects();
             Collection<PathObject> objectsToAdd = new ArrayList<>();
             while(!newObjects.isEmpty()) {
-                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects, allExistingDetections, objectsToAdd);
+                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects,
+//                        hierarchy.getDetectionObjects(),
+                        objectsToAdd);
             }
             hierarchy.addObjects(objectsToAdd);
         }
@@ -95,7 +96,7 @@ public class ExpandObjectsCommand {
     }
     private static Collection<PathObject> detectAndMergeOverlappingObjects(final PathObjectHierarchy hierarchy,
                                                                            Collection<PathObject> newObjects,
-                                                                           Collection<PathObject> alreadyExistingObjects,
+//                                                                           Collection<PathObject> alreadyExistingObjects,
                                                                            Collection<PathObject> objectsToAdd){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
@@ -111,6 +112,20 @@ public class ExpandObjectsCommand {
                 }
             }
             remainingObjects.removeAll(objectsToMerge);
+
+//            //Include all background detections in processing, i.e. not only the selected ones. This operation is very costly.
+//            double distanceThreshold = 100;
+//            for (PathObject otherObject : alreadyExistingObjects){
+//                double distance = computeDistance(object.getROI().getGeometry().getCoordinate(),otherObject.getROI().getGeometry(),null);
+//                if (distance > distanceThreshold) {
+//                    continue;
+//                }
+//                Polygon otherPolygon = convertRoiToGeometry(otherObject);
+//                if (polygon.intersects(otherPolygon)){
+//                    objectsToMerge.add(otherObject);
+//                    isOverlapping = true;
+//                }
+//            }
             if (isOverlapping){
                 objectsToMerge.add(object);
             }
