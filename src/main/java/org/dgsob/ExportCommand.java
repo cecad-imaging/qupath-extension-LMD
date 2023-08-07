@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.dgsob.GeoJSON_to_XML.shapeType.ANNOTATION;
+import static org.dgsob.GeojsonToXml.shapeType.ANNOTATION;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 
 public class ExportCommand {
@@ -67,9 +67,7 @@ public class ExportCommand {
 
             exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
-            // TODO: This might as well be static.
-            GeoJSON_to_XML converter = new GeoJSON_to_XML(pathGeoJSON, pathXML, ANNOTATION);
-            converter.convertGeoJSONtoXML();
+            GeojsonToXml.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION);
 
             deleteTemporaryGeoJSON(pathGeoJSON);
 
