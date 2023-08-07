@@ -25,6 +25,7 @@ public class GeoJSON_to_XML {
     // 'objectType' in GeoJSON from feature's properties
     public static class shapeType {
         public static final String CELL = "cell";
+        public static final String DETECTION = "detection";
         public static final String ANNOTATION = "annotation";
     }
 //    private static String featureType;
@@ -79,7 +80,7 @@ public class GeoJSON_to_XML {
             int shapeCount = 0;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (shapeType.equals(objectType)) {
+                if (!shapeType.equals(objectType)) {
                     shapeCount++;
                 }
             }
@@ -89,7 +90,7 @@ public class GeoJSON_to_XML {
             int shapeIndex = 1;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (shapeType.equals(objectType)) {
+                if (!shapeType.equals(objectType)) {
                     Element shapeElement = xmlDoc.createElement("Shape_" + shapeIndex);
                     imageDataElement.appendChild(shapeElement);
 
