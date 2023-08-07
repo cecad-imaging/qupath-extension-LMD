@@ -18,13 +18,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-public class GeoJSON_to_XML {
-    private final String inputPath;
-    private final String outputPath;
-    private final String shapeType;
-    // 'objectType' in GeoJSON from feature's properties
+public class GeojsonToXml {
     public static class shapeType {
         public static final String CELL = "cell";
+        public static final String DETECTION = "detection";
         public static final String ANNOTATION = "annotation";
     }
 //    private static String featureType;
@@ -33,12 +30,10 @@ public class GeoJSON_to_XML {
 //        public static final String POINT = "MultiPoint";
 //    }
 
-    public GeoJSON_to_XML(String inputPath, String outputPath, String shapeType){
-        this.outputPath = outputPath;
-        this.inputPath = inputPath;
-        this.shapeType = shapeType;
+    public GeojsonToXml(){
+
     }
-    public void convertGeoJSONtoXML() {
+    public static void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -79,7 +74,7 @@ public class GeoJSON_to_XML {
             int shapeCount = 0;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (shapeType.equals(objectType)) {
+                if (!shapeType.equals(objectType)) {
                     shapeCount++;
                 }
             }
@@ -89,7 +84,7 @@ public class GeoJSON_to_XML {
             int shapeIndex = 1;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (shapeType.equals(objectType)) {
+                if (!shapeType.equals(objectType)) {
                     Element shapeElement = xmlDoc.createElement("Shape_" + shapeIndex);
                     imageDataElement.appendChild(shapeElement);
 

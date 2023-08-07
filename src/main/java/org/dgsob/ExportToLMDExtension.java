@@ -34,7 +34,7 @@ public class ExportToLMDExtension implements QuPathExtension {
         private final QuPathGUI qupath;
         @ActionMenu("Utilities>Expand selected objects")
         public final Action actionExpandObjects;
-        @ActionMenu("Export options")
+        @ActionMenu("Export")
         public final Action actionExport;
 
         private ExportToLMDAction(QuPathGUI qupath) {

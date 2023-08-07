@@ -1,10 +1,11 @@
 package org.dgsob;
 
-import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 
 import qupath.lib.common.GeneralTools;
+import qupath.lib.geom.Point2;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
 import qupath.lib.images.ImageData;
@@ -17,10 +18,14 @@ import qupath.lib.plugins.parameters.ParameterList;
 import qupath.lib.roi.interfaces.ROI;
 import qupath.lib.regions.ImagePlane;
 import qupath.lib.roi.GeometryTools;
+import qupath.lib.roi.RoiTools;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
+//import static qupath.lib.analysis.DistanceTools.computeDistance;
 
 public class ExpandObjectsCommand {
     private ExpandObjectsCommand(){
@@ -37,15 +42,15 @@ public class ExpandObjectsCommand {
 
         assert pathObjects != null;
 
-        ArrayList<PathObject> newObjects = new ArrayList<>();
+        Collection<PathObject> newObjects = new ArrayList<>();
 
         int objectsNumber = pathObjects.size();
-        if(objectsNumber>100)
-            Dialogs.showInfoNotification("EtLMD notification", "You've chosen " + objectsNumber + " objects.");
+        if(objectsNumber>500)
+            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand. This may take a while.");
 
         ParameterList params = new ParameterList()
-                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(), "Distance to expand ROI")
-                ;
+                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(),
+                        "Distance to expand ROI");
 
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
@@ -67,10 +72,18 @@ public class ExpandObjectsCommand {
                 detection2.setName(pathObject.getName());
                 detection2.setColor(pathObject.getColor());
                 newObjects.add(detection2);
-                hierarchy.addObjects(newObjects);
             }
-                hierarchy.removeObjects(pathObjects, false);
-                hierarchy.getSelectionModel().clearSelection();
+            hierarchy.removeObjects(pathObjects, false);
+            hierarchy.getSelectionModel().clearSelection();
+
+            // Merge overlapping objects
+            Collection<PathObject> objectsToAdd = new ArrayList<>();
+            while(!newObjects.isEmpty()) {
+                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects,
+//                        hierarchy.getDetectionObjects(),
+                        objectsToAdd);
+            }
+            hierarchy.addObjects(objectsToAdd);
         }
 
     }
@@ -80,5 +93,84 @@ public class ExpandObjectsCommand {
             return null;
         }
         return hierarchy.getSelectionModel().getSelectedObjects();
+    }
+    private static Collection<PathObject> detectAndMergeOverlappingObjects(final PathObjectHierarchy hierarchy,
+                                                                           Collection<PathObject> newObjects,
+//                                                                           Collection<PathObject> alreadyExistingObjects,
+                                                                           Collection<PathObject> objectsToAdd){
+        Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
+        Collection<PathObject> objectsToMerge = new ArrayList<>();
+        boolean isOverlapping = false;
+        for (PathObject object : newObjects){
+            Polygon polygon = convertRoiToGeometry(object);
+            remainingObjects.remove(object);
+            for (PathObject otherObject : remainingObjects){
+                Polygon otherPolygon = convertRoiToGeometry(otherObject);
+                if (polygon.intersects(otherPolygon)){
+                    objectsToMerge.add(otherObject);
+                    isOverlapping = true;
+                }
+            }
+            remainingObjects.removeAll(objectsToMerge);
+
+//            //Include all background detections in processing, i.e. not only the selected ones. This operation is very costly.
+//            double distanceThreshold = 100;
+//            for (PathObject otherObject : alreadyExistingObjects){
+//                double distance = computeDistance(object.getROI().getGeometry().getCoordinate(),otherObject.getROI().getGeometry(),null);
+//                if (distance > distanceThreshold) {
+//                    continue;
+//                }
+//                Polygon otherPolygon = convertRoiToGeometry(otherObject);
+//                if (polygon.intersects(otherPolygon)){
+//                    objectsToMerge.add(otherObject);
+//                    isOverlapping = true;
+//                }
+//            }
+            if (isOverlapping){
+                objectsToMerge.add(object);
+            }
+            else{
+                objectsToAdd.add(object);
+            }
+            break;
+        }
+        if (!objectsToMerge.isEmpty()){
+            remainingObjects.add(mergeObjects(hierarchy, objectsToMerge));
+        }
+        return remainingObjects;
+    }
+    private static Polygon convertRoiToGeometry(PathObject object){
+        List<Point2> points = object.getROI().getAllPoints();
+
+        Coordinate[] coords = new Coordinate[points.size() + 1]; // +1 to close the polygon
+        for (int i = 0; i < points.size(); i++) {
+            Point2 point = points.get(i);
+            coords[i] = new Coordinate(point.getX(), point.getY());
+        }
+        coords[points.size()] = coords[0]; // Close the polygon
+
+        GeometryFactory geomFactory = new GeometryFactory();
+        LinearRing linearRing = geomFactory.createLinearRing(coords);
+        return geomFactory.createPolygon(linearRing, null);
+    }
+    private static PathObject mergeObjects(final PathObjectHierarchy hierarchy, final Collection<PathObject> objects) {
+        ROI shapeNew = null;
+        List<PathObject> merged = new ArrayList<>();
+        for (PathObject object : objects) {
+            if (object.hasROI() && object.getROI().isArea()) {
+                if (shapeNew == null)
+                    shapeNew = object.getROI();//.duplicate();
+                else if (shapeNew.getImagePlane().equals(object.getROI().getImagePlane()))
+                    shapeNew = RoiTools.combineROIs(shapeNew, object.getROI(), RoiTools.CombineOp.ADD);
+                else {
+                    Dialogs.showErrorMessage("", "");
+                }
+                merged.add(object);
+            }
+        }
+        assert shapeNew != null;
+        PathObject pathObjectNew = PathObjects.createDetectionObject(shapeNew);
+        hierarchy.removeObjects(merged, false);
+        return pathObjectNew;
     }
 }
