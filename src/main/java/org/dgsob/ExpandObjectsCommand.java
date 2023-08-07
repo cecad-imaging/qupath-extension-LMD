@@ -79,9 +79,7 @@ public class ExpandObjectsCommand {
             // Merge overlapping objects
             Collection<PathObject> objectsToAdd = new ArrayList<>();
             while(!newObjects.isEmpty()) {
-                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects,
-//                        hierarchy.getDetectionObjects(),
-                        objectsToAdd);
+                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects, objectsToAdd);
             }
             hierarchy.addObjects(objectsToAdd);
         }
@@ -96,7 +94,6 @@ public class ExpandObjectsCommand {
     }
     private static Collection<PathObject> detectAndMergeOverlappingObjects(final PathObjectHierarchy hierarchy,
                                                                            Collection<PathObject> newObjects,
-//                                                                           Collection<PathObject> alreadyExistingObjects,
                                                                            Collection<PathObject> objectsToAdd){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
@@ -113,19 +110,18 @@ public class ExpandObjectsCommand {
             }
             remainingObjects.removeAll(objectsToMerge);
 
-//            //Include all background detections in processing, i.e. not only the selected ones. This operation is very costly.
-//            double distanceThreshold = 100;
-//            for (PathObject otherObject : alreadyExistingObjects){
-//                double distance = computeDistance(object.getROI().getGeometry().getCoordinate(),otherObject.getROI().getGeometry(),null);
-//                if (distance > distanceThreshold) {
-//                    continue;
-//                }
-//                Polygon otherPolygon = convertRoiToGeometry(otherObject);
-//                if (polygon.intersects(otherPolygon)){
-//                    objectsToMerge.add(otherObject);
-//                    isOverlapping = true;
-//                }
-//            }
+            // Handle objects that are not selected to be expanded but intersect our object in the result of its expansion.
+            // These are already in hierarchy, newObjects are not.
+            // It is for sure an improvement from iterating over all objects but the problem is it relies on objects centroids, not intersection checking.
+            // We could try to somehow enlarge the ROI and iterate over these objects identically to newObjects above.
+            Collection<PathObject> alreadyInHierarchy = hierarchy.getObjectsForROI(null, object.getROI());
+            if (!alreadyInHierarchy.isEmpty()){
+                Dialogs.showConfirmDialog("","");
+                objectsToMerge.addAll(alreadyInHierarchy);
+                isOverlapping = true;
+            }
+            //
+
             if (isOverlapping){
                 objectsToMerge.add(object);
             }
