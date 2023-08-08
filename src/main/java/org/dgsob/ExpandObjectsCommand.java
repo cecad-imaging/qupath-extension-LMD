@@ -116,7 +116,6 @@ public class ExpandObjectsCommand {
             // We could try to somehow enlarge the ROI and iterate over these objects identically to newObjects above.
             Collection<PathObject> alreadyInHierarchy = hierarchy.getObjectsForROI(null, object.getROI());
             if (!alreadyInHierarchy.isEmpty()){
-                Dialogs.showConfirmDialog("","");
                 objectsToMerge.addAll(alreadyInHierarchy);
                 isOverlapping = true;
             }

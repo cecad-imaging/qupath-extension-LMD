@@ -26,22 +26,32 @@ public class ExportCommand {
 
     }
 
-    public static void runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
+    public static boolean runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
-        // Provide exactly the same options of export as native exporting to geojson
         String allObjects = "All objects";
         String selectedObjects = "Selected objects";
         String defaultObjects = hierarchy.getSelectionModel().noSelection() ? allObjects : selectedObjects;
 
-        var parametersList = new ParameterList()
-                .addChoiceParameter("exportOptions", "Export", defaultObjects, Arrays.asList(allObjects, selectedObjects),
-                        "Choose objects to export.");
+        ParameterList parametersList = new ParameterList()
+                .addChoiceParameter("exportOptions", "Export", defaultObjects,
+                        Arrays.asList(allObjects, selectedObjects),
+                        "Choose objects to export.")
+                .addChoiceParameter("collectorChoice", "Choose the type of collector", "None",
+                        Arrays.asList("4 tube cap holder","8-strip holder", "96-well collector"));
 
         boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(parametersList).getPane());
 
         if (confirmed) {
-            // The user chooses objects
+            boolean confirmedSecondWindow = true;
+            if (!parametersList.getChoiceParameterValue("collectorChoice").equals("None")){
+                confirmedSecondWindow = Dialogs.showConfirmDialog("","");
+            }
+
+            if (!confirmedSecondWindow){
+                return false;
+            }
+
             Collection<PathObject> chosenObjects;
             var comboChoice = parametersList.getChoiceParameterValue("exportOptions");
             if (comboChoice.equals("Selected objects")) {
@@ -78,6 +88,7 @@ public class ExportCommand {
                         "Check your home folder for the output files.");
             }
         }
+        return true;
     }
         private static Path getProjectDirectory (Path projectFilePath, String subdirectory){
             // Return the path to the project directory, i.e. projectFilePath's parent.
