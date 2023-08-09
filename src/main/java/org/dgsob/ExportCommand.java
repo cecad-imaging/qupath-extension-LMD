@@ -35,14 +35,14 @@ public class ExportCommand {
         String selectedObjects = "Selected detection objects";
         String defaultObjects = hierarchy.getSelectionModel().noSelection() ? allObjects : selectedObjects;
 
-        ParameterList parametersList = new ParameterList()
+        ParameterList exportParams = new ParameterList()
                 .addChoiceParameter("exportOptions", "Export", defaultObjects,
                         Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.")
                 .addChoiceParameter("collectorChoice", "Choose the type of collector", "None",
                         Arrays.asList("None", "PCR Tubes","8-fold-Strip", "96-Wellplate", "Petri"));
 
-        boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(parametersList).getPane());
+        boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(exportParams).getPane());
 
         if (!confirmed) {
             return false;
@@ -50,7 +50,7 @@ public class ExportCommand {
 
         // Part of the code responsible for setting objects to export to either selected or all detections.
         Collection<PathObject> chosenObjects;
-        var comboChoice = parametersList.getChoiceParameterValue("exportOptions");
+        var comboChoice = exportParams.getChoiceParameterValue("exportOptions");
         if (comboChoice.equals("Selected detection objects")) {
             if (hierarchy.getSelectionModel().noSelection()) {
                 Dialogs.showErrorMessage("Error", "No selection detected!");
@@ -62,15 +62,14 @@ public class ExportCommand {
             chosenObjects = hierarchy.getAllObjects(false);
         //
 
-        boolean confirmedSecondWindow = true;
-        var collectorType = parametersList.getChoiceParameterValue("collectorChoice");
-        if (!collectorType.equals("None")){
-            confirmedSecondWindow = Dialogs.showConfirmDialog("Collector Assignment", setCollectorsPane(collectorType, chosenObjects));
-        }
-
-
-        if (!confirmedSecondWindow){
-            return false;
+        var collectorType = exportParams.getChoiceParameterValue("collectorChoice");
+        boolean processCollectors = !collectorType.equals("None");
+        ParameterList collectorParams = setCollectorsParameterList(collectorType, chosenObjects);
+        if (processCollectors){
+            boolean confirmedSecondWindow = Dialogs.showConfirmDialog("Collector Assignment", new ParameterPanelFX(collectorParams).getPane());
+            if (!confirmedSecondWindow){
+                return false;
+            }
         }
 
         // Set default names for geojson and xml files
@@ -86,7 +85,7 @@ public class ExportCommand {
 
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
-        GeojsonToXml.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION);
+        GeojsonToXml.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorType, collectorParams);
 
         deleteTemporaryGeoJSON(pathGeoJSON);
 
@@ -124,38 +123,42 @@ public class ExportCommand {
                 // Well, I guess it doesn't matter if it fails or not.
             }
         }
-        private static Pane setCollectorsPane(Object collectorType, Collection<PathObject> chosenObjects){
+        private static ParameterList setCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
             // PCR A B C D E No Cap
             // 8-strip A B C D E F G H
             // 96 A-H, 1-12
             // Petri A B
-            ParameterList parametersList = new ParameterList();
-            List<String> collectorOptions = Arrays.asList("None", "All objects", "Stroma", "Tumor", "Positive", "Negative", "Remaining objects", "Other");
+            ParameterList collectorParams = new ParameterList();
+            List<String> collectorOptions = Arrays.asList("None", "All objects", "Stroma", "Tumor", "Positive", "Negative", "Remaining objects");
             if (collectorType.equals("PCR Tubes")) {
-                parametersList
-                        .addChoiceParameter("eppA", "A", "None", collectorOptions)
-                        .addChoiceParameter("eppB", "B", "None", collectorOptions)
-                        .addChoiceParameter("eppC", "C", "None", collectorOptions)
-                        .addChoiceParameter("eppD", "D", "None", collectorOptions);
+                collectorParams
+                        .addChoiceParameter("A", "A", "None", collectorOptions)
+                        .addChoiceParameter("B", "B", "None", collectorOptions)
+                        .addChoiceParameter("C", "C", "None", collectorOptions)
+                        .addChoiceParameter("D", "D", "None", collectorOptions)
+                        .addChoiceParameter("E", "E", "None", collectorOptions)
+                        .addChoiceParameter("No Cap", "No Cap", "None", collectorOptions); // TODO: No Cap ID is not No Cap, check in the LMD
             }
             else if (collectorType.equals("8-fold-Strip")) {
-                parametersList
-                        .addChoiceParameter("capA", "A", "None", collectorOptions)
-                        .addChoiceParameter("capB", "B", "None", collectorOptions)
-                        .addChoiceParameter("capC", "C", "None", collectorOptions)
-                        .addChoiceParameter("capD", "D", "None", collectorOptions)
-                        .addChoiceParameter("capE", "E", "None", collectorOptions)
-                        .addChoiceParameter("capF", "F", "None", collectorOptions)
-                        .addChoiceParameter("capG", "G", "None", collectorOptions)
-                        .addChoiceParameter("capH", "H", "None", collectorOptions);
+                collectorParams
+                        .addChoiceParameter("A", "A", "None", collectorOptions)
+                        .addChoiceParameter("B", "B", "None", collectorOptions)
+                        .addChoiceParameter("C", "C", "None", collectorOptions)
+                        .addChoiceParameter("D", "D", "None", collectorOptions)
+                        .addChoiceParameter("E", "E", "None", collectorOptions)
+                        .addChoiceParameter("F", "F", "None", collectorOptions)
+                        .addChoiceParameter("G", "G", "None", collectorOptions)
+                        .addChoiceParameter("H", "H", "None", collectorOptions)
+                        .addChoiceParameter("No Cap", "No Cap", "None", collectorOptions); // TODO: No Cap ID is not No Cap, check in the LMD
             }
             else if (collectorType.equals("96-Wellplate")) {
             }
             else if (collectorType.equals("Petri")) {
-                parametersList
-                        .addChoiceParameter("dishA", "A", "None", collectorOptions)
-                        .addChoiceParameter("dishB", "B", "None", collectorOptions);
+                collectorParams
+                        .addChoiceParameter("A", "A", "None", collectorOptions)
+                        .addChoiceParameter("B", "B", "None", collectorOptions)
+                        .addChoiceParameter("No Cap", "No Cap", "None", collectorOptions); // TODO: No Cap ID is not No Cap, check in the LMD
             }
-            return new ParameterPanelFX(parametersList).getPane();
+            return collectorParams;
         }
     }

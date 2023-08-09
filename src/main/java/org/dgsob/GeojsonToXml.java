@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
+import qupath.lib.plugins.parameters.ParameterList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -33,7 +34,7 @@ public class GeojsonToXml {
     public GeojsonToXml(){
 
     }
-    public static void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType) {
+    public static void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, Object collectorType, ParameterList collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -70,7 +71,7 @@ public class GeojsonToXml {
                 imageDataElement.appendChild(yElement);
             }
 
-            // Extract shapes from GeoJSON and add to XML
+            // Count shapes in GeoJSON and add ShapeCount element to XML
             int shapeCount = 0;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
@@ -81,6 +82,7 @@ public class GeojsonToXml {
             Element shapeCountElement = createTextElement(xmlDoc, "ShapeCount", String.valueOf(shapeCount));
             imageDataElement.appendChild(shapeCountElement);
 
+            // Handle each shape: PointCount, CapID, coordinates
             int shapeIndex = 1;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
@@ -94,6 +96,11 @@ public class GeojsonToXml {
                     int pointCount = coordinates.size();
                     Element pointCountElement = createTextElement(xmlDoc, "PointCount", String.valueOf(pointCount));
                     shapeElement.appendChild(pointCountElement);
+
+                    if (!collectorType.equals("None")) {
+                        JsonNode featureClassificationNode = feature.path("properties").path("classification");
+                        addCupID(xmlDoc, shapeElement, featureClassificationNode, collectorParams);
+                    }
 
                     int pointIndex = 1;
                     for (JsonNode point : coordinates) {
@@ -131,5 +138,60 @@ public class GeojsonToXml {
         Text textNode = doc.createTextNode(textContent);
         element.appendChild(textNode);
         return element;
+    }
+    private static boolean addCupID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
+        if (!classificationNode.isMissingNode()) {
+            String featureClassName = classificationNode.path("name").asText();
+            //iterate over params in paramsSetByUser
+                // if param value is all objects -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
+                // if param value is a certain class -> assign matching class
+                // if paramvalue is remianing -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
+                // if paramvalue is None -> return false
+            for (String paramKey : paramsSetByUser.getParameters().keySet()){
+                Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
+                if (paramValue.equals("All objects")){
+                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                    return true;
+                }
+                if (featureClassName.equals(paramValue)){
+                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                    return true;
+                }
+                if (paramValue.equals("Remaining objects")){
+                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                    return true;
+                }
+                if (paramValue.equals("None")){
+                    return false;
+                }
+
+            }
+        }
+        else {
+            //iterate over params in paramsSetByUser
+              // if param value is all objects -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
+              // if param value is a certain class -> continue
+              // if paramvalue is remianing -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
+              // if paramvalue is None -> return false
+            for (String paramKey : paramsSetByUser.getParameters().keySet()){
+                Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
+                if (paramValue.equals("All objects")){
+                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                    return true;
+                }
+                if (paramValue.equals("Stroma") || paramValue.equals("Tumor") || paramValue.equals("Positive") || paramValue.equals("Negative")){
+                    continue;
+                }
+                if (paramValue.equals("Remaining objects")){
+                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                    return true;
+                }
+                if (paramValue.equals("None")){
+                    return false;
+                }
+
+            }
+        }
+        return false;
     }
 }
