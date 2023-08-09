@@ -106,7 +106,7 @@ public class ExportCommand {
                     try {
                         Files.createDirectories(subdirectoryPath); // Create the directory if it doesn't exist
                     } catch (IOException e) {
-                        // Handle the exception if necessary
+                        // I don't know what to do here
                     }
                     return subdirectoryPath;
                 }
@@ -124,10 +124,7 @@ public class ExportCommand {
             }
         }
         private static ParameterList setCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
-            // PCR A B C D E No Cap
-            // 8-strip A B C D E F G H
-            // 96 A-H, 1-12
-            // Petri A B
+            // TODO: Add enum with values of collectorOptions, it should probably also be renamed to smth like classificationOptions
             ParameterList collectorParams = new ParameterList();
             List<String> collectorOptions = Arrays.asList("None", "All objects", "Stroma", "Tumor", "Positive", "Negative", "Remaining objects");
             if (collectorType.equals("PCR Tubes")) {

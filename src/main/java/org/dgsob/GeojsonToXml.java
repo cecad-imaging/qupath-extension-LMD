@@ -142,11 +142,6 @@ public class GeojsonToXml {
     private static boolean addCupID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
         if (!classificationNode.isMissingNode()) {
             String featureClassName = classificationNode.path("name").asText();
-            //iterate over params in paramsSetByUser
-                // if param value is all objects -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
-                // if param value is a certain class -> assign matching class
-                // if paramvalue is remianing -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
-                // if paramvalue is None -> return false
             for (String paramKey : paramsSetByUser.getParameters().keySet()){
                 Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
                 if (paramValue.equals("All objects")){
@@ -168,11 +163,6 @@ public class GeojsonToXml {
             }
         }
         else {
-            //iterate over params in paramsSetByUser
-              // if param value is all objects -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
-              // if param value is a certain class -> continue
-              // if paramvalue is remianing -> parentShape.appendChild(createTextElement(doc, "CupID", param key)); return true;
-              // if paramvalue is None -> return false
             for (String paramKey : paramsSetByUser.getParameters().keySet()){
                 Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
                 if (paramValue.equals("All objects")){
