@@ -32,7 +32,7 @@ public class ExportToLMDExtension implements QuPathExtension {
     @ActionMenu("Extensions>Export to LMD")
     public static class ExportToLMDAction {
         private final QuPathGUI qupath;
-        @ActionMenu("Utilities>Expand selected objects")
+        @ActionMenu("Utilities>Expand selected objects (merges overlapping)")
         public final Action actionExpandObjects;
         @ActionMenu("Export")
         public final Action actionExport;
