@@ -71,6 +71,7 @@ public class GeojsonToXml {
                 imageDataElement.appendChild(yElement);
             }
 
+            // TODO: Replace shapeCount with numberOfExportedObjects from ExportCommand, pass it here as a parameter, also rename it to shapeCount
             // Count shapes in GeoJSON and add ShapeCount element to XML
             int shapeCount = 0;
             for (JsonNode feature : features) {

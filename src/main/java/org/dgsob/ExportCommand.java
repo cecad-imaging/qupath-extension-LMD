@@ -50,16 +50,22 @@ public class ExportCommand {
 
         // Part of the code responsible for setting objects to export to either selected or all detections.
         Collection<PathObject> chosenObjects;
+        int numberOfExportedShapes;
         var comboChoice = exportParams.getChoiceParameterValue("exportOptions");
         if (comboChoice.equals("Selected detection objects")) {
             if (hierarchy.getSelectionModel().noSelection()) {
                 Dialogs.showErrorMessage("Error", "No selection detected!");
+                return false;
             }
             chosenObjects = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
+            numberOfExportedShapes = chosenObjects.size();
             // Automatically include MultiPoint even if not selected, other annotations will be ignored
             chosenObjects.addAll(hierarchy.getAnnotationObjects());
-        } else
+        }
+        else {
             chosenObjects = hierarchy.getAllObjects(false);
+            numberOfExportedShapes = hierarchy.getDetectionObjects().size();
+        }
         //
 
         var collectorType = exportParams.getChoiceParameterValue("collectorChoice");
@@ -90,7 +96,8 @@ public class ExportCommand {
         deleteTemporaryGeoJSON(pathGeoJSON);
 
         if (projectFilePath != null) {
-            Dialogs.showInfoNotification("Export successful", "Objects succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
+            Dialogs.showInfoNotification("Export successful",
+                    numberOfExportedShapes+ " shapes succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
         } else {
             Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
                     "Check your home folder for the output files.");
