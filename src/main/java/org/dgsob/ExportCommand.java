@@ -1,6 +1,5 @@
 package org.dgsob;
 
-import javafx.scene.layout.Pane;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
