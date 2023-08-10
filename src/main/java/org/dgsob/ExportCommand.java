@@ -50,7 +50,6 @@ public class ExportCommand {
 
         // Part of the code responsible for setting objects to export to either selected or all detections.
         Collection<PathObject> chosenObjects;
-        int numberOfExportedShapes;
         var comboChoice = exportParams.getChoiceParameterValue("exportOptions");
         if (comboChoice.equals("Selected detection objects")) {
             if (hierarchy.getSelectionModel().noSelection()) {
@@ -58,13 +57,11 @@ public class ExportCommand {
                 return false;
             }
             chosenObjects = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
-            numberOfExportedShapes = chosenObjects.size();
             // Automatically include MultiPoint even if not selected, other annotations will be ignored
             chosenObjects.addAll(hierarchy.getAnnotationObjects());
         }
         else {
             chosenObjects = hierarchy.getAllObjects(false);
-            numberOfExportedShapes = hierarchy.getDetectionObjects().size();
         }
         //
 
@@ -91,13 +88,14 @@ public class ExportCommand {
 
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
-        GeojsonToXml.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorType, collectorParams);
+        GeojsonToXml xmlConverter = new GeojsonToXml();
+        xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorType, collectorParams);
 
         deleteTemporaryGeoJSON(pathGeoJSON);
 
         if (projectFilePath != null) {
             Dialogs.showInfoNotification("Export successful",
-                    numberOfExportedShapes+ " shapes succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
+                    xmlConverter.getShapeCount() + " shapes succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
         } else {
             Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
                     "Check your home folder for the output files.");

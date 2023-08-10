@@ -30,11 +30,19 @@ public class GeojsonToXml {
 //        public static final String POLYGON = "Polygon";
 //        public static final String POINT = "MultiPoint";
 //    }
-
     public GeojsonToXml(){
-
     }
-    public static void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, Object collectorType, ParameterList collectorParams) {
+    private int shapeCount = 0;
+
+    /**
+     *
+     * @param inputPath
+     * @param outputPath
+     * @param shapeType
+     * @param collectorType
+     * @param collectorParams
+     */
+    public void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, Object collectorType, ParameterList collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -71,9 +79,7 @@ public class GeojsonToXml {
                 imageDataElement.appendChild(yElement);
             }
 
-            // TODO: Replace shapeCount with numberOfExportedObjects from ExportCommand, pass it here as a parameter, also rename it to shapeCount
             // Count shapes in GeoJSON and add ShapeCount element to XML
-            int shapeCount = 0;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
                 if (!shapeType.equals(objectType)) {
@@ -134,13 +140,13 @@ public class GeojsonToXml {
         }
     }
 
-    private static Element createTextElement(Document doc, String tagName, String textContent) {
+    private Element createTextElement(Document doc, String tagName, String textContent) {
         Element element = doc.createElement(tagName);
         Text textNode = doc.createTextNode(textContent);
         element.appendChild(textNode);
         return element;
     }
-    private static boolean addCupID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
+    private boolean addCupID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
         if (!classificationNode.isMissingNode()) {
             String featureClassName = classificationNode.path("name").asText();
             for (String paramKey : paramsSetByUser.getParameters().keySet()){
@@ -184,5 +190,8 @@ public class GeojsonToXml {
             }
         }
         return false;
+    }
+    public int getShapeCount(){
+        return shapeCount;
     }
 }
