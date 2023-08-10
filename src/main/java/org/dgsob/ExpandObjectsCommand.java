@@ -13,6 +13,7 @@ import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
+import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 import qupath.lib.plugins.parameters.ParameterList;
 import qupath.lib.roi.interfaces.ROI;
@@ -95,29 +96,50 @@ public class ExpandObjectsCommand {
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
         boolean isOverlapping = false;
+        boolean areAllTheSameClass = true;
+        PathClass objectClass = null;
+
         for (PathObject object : newObjects){
+            objectClass = object.getPathClass();
             Polygon polygon = convertRoiToGeometry(object);
             remainingObjects.remove(object);
+
             for (PathObject otherObject : remainingObjects){
                 Polygon otherPolygon = convertRoiToGeometry(otherObject);
                 if (polygon.intersects(otherPolygon)){
+                    if (objectClass == null && otherObject.getPathClass() != null ||
+                            objectClass != null && otherObject.getPathClass() == null ||
+                            objectClass != null && !objectClass.equals(otherObject.getPathClass())){
+
+                        areAllTheSameClass = false;
+                    }
                     objectsToMerge.add(otherObject);
                     isOverlapping = true;
                 }
             }
             remainingObjects.removeAll(objectsToMerge);
 
+            // ---------------------------------------------------------------------------------------------------------
             // Handle objects that are not selected to be expanded but intersect our object in the result of its expansion.
             // These are already in hierarchy, newObjects are not.
             // It is for sure an improvement from iterating over all objects but the problem is it relies on objects centroids, not intersection checking.
             // We could try to somehow enlarge the ROI and iterate over these objects identically to newObjects above.
             Collection<PathObject> alreadyInHierarchy = hierarchy.getObjectsForROI(null, object.getROI());
             if (!alreadyInHierarchy.isEmpty()){
+                for (PathObject otherObject : alreadyInHierarchy){
+                    if (objectClass == null && otherObject.getPathClass() != null ||
+                            objectClass != null && otherObject.getPathClass() == null ||
+                            objectClass != null && !objectClass.equals(otherObject.getPathClass())){
+
+                        areAllTheSameClass = false;
+                    }
+                    // We could either add each object to objectsToMerge here or all at once below, doesn't matter I guess
+                }
                 objectsToMerge.addAll(alreadyInHierarchy);
                 objectsToRemove.addAll(alreadyInHierarchy);
                 isOverlapping = true;
             }
-            //
+            // ---------------------------------------------------------------------------------------------------------
 
             if (isOverlapping){
                 objectsToMerge.add(object);
@@ -127,8 +149,12 @@ public class ExpandObjectsCommand {
             }
             break;
         }
+        PathClass classForTheMerged = null;
+        if (areAllTheSameClass){
+            classForTheMerged = objectClass;
+        }
         if (!objectsToMerge.isEmpty()){
-            remainingObjects.add(mergeObjects(objectsToMerge));
+            remainingObjects.add(mergeObjects(objectsToMerge, classForTheMerged));
         }
         return remainingObjects;
     }
@@ -146,7 +172,7 @@ public class ExpandObjectsCommand {
         LinearRing linearRing = geomFactory.createLinearRing(coords);
         return geomFactory.createPolygon(linearRing, null);
     }
-    private static PathObject mergeObjects(final Collection<PathObject> objects) {
+    private static PathObject mergeObjects(final Collection<PathObject> objects, final PathClass objectClass) {
         ROI shapeNew = null;
         for (PathObject object : objects) {
             if (shapeNew == null)
@@ -159,7 +185,10 @@ public class ExpandObjectsCommand {
             }
         }
         assert shapeNew != null;
-        return PathObjects.createDetectionObject(shapeNew);
+        if (objectClass != null)
+            return PathObjects.createDetectionObject(shapeNew, objectClass);
+        else
+            return PathObjects.createDetectionObject(shapeNew);
     }
 
     private static Collection<PathObject> getSelected(PathObjectHierarchy hierarchy){
