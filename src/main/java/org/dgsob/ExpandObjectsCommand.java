@@ -77,24 +77,21 @@ public class ExpandObjectsCommand {
             hierarchy.getSelectionModel().clearSelection();
 
             // Merge overlapping objects
+            Collection<PathObject> objectsToRemove = new ArrayList<>();
             Collection<PathObject> objectsToAdd = new ArrayList<>();
             while(!newObjects.isEmpty()) {
-                newObjects = detectAndMergeOverlappingObjects(hierarchy, newObjects, objectsToAdd);
+                newObjects = processOverlappingObjects(hierarchy, newObjects, objectsToAdd, objectsToRemove);
             }
+            hierarchy.removeObjects(objectsToRemove, false);
             hierarchy.addObjects(objectsToAdd);
         }
 
     }
-    private static Collection<PathObject> getSelected(PathObjectHierarchy hierarchy){
-        if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorMessage("Error", "No selection. Please, select detections to expand.");
-            return null;
-        }
-        return hierarchy.getSelectionModel().getSelectedObjects();
-    }
-    private static Collection<PathObject> detectAndMergeOverlappingObjects(final PathObjectHierarchy hierarchy,
+
+    private static Collection<PathObject> processOverlappingObjects(final PathObjectHierarchy hierarchy,
                                                                            Collection<PathObject> newObjects,
-                                                                           Collection<PathObject> objectsToAdd){
+                                                                           Collection<PathObject> objectsToAdd,
+                                                                           Collection<PathObject> objectsToRemove){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
         boolean isOverlapping = false;
@@ -117,6 +114,7 @@ public class ExpandObjectsCommand {
             Collection<PathObject> alreadyInHierarchy = hierarchy.getObjectsForROI(null, object.getROI());
             if (!alreadyInHierarchy.isEmpty()){
                 objectsToMerge.addAll(alreadyInHierarchy);
+                objectsToRemove.addAll(alreadyInHierarchy);
                 isOverlapping = true;
             }
             //
@@ -130,7 +128,7 @@ public class ExpandObjectsCommand {
             break;
         }
         if (!objectsToMerge.isEmpty()){
-            remainingObjects.add(mergeObjects(hierarchy, objectsToMerge));
+            remainingObjects.add(mergeObjects(objectsToMerge));
         }
         return remainingObjects;
     }
@@ -148,24 +146,27 @@ public class ExpandObjectsCommand {
         LinearRing linearRing = geomFactory.createLinearRing(coords);
         return geomFactory.createPolygon(linearRing, null);
     }
-    private static PathObject mergeObjects(final PathObjectHierarchy hierarchy, final Collection<PathObject> objects) {
+    private static PathObject mergeObjects(final Collection<PathObject> objects) {
         ROI shapeNew = null;
-        List<PathObject> merged = new ArrayList<>();
         for (PathObject object : objects) {
-            if (object.hasROI() && object.getROI().isArea()) {
-                if (shapeNew == null)
-                    shapeNew = object.getROI();//.duplicate();
-                else if (shapeNew.getImagePlane().equals(object.getROI().getImagePlane()))
-                    shapeNew = RoiTools.combineROIs(shapeNew, object.getROI(), RoiTools.CombineOp.ADD);
-                else {
-                    Dialogs.showErrorMessage("", "");
-                }
-                merged.add(object);
+            if (shapeNew == null)
+                shapeNew = object.getROI();
+            else if (shapeNew.getImagePlane().equals(object.getROI().getImagePlane()))
+                shapeNew = RoiTools.combineROIs(shapeNew, object.getROI(), RoiTools.CombineOp.ADD);
+            else {
+                Dialogs.showErrorMessage("Error", "It seems as if the processed objects were from different image planes. " +
+                        "Please reload the image and try again.");
             }
         }
         assert shapeNew != null;
-        PathObject pathObjectNew = PathObjects.createDetectionObject(shapeNew);
-        hierarchy.removeObjects(merged, false);
-        return pathObjectNew;
+        return PathObjects.createDetectionObject(shapeNew);
+    }
+
+    private static Collection<PathObject> getSelected(PathObjectHierarchy hierarchy){
+        if (hierarchy.getSelectionModel().noSelection()) {
+            Dialogs.showErrorMessage("Error", "No selection. Please, select detections to expand.");
+            return null;
+        }
+        return hierarchy.getSelectionModel().getSelectedObjects();
     }
 }
