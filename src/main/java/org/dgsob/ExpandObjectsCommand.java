@@ -114,7 +114,7 @@ public class ExpandObjectsCommand {
             while(!newObjects.isEmpty()) {
                 newObjects = processOverlappingObjects(hierarchy, newObjects, objectsToAdd, objectsToRemove, priorityClass);
             }
-            hierarchy.removeObjects(objectsToRemove, false);
+//            hierarchy.removeObjects(objectsToRemove, false);
             hierarchy.addObjects(objectsToAdd);
         }
 
@@ -156,14 +156,15 @@ public class ExpandObjectsCommand {
                         }
                         else{
                             // assumes max 2 class scenario
-                            if (priorityClass.toString().equals(objectClass.toString())) {
+                            if (Objects.equals(priorityClass.toString(), objectClass != null ? objectClass.toString() : null)) {
 //                                Dialogs.showConfirmDialog("","I am priority class object, I'm removing the other intersecting me rn");
                                 objectsToRemoveFromProcessed.add(otherObject);
                                 objectToAddBackToProcessed.add(object);
                             } else {
-//                                Dialogs.showConfirmDialog("","I am not a priority object, I am getting removed for intersecting one rn");
+//                                Dialogs.showConfirmDialog("","I am not a priority object, I am getting removed for intersecting one rn." +
+//                                        "Btw, this should never occur if the object were actually sorted, which they should've been.");
 //                                Dialogs.showConfirmDialog("","Let's check if you don't lie, your class is " + objectClass + " and priority class is " + priorityClass);
-                                // we should remove object from the remaining here but it was done earlier
+                                // we should remove object from the remaining here, but it was done earlier
                             }
                             break;
                         }
@@ -272,8 +273,9 @@ public class ExpandObjectsCommand {
             PathClass class1 = obj1.getPathClass();
             PathClass class2 = obj2.getPathClass();
 
-            boolean isClass1Priority = class1.toString().equals(priorityClass.toString());
-            boolean isClass2Priority = class2.toString().equals(priorityClass.toString());
+            boolean isClass1Priority = Objects.equals(class1 != null ? class1.toString() : null, priorityClass.toString());
+            boolean isClass2Priority = Objects.equals(class2 != null ? class2.toString() : null, priorityClass.toString());
+
             if (isClass1Priority && !isClass2Priority) {
                 return -1; // obj1 comes before obj2
             } else if (!isClass1Priority && isClass2Priority) {
