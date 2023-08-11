@@ -81,6 +81,20 @@ public class ExpandObjectsCommand {
             hierarchy.removeObjects(pathObjects, false);
             hierarchy.getSelectionModel().clearSelection();
 
+            // We should iterate over newObjets here, get each objects ROI + a little extra,
+            // add all background objects which intersect an object to newObjects and probably remove them from heirarchy at this point
+            // as there is only once scenario - it is a priority class object - when it should remain in the heirarchy
+            // so we will add it back later when we actually check for class priority - here we have no idea
+
+            // Now when we have enhanced newObjects, we should check if they ALL are of the same class, if they are -> we should process
+            // them just merging overlapping
+
+            // If they are not all the same class we should check what the user wants us to do when different classes overlap
+            // If the user wants to exclude both -> we should process objects merging overlapping same class and deleting overlapping different class
+            // If the user wants priority class set -> we should sort newObjects so that priority class is first, then process them deleting all objecs
+            // intersecting priority class objects and merging the rest
+
+
             // Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
             Collection<PathObject> objectsToRemove = new ArrayList<>();
             Collection<PathObject> objectsToAdd = new ArrayList<>();
