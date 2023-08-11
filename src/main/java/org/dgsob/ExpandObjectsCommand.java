@@ -109,20 +109,20 @@ public class ExpandObjectsCommand {
 
             // 3.
             // Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
-            Collection<PathObject> objectsToRemove = new ArrayList<>();
-            Collection<PathObject> objectsToAdd = new ArrayList<>();
+            Collection<PathObject> objectsToRemoveFromHierarchy = new ArrayList<>();
+            Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
             while(!newObjects.isEmpty()) {
-                newObjects = processOverlappingObjects(hierarchy, newObjects, objectsToAdd, objectsToRemove, priorityClass);
+                newObjects = processOverlappingObjects(hierarchy, newObjects, objectsToAddToHierarchy, objectsToRemoveFromHierarchy, priorityClass);
             }
-//            hierarchy.removeObjects(objectsToRemove, false);
-            hierarchy.addObjects(objectsToAdd);
+//            hierarchy.removeObjects(objectsToRemoveFromHierarchy, false);
+            hierarchy.addObjects(objectsToAddToHierarchy);
         }
 
     }
 
     private static Collection<PathObject> processOverlappingObjects(final PathObjectHierarchy hierarchy,
                                                                            Collection<PathObject> newObjects,
-                                                                           Collection<PathObject> objectsToAdd,
+                                                                           Collection<PathObject> objectsToAddToHierarchy,
                                                                            Collection<PathObject> objectsToRemoveFromHierarchy,
                                                                            Object priorityClass){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
@@ -186,7 +186,7 @@ public class ExpandObjectsCommand {
             }
             else{
 //                Dialogs.showConfirmDialog("","This should fire only once at the end");
-                objectsToAdd.add(object);
+                objectsToAddToHierarchy.add(object);
             }
             break;
         }
@@ -210,7 +210,7 @@ public class ExpandObjectsCommand {
 //                    // We could either add each object to objectsToMerge here or all at once below, doesn't matter I guess
 //                }
 //                objectsToMerge.addAll(alreadyInHierarchy);
-//                objectsToRemove.addAll(alreadyInHierarchy);
+//                objectsToRemoveFromHierarchy.addAll(alreadyInHierarchy);
 //                isOverlapping = true;
 //            }
             // ---------------------------------------------------------------------------------------------------------
