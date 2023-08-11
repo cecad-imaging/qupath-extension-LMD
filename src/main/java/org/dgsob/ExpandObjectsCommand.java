@@ -248,13 +248,11 @@ public class ExpandObjectsCommand {
 
     public static boolean areAllObjectsOfSameClass(Collection<PathObject> objects) {
         PathClass commonClass = null;
-        boolean hasClass = false;
 
         for (PathObject object : objects) {
             if (object != null) {
                 PathClass currentClass = object.getPathClass();
                 if (currentClass != null) {
-                    hasClass = true;
                     if (commonClass == null) {
                         commonClass = currentClass;
                     } else if (!commonClass.equals(currentClass)) {
@@ -264,7 +262,7 @@ public class ExpandObjectsCommand {
             }
         }
 
-        return !hasClass || commonClass != null;
+        return true;
     }
 
     public static List<PathObject> sortObjectsByPriority(Collection<PathObject> objects, Object priorityClass) {
