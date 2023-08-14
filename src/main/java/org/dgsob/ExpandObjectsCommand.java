@@ -81,11 +81,7 @@ public class ExpandObjectsCommand {
             hierarchy.getSelectionModel().clearSelection();
 
             // 1. -> 2.
-            // We should iterate over newObjets here, get each objects ROI + a little extra,
-            // add all background objects which intersect an object to newObjects and probably remove them from heirarchy at this point
-            // as there is only once scenario - it is a priority class object - when it should remain in the heirarchy
-            // so we will add it back later when we actually check for class priority - here we have no idea
-            // TODO: Place to solve isse #5
+            // Adding 'background', i.e. already existing in hierarchy, not selected, objects.
             newObjects = addOverlappingBackroundObjects(hierarchy, newObjects);
 
             // 2.a. -> Unimplemented logic
@@ -102,7 +98,7 @@ public class ExpandObjectsCommand {
 
 
             // 2.b. -> 3.
-            // Or we can just check if priorityClass is not exclude both and if !all objects have same class, if both are true -> sort newObjects
+            // Check if priorityClass is not exclude both and if !all objects have same class, if both are true -> sort newObjects
 
             Object priorityClass = params.getChoiceParameterValue("priorityClass");
             if (!areAllObjectsOfSameClass(newObjects) && !priorityClass.equals("Exclude both")){
@@ -111,12 +107,10 @@ public class ExpandObjectsCommand {
 
             // 3.
             // Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
-            Collection<PathObject> objectsToRemoveFromHierarchy = new ArrayList<>();
             Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
             while(!newObjects.isEmpty()) {
-                newObjects = processOverlappingObjects(hierarchy, newObjects, objectsToAddToHierarchy, objectsToRemoveFromHierarchy, priorityClass);
+                newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityClass);
             }
-//            hierarchy.removeObjects(objectsToRemoveFromHierarchy, false);
             hierarchy.addObjects(objectsToAddToHierarchy);
         }
 
@@ -143,11 +137,8 @@ public class ExpandObjectsCommand {
         return enhancedObjects;
     }
 
-    private static Collection<PathObject> processOverlappingObjects(final PathObjectHierarchy hierarchy,
-                                                                           Collection<PathObject> newObjects,
-                                                                           Collection<PathObject> objectsToAddToHierarchy,
-                                                                           Collection<PathObject> objectsToRemoveFromHierarchy,
-                                                                           Object priorityClass){
+    private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
+                                                                    Collection<PathObject> objectsToAddToHierarchy, Object priorityClass){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
         Collection<PathObject> objectsToRemoveFromProcessed = new ArrayList<>();
@@ -216,27 +207,6 @@ public class ExpandObjectsCommand {
         return remainingObjects;
     }
 
-            // ---------------------------------------------------------------------------------------------------------
-            // Handle objects that are not selected to be expanded but intersect our object in the result of its expansion.
-            // These are already in hierarchy, newObjects are not.
-            // It is for sure an improvement from iterating over all objects but the problem is it relies on objects centroids, not intersection checking.
-            // We could try to somehow enlarge the ROI and iterate over these objects identically to newObjects above.
-//            Collection<PathObject> alreadyInHierarchy = hierarchy.getObjectsForROI(null, object.getROI());
-//            if (!alreadyInHierarchy.isEmpty()){
-//                for (PathObject otherObject : alreadyInHierarchy){
-//                    if (objectClass == null && otherObject.getPathClass() != null ||
-//                            objectClass != null && otherObject.getPathClass() == null ||
-//                            objectClass != null && !objectClass.equals(otherObject.getPathClass())){
-//
-//                        areAllTheSameClass = false;
-//                    }
-//                    // We could either add each object to objectsToMerge here or all at once below, doesn't matter I guess
-//                }
-//                objectsToMerge.addAll(alreadyInHierarchy);
-//                objectsToRemoveFromHierarchy.addAll(alreadyInHierarchy);
-//                isOverlapping = true;
-//            }
-            // ---------------------------------------------------------------------------------------------------------
     private static Polygon convertRoiToGeometry(PathObject object){
         List<Point2> points = object.getROI().getAllPoints();
 
