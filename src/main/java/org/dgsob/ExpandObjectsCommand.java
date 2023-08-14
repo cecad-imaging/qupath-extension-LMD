@@ -81,10 +81,8 @@ public class ExpandObjectsCommand {
             hierarchy.getSelectionModel().clearSelection();
 
             // 1. -> 2.
-            // We should iterate over newObjets here, get each objects ROI + a little extra,
-            // add all background objects which intersect an object to newObjects and probably remove them from heirarchy at this point
-            // as there is only once scenario - it is a priority class object - when it should remain in the heirarchy
-            // so we will add it back later when we actually check for class priority - here we have no idea
+            // Adding 'background', i.e. already existing in hierarchy, not selected, objects.
+            newObjects = addOverlappingBackroundObjects(hierarchy, newObjects);
 
             // 2.a. -> Unimplemented logic
             // Now when we have enhanced newObjects, we should check if they ALL are of the same class, if they are -> we should process
@@ -100,7 +98,7 @@ public class ExpandObjectsCommand {
 
 
             // 2.b. -> 3.
-            // Or we can just check if priorityClass is not exclude both and if !all objects have same class, if both are true -> sort newObjects
+            // Check if priorityClass is not exclude both and if !all objects have same class, if both are true -> sort newObjects
 
             Object priorityClass = params.getChoiceParameterValue("priorityClass");
             if (!areAllObjectsOfSameClass(newObjects) && !priorityClass.equals("Exclude both")){
@@ -109,33 +107,49 @@ public class ExpandObjectsCommand {
 
             // 3.
             // Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
-            Collection<PathObject> objectsToRemove = new ArrayList<>();
-            Collection<PathObject> objectsToAdd = new ArrayList<>();
+            Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
             while(!newObjects.isEmpty()) {
-                newObjects = processOverlappingObjects(hierarchy, newObjects, objectsToAdd, objectsToRemove, priorityClass);
+                newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityClass);
             }
-            hierarchy.removeObjects(objectsToRemove, false);
-            hierarchy.addObjects(objectsToAdd);
+            hierarchy.addObjects(objectsToAddToHierarchy);
         }
 
     }
 
-    private static Collection<PathObject> processOverlappingObjects(final PathObjectHierarchy hierarchy,
-                                                                           Collection<PathObject> newObjects,
-                                                                           Collection<PathObject> objectsToAdd,
-                                                                           Collection<PathObject> objectsToRemoveFromHierarchy,
-                                                                           Object priorityClass){
+    private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects){
+        Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
+        for (PathObject object : objects){
+            ROI roi = object.getROI();
+            Geometry geometry = roi.getGeometry();
+            Geometry geometry2 = BufferOp.bufferOp(geometry, 10, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
+            ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
+
+            Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
+            hierarchy.removeObjects(objectsInROI, false);
+            // this loop might be unnecessary and replaced with objects.addAll(objectsInROI) but idk, should be tested
+            for (PathObject roiObject : objectsInROI){
+                if (!enhancedObjects.contains(roiObject)){
+                    enhancedObjects.add(roiObject);
+                }
+            }
+            //
+        }
+        return enhancedObjects;
+    }
+
+    private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
+                                                                    Collection<PathObject> objectsToAddToHierarchy, Object priorityClass){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
         Collection<PathObject> objectsToRemoveFromProcessed = new ArrayList<>();
-        Collection<PathObject> objectToAddBackToProcessed = new ArrayList<>();
+        Collection<PathObject> objectsToAddToProcessed = new ArrayList<>();
         boolean isOverlapping = false;
         boolean isSameClass = true;
 
         for (PathObject object : newObjects){
             PathClass objectClass = object.getPathClass();
             Polygon polygon = convertRoiToGeometry(object);
-            remainingObjects.remove(object);
+            remainingObjects.remove(object); // remove from processed now so there will be no intersection with itself check
 
             for (PathObject otherObject : remainingObjects){
                 PathClass otherObjectClass = otherObject.getPathClass();
@@ -154,65 +168,45 @@ public class ExpandObjectsCommand {
                             objectsToRemoveFromProcessed.add(otherObject);
                             break;
                         }
-                        else{
-                            // assumes max 2 class scenario
-                            if (priorityClass.toString().equals(objectClass.toString())) {
-//                                Dialogs.showConfirmDialog("","I am priority class object, I'm removing the other intersecting me rn");
-                                objectsToRemoveFromProcessed.add(otherObject);
-                                objectToAddBackToProcessed.add(object);
-                            } else {
-//                                Dialogs.showConfirmDialog("","I am not a priority object, I am getting removed for intersecting one rn");
-//                                Dialogs.showConfirmDialog("","Let's check if you don't lie, your class is " + objectClass + " and priority class is " + priorityClass);
-                                // we should remove object from the remaining here but it was done earlier
+                        else{ // else, i.e. two diffrent classes intersecting and priority class is set by the user.
+                            // Assumes max 2 class scenario.
+                            if (Objects.equals(priorityClass.toString(), objectClass != null ? objectClass.toString() : null)) {
+                                objectsToRemoveFromProcessed.add(otherObject); // other, non-priority object intersects object, so will be deleted
+                                // This is the only case when we don't break the loop.
+                                // After it is finished, we are sure the object doesn't intersect diffrent class object,
+                                // still may intersect same class object though.
+                                if (!objectsToAddToProcessed.contains(object)) {
+                                    objectsToAddToProcessed.add(object);
+                                }
                             }
-                            break;
+                            else {
+                                // Here the object is non-priority, and it intersects priority otherObject (assuming two classes),
+                                // the object has been removed from remaining objects before the loop started, so we don't really do anything here.
+                                // I do not really understand why this actually ever happens as the collection should be sorted and all the
+                                // priority objects should delete other non-priority intersecting them objects. But it does happen sometimes for some reason.
+                                break;
+                            }
                         }
                     }
                 }
             }
-            if (isOverlapping) {
-                if (isSameClass) {
-                    remainingObjects.removeAll(objectsToMerge); //we already removed object earlier,
-                    // but I don't see intuitive other option to remove otherObject as well other than this for now
-                    remainingObjects.add(mergeObjects(objectsToMerge, objectClass));
-                }
-                else{
-//                    Dialogs.showConfirmDialog("","Size of the remaining: " + remainingObjects.size());
-                    remainingObjects.removeAll(objectsToRemoveFromProcessed);
-                    remainingObjects.addAll(objectToAddBackToProcessed);
-//                    Dialogs.showConfirmDialog("","Size of the remaining after removal of peasants: " + remainingObjects.size());
-                }
+            if (!isOverlapping) {
+                objectsToAddToHierarchy.add(object);
+                break;
             }
-            else{
-//                Dialogs.showConfirmDialog("","This should fire only once at the end");
-                objectsToAdd.add(object);
+
+            if (isSameClass) {
+                remainingObjects.removeAll(objectsToMerge);
+                remainingObjects.add(mergeObjects(objectsToMerge, objectClass));
+            } else {
+                remainingObjects.removeAll(objectsToRemoveFromProcessed);
+                remainingObjects.addAll(objectsToAddToProcessed);
             }
             break;
         }
         return remainingObjects;
     }
 
-            // ---------------------------------------------------------------------------------------------------------
-            // Handle objects that are not selected to be expanded but intersect our object in the result of its expansion.
-            // These are already in hierarchy, newObjects are not.
-            // It is for sure an improvement from iterating over all objects but the problem is it relies on objects centroids, not intersection checking.
-            // We could try to somehow enlarge the ROI and iterate over these objects identically to newObjects above.
-//            Collection<PathObject> alreadyInHierarchy = hierarchy.getObjectsForROI(null, object.getROI());
-//            if (!alreadyInHierarchy.isEmpty()){
-//                for (PathObject otherObject : alreadyInHierarchy){
-//                    if (objectClass == null && otherObject.getPathClass() != null ||
-//                            objectClass != null && otherObject.getPathClass() == null ||
-//                            objectClass != null && !objectClass.equals(otherObject.getPathClass())){
-//
-//                        areAllTheSameClass = false;
-//                    }
-//                    // We could either add each object to objectsToMerge here or all at once below, doesn't matter I guess
-//                }
-//                objectsToMerge.addAll(alreadyInHierarchy);
-//                objectsToRemove.addAll(alreadyInHierarchy);
-//                isOverlapping = true;
-//            }
-            // ---------------------------------------------------------------------------------------------------------
     private static Polygon convertRoiToGeometry(PathObject object){
         List<Point2> points = object.getROI().getAllPoints();
 
@@ -265,15 +259,16 @@ public class ExpandObjectsCommand {
         return true;
     }
 
-    public static List<PathObject> sortObjectsByPriority(Collection<PathObject> objects, Object priorityClass) {
+    public static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, Object priorityClass) {
         List<PathObject> sortedObjects = new ArrayList<>(objects);
 
         sortedObjects.sort((obj1, obj2) -> {
             PathClass class1 = obj1.getPathClass();
             PathClass class2 = obj2.getPathClass();
 
-            boolean isClass1Priority = class1.toString().equals(priorityClass.toString());
-            boolean isClass2Priority = class2.toString().equals(priorityClass.toString());
+            boolean isClass1Priority = Objects.equals(class1 != null ? class1.toString() : null, priorityClass.toString());
+            boolean isClass2Priority = Objects.equals(class2 != null ? class2.toString() : null, priorityClass.toString());
+
             if (isClass1Priority && !isClass2Priority) {
                 return -1; // obj1 comes before obj2
             } else if (!isClass1Priority && isClass2Priority) {
