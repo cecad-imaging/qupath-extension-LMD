@@ -128,14 +128,14 @@ public class ExpandObjectsCommand {
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
         Collection<PathObject> objectsToRemoveFromProcessed = new ArrayList<>();
-        Collection<PathObject> objectToAddBackToProcessed = new ArrayList<>();
+        Collection<PathObject> objectsToAddToProcessed = new ArrayList<>();
         boolean isOverlapping = false;
         boolean isSameClass = true;
 
         for (PathObject object : newObjects){
             PathClass objectClass = object.getPathClass();
             Polygon polygon = convertRoiToGeometry(object);
-            remainingObjects.remove(object);
+            remainingObjects.remove(object); // remove from processed now so there will be no intersection with itself check
 
             for (PathObject otherObject : remainingObjects){
                 PathClass otherObjectClass = otherObject.getPathClass();
@@ -154,39 +154,39 @@ public class ExpandObjectsCommand {
                             objectsToRemoveFromProcessed.add(otherObject);
                             break;
                         }
-                        else{
-                            // assumes max 2 class scenario
+                        else{ // else, i.e. two diffrent classes intersecting and priority class is set by the user.
+                            // Assumes max 2 class scenario.
                             if (Objects.equals(priorityClass.toString(), objectClass != null ? objectClass.toString() : null)) {
-//                                Dialogs.showConfirmDialog("","I am priority class object, I'm removing the other intersecting me rn");
-                                objectsToRemoveFromProcessed.add(otherObject);
-                                objectToAddBackToProcessed.add(object);
-                            } else {
-//                                Dialogs.showConfirmDialog("","I am not a priority object, I am getting removed for intersecting one rn." +
-//                                        "Btw, this should never occur if the object were actually sorted, which they should've been.");
-//                                Dialogs.showConfirmDialog("","Let's check if you don't lie, your class is " + objectClass + " and priority class is " + priorityClass);
-                                // we should remove object from the remaining here, but it was done earlier
+                                objectsToRemoveFromProcessed.add(otherObject); // other, non-priority object intersects object, so will be deleted
+                                // This is the only case when we don't break the loop.
+                                // After it is finished, we are sure the object doesn't intersect diffrent class object,
+                                // still may intersect same class object though.
+                                if (!objectsToAddToProcessed.contains(object)) {
+                                    objectsToAddToProcessed.add(object);
+                                }
                             }
-                            break;
+                            else {
+                                // Here the object is non-priority, and it intersects priority otherObject (assuming two classes),
+                                // the object has been removed from remaining objects before the loop started, so we don't really do anything here.
+                                // I do not really understand why this actually ever happens as the collection should be sorted and all the
+                                // priority objects should delete other non-priority intersecting them objects. But it does happen sometimes for some reason.
+                                break;
+                            }
                         }
                     }
                 }
             }
-            if (isOverlapping) {
-                if (isSameClass) {
-                    remainingObjects.removeAll(objectsToMerge); //we already removed object earlier,
-                    // but I don't see intuitive other option to remove otherObject as well other than this for now
-                    remainingObjects.add(mergeObjects(objectsToMerge, objectClass));
-                }
-                else{
-//                    Dialogs.showConfirmDialog("","Size of the remaining: " + remainingObjects.size());
-                    remainingObjects.removeAll(objectsToRemoveFromProcessed);
-                    remainingObjects.addAll(objectToAddBackToProcessed);
-//                    Dialogs.showConfirmDialog("","Size of the remaining after removal of peasants: " + remainingObjects.size());
-                }
-            }
-            else{
-//                Dialogs.showConfirmDialog("","This should fire only once at the end");
+            if (!isOverlapping) {
                 objectsToAddToHierarchy.add(object);
+                break;
+            }
+
+            if (isSameClass) {
+                remainingObjects.removeAll(objectsToMerge);
+                remainingObjects.add(mergeObjects(objectsToMerge, objectClass));
+            } else {
+                remainingObjects.removeAll(objectsToRemoveFromProcessed);
+                remainingObjects.addAll(objectsToAddToProcessed);
             }
             break;
         }
