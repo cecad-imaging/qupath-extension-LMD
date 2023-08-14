@@ -85,6 +85,8 @@ public class ExpandObjectsCommand {
             // add all background objects which intersect an object to newObjects and probably remove them from heirarchy at this point
             // as there is only once scenario - it is a priority class object - when it should remain in the heirarchy
             // so we will add it back later when we actually check for class priority - here we have no idea
+            // TODO: Place to solve isse #5
+            newObjects = addOverlappingBackroundObjects(hierarchy, newObjects);
 
             // 2.a. -> Unimplemented logic
             // Now when we have enhanced newObjects, we should check if they ALL are of the same class, if they are -> we should process
@@ -118,6 +120,27 @@ public class ExpandObjectsCommand {
             hierarchy.addObjects(objectsToAddToHierarchy);
         }
 
+    }
+
+    private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects){
+        Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
+        for (PathObject object : objects){
+            ROI roi = object.getROI();
+            Geometry geometry = roi.getGeometry();
+            Geometry geometry2 = BufferOp.bufferOp(geometry, 10, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
+            ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
+
+            Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
+            hierarchy.removeObjects(objectsInROI, false);
+            // this loop might be unnecessary and replaced with objects.addAll(objectsInROI) but idk, should be tested
+            for (PathObject roiObject : objectsInROI){
+                if (!enhancedObjects.contains(roiObject)){
+                    enhancedObjects.add(roiObject);
+                }
+            }
+            //
+        }
+        return enhancedObjects;
     }
 
     private static Collection<PathObject> processOverlappingObjects(final PathObjectHierarchy hierarchy,
@@ -266,7 +289,7 @@ public class ExpandObjectsCommand {
         return true;
     }
 
-    public static List<PathObject> sortObjectsByPriority(Collection<PathObject> objects, Object priorityClass) {
+    public static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, Object priorityClass) {
         List<PathObject> sortedObjects = new ArrayList<>(objects);
 
         sortedObjects.sort((obj1, obj2) -> {
