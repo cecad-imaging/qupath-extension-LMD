@@ -39,10 +39,9 @@ public class GeojsonToXml {
      * @param inputPath
      * @param outputPath
      * @param shapeType
-     * @param collectorType
      * @param collectorParams
      */
-    public void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, Object collectorType, ParameterList collectorParams) {
+    public void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, ParameterList collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -104,7 +103,7 @@ public class GeojsonToXml {
                     Element pointCountElement = createTextElement(xmlDoc, "PointCount", String.valueOf(pointCount));
                     shapeElement.appendChild(pointCountElement);
 
-                    if (!collectorType.equals("None")) {
+                    if (collectorParams != null) {
                         JsonNode featureClassificationNode = feature.path("properties").path("classification");
                         addCupID(xmlDoc, shapeElement, featureClassificationNode, collectorParams);
                     }
@@ -146,6 +145,7 @@ public class GeojsonToXml {
         element.appendChild(textNode);
         return element;
     }
+    @SuppressWarnings("UnusedReturnValue")
     private boolean addCupID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
         if (!classificationNode.isMissingNode()) {
             String featureClassName = classificationNode.path("name").asText();
