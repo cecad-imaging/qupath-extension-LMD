@@ -24,8 +24,6 @@ import qupath.lib.roi.RoiTools;
 import java.awt.image.BufferedImage;
 import java.util.*;
 
-//import static qupath.lib.analysis.DistanceTools.computeDistance;
-
 public class ExpandObjectsCommand {
     private ExpandObjectsCommand(){
 
@@ -49,17 +47,24 @@ public class ExpandObjectsCommand {
         else
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand.");
 
+        Set<PathClass> availableClasses = ClassUtils.getAllClasses(pathObjects);
+        List<String> classNames = new ArrayList<>(availableClasses.stream()
+                .map(PathClass::getName)
+                .toList());
+        classNames.add(0, "Exclude both");
+
         ParameterList params = new ParameterList()
                 .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(),
                         "Distance to expand ROI")
                 .addChoiceParameter("priorityClass",
                         "Set object of which class to keep if two diffrent overlap or exlude both",
-                        "Positive", Arrays.asList("Exclude both", "Positive", "Negative"));
+                        classNames.get(0), classNames);
 
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
         if(confirmed) {
             double radiusPixels;
+            // TODO: Test what calibration is, and rename it
             PixelCalibration cal = server.getPixelCalibration();
             if (cal.hasPixelSizeMicrons())
                 radiusPixels = params.getDoubleParameterValue("radiusMicrons") / cal.getAveragedPixelSizeMicrons();

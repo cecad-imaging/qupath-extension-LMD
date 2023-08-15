@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "org.dgsob"
-version = "0.0.9-2"
+version = "0.0.9-3"
 
 repositories {
     mavenCentral()

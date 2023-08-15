@@ -5,6 +5,7 @@ import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
 import qupath.lib.images.ImageData;
 import qupath.lib.objects.PathObject;
+import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 import qupath.lib.plugins.parameters.ParameterList;
 
@@ -14,10 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.dgsob.GeojsonToXml.shapeType.ANNOTATION;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
@@ -66,8 +64,9 @@ public class ExportCommand {
 
         var collectorType = exportParams.getChoiceParameterValue("collectorChoice");
         boolean processCollectors = !collectorType.equals("None");
-        ParameterList collectorParams = setCollectorsParameterList(collectorType, chosenObjects);
+        ParameterList collectorParams = null;
         if (processCollectors){
+            collectorParams = setCollectorsParameterList(collectorType, chosenObjects);
             boolean confirmedSecondWindow = Dialogs.showConfirmDialog("Collector Assignment", new ParameterPanelFX(collectorParams).getPane());
             if (!confirmedSecondWindow){
                 return false;
@@ -88,7 +87,7 @@ public class ExportCommand {
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
         GeojsonToXml xmlConverter = new GeojsonToXml();
-        xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorType, collectorParams);
+        xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorParams);
 
         deleteTemporaryGeoJSON(pathGeoJSON);
 
@@ -130,7 +129,15 @@ public class ExportCommand {
         private static ParameterList setCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
             // TODO: Add enum with values of collectorOptions, it should probably also be renamed to smth like classificationOptions
             ParameterList collectorParams = new ParameterList();
-            List<String> collectorOptions = Arrays.asList("None", "All objects", "Stroma", "Tumor", "Positive", "Negative", "Remaining objects");
+            Set<PathClass> availableClasses = ClassUtils.getAllClasses(chosenObjects);
+            List<String> classNames = new ArrayList<>(availableClasses.stream().map(PathClass::getName).toList());
+
+            List<String> collectorOptions = new ArrayList<>();
+            collectorOptions.add("None");
+            collectorOptions.add("All Objects");
+            collectorOptions.addAll(classNames);
+            collectorOptions.add("Remaining Objects");
+
             if (collectorType.equals("PCR Tubes")) {
                 collectorParams
                         .addChoiceParameter("A", "A", "None", collectorOptions)
@@ -152,8 +159,8 @@ public class ExportCommand {
                         .addChoiceParameter("H", "H", "None", collectorOptions)
                         .addChoiceParameter("No Cap", "No Cap", "None", collectorOptions); // TODO: No Cap ID is not No Cap, check in the LMD
             }
-            else if (collectorType.equals("96-Wellplate")) {
-            }
+//            else if (collectorType.equals("96-Wellplate")) {
+//            }
             else if (collectorType.equals("Petri")) {
                 collectorParams
                         .addChoiceParameter("A", "A", "None", collectorOptions)
