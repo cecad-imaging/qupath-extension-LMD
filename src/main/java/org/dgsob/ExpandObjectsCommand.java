@@ -35,6 +35,11 @@ public class ExpandObjectsCommand {
 
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
+        if (hierarchy.getSelectionModel().noSelection()) {
+            Dialogs.showErrorMessage("Selection Required", "Please select objects to expand.");
+            return false;
+        }
+
         Collection<PathObject> pathObjects = getSelected(hierarchy);
 
         assert pathObjects != null;
