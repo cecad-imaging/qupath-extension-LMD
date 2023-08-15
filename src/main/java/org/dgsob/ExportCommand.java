@@ -24,7 +24,7 @@ public class ExportCommand {
     private ExportCommand(){
 
     }
-
+    @SuppressWarnings("UnusedReturnValue")
     public static boolean runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
@@ -66,7 +66,7 @@ public class ExportCommand {
         boolean processCollectors = !collectorType.equals("None");
         ParameterList collectorParams = null;
         if (processCollectors){
-            collectorParams = setCollectorsParameterList(collectorType, chosenObjects);
+            collectorParams = createCollectorsParameterList(collectorType, chosenObjects);
             boolean confirmedSecondWindow = Dialogs.showConfirmDialog("Collector Assignment", new ParameterPanelFX(collectorParams).getPane());
             if (!confirmedSecondWindow){
                 return false;
@@ -126,7 +126,7 @@ public class ExportCommand {
                 // Well, I guess it doesn't matter if it fails or not.
             }
         }
-        private static ParameterList setCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
+        private static ParameterList createCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
             // TODO: Add enum with values of collectorOptions, it should probably also be renamed to smth like classificationOptions
             ParameterList collectorParams = new ParameterList();
             Set<PathClass> availableClasses = ClassUtils.getAllClasses(chosenObjects);

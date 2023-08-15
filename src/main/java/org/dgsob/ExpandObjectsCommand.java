@@ -28,8 +28,8 @@ public class ExpandObjectsCommand {
     private ExpandObjectsCommand(){
 
     }
-
-    public static void runObjectsExpansion(ImageData<BufferedImage> imageData){
+    @SuppressWarnings("UnusedReturnValue")
+    public static boolean runObjectsExpansion(ImageData<BufferedImage> imageData){
 
         ImageServer<BufferedImage> server = imageData.getServer();
 
@@ -47,86 +47,99 @@ public class ExpandObjectsCommand {
         else
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand.");
 
-        Set<PathClass> availableClasses = ClassUtils.getAllClasses(pathObjects);
-        List<String> classNames = new ArrayList<>(availableClasses.stream()
-                .map(PathClass::getName)
-                .toList());
-        classNames.add(0, "Exclude both");
-
         ParameterList params = new ParameterList()
                 .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(),
                         "Distance to expand ROI")
-                .addChoiceParameter("priorityClass",
-                        "Set object of which class to keep if two diffrent overlap or exlude both",
-                        classNames.get(0), classNames);
+                .addChoiceParameter("differentClassesChoice",
+                        "When objects of two different classes intersect",
+                        "Exclude Both", Arrays.asList("Exclude Both", "Set priority for each class"));
 
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
-        if(confirmed) {
-            double radiusPixels;
-            // TODO: Test what calibration is, and rename it
-            PixelCalibration cal = server.getPixelCalibration();
-            if (cal.hasPixelSizeMicrons())
-                radiusPixels = params.getDoubleParameterValue("radiusMicrons") / cal.getAveragedPixelSizeMicrons();
-            else
-                radiusPixels = params.getDoubleParameterValue("radiusMicrons");
-
-            for (PathObject pathObject : pathObjects) {
-
-                ROI roi = pathObject.getROI();
-                Geometry geometry = roi.getGeometry();
-                Geometry geometry2 = BufferOp.bufferOp(geometry, radiusPixels, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
-                ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
-                PathObject detection2 = PathObjects.createDetectionObject(roi2, pathObject.getPathClass());
-                detection2.setName(pathObject.getName());
-                detection2.setColor(pathObject.getColor());
-                newObjects.add(detection2);
-            }
-            hierarchy.removeObjects(pathObjects, false);
-            hierarchy.getSelectionModel().clearSelection();
-
-            // 1. -> 2.
-            // Adding 'background', i.e. already existing in hierarchy, not selected, objects.
-            newObjects = addOverlappingBackroundObjects(hierarchy, newObjects);
-
-            // 2.a. -> Unimplemented logic
-            // Now when we have enhanced newObjects, we should check if they ALL are of the same class, if they are -> we should process
-            // them just merging overlapping
-
-            // If they are not all the same class we should check what the user wants us to do when different classes overlap
-            // If the user wants to exclude both -> we should process objects merging overlapping same class and deleting overlapping different class
-            // If the user wants priority class set -> we should sort newObjects so that priority class is first, then process them deleting all objecs
-            // intersecting priority class objects and merging the rest
-
-
-
-
-
-            // 2.b. -> 3.
-            // Check if priorityClass is not exclude both and if !all objects have same class, if both are true -> sort newObjects
-
-            Object priorityClass = params.getChoiceParameterValue("priorityClass");
-            if (!areAllObjectsOfSameClass(newObjects) && !priorityClass.equals("Exclude both")){
-                newObjects = sortObjectsByPriority(newObjects, priorityClass);
-            }
-
-            // 3.
-            // Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
-            Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
-            while(!newObjects.isEmpty()) {
-                newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityClass);
-            }
-            hierarchy.addObjects(objectsToAddToHierarchy);
+        if(!confirmed) {
+            return false;
         }
 
+        Object differentClassesChoice = params.getChoiceParameterValue("differentClassesChoice");
+        List<String> priorityRanking = new ArrayList<>();
+        // Creating second window if the user wants to set priorities for classes
+        if (differentClassesChoice.equals("Set priority for each class")){
+            Set<PathClass> availableClasses = ClassUtils.getAllClasses(pathObjects);
+            ParameterList priorityRankingParams = createPriorityRankingParameterList(availableClasses);
+            boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
+
+            if (!confirmedPriorityRanking){
+                return false;
+            }
+
+            for (int i = 1; i <= availableClasses.size(); i++){
+                String priorityClass = priorityRankingParams.getChoiceParameterValue("priorityClass_" + i).toString();
+                if (priorityClass != null) {
+                    priorityRanking.add(priorityClass);
+                }
+            }
+        }
+        // Enlarging the objects by creating new ones and deleting old ones
+        double radiusPixels;
+        PixelCalibration calibration = server.getPixelCalibration();
+        if (calibration.hasPixelSizeMicrons())
+            radiusPixels = params.getDoubleParameterValue("radiusMicrons") / calibration.getAveragedPixelSizeMicrons();
+        else
+            radiusPixels = params.getDoubleParameterValue("radiusMicrons");
+        // Iterate over old objects and create a new one for each
+        for (PathObject pathObject : pathObjects) {
+
+            ROI roi = pathObject.getROI();
+            Geometry geometry = roi.getGeometry();
+            Geometry geometry2 = BufferOp.bufferOp(geometry, radiusPixels, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
+            ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
+            PathObject detection2 = PathObjects.createDetectionObject(roi2, pathObject.getPathClass());
+            detection2.setName(pathObject.getName());
+            detection2.setColor(pathObject.getColor());
+            newObjects.add(detection2); // append newly created objects for processing instead of adding them to hierarchy
+        }
+        hierarchy.removeObjects(pathObjects, false); // remove old objects
+        hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
+
+        // 1. Add 'background', i.e. already existing in hierarchy, not selected, objects to newObjects.
+        newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
+
+        // 2. Check if differentClassesChoice is not exclude both and if !all objects have same class, if both are true -> sort newObjects
+        if (!areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")){
+            newObjects = sortObjectsByPriority(newObjects, priorityRanking);
+        }
+
+        // 3. Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
+        Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
+        while(!newObjects.isEmpty()) {
+            newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
+        }
+        hierarchy.addObjects(objectsToAddToHierarchy);
+        return true;
     }
 
-    private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects){
+    private static ParameterList createPriorityRankingParameterList(Set<PathClass> availableClasses){
+        List<String> classNames = new ArrayList<>(availableClasses.stream()
+                .map(PathClass::getName)
+                .toList());
+        ParameterList priorityRankingParams = new ParameterList();
+        priorityRankingParams.addEmptyParameter("""
+                Class 1 corresponds to the highest priority.
+                Lower prority object will be deleted if intersecting object of a higher priority.
+                
+                """);
+        for (int i = 1; i <= classNames.size(); i++){
+            priorityRankingParams.addChoiceParameter("priorityClass_" + i, "Class " + i, classNames.get(i-1), classNames);
+        }
+        return priorityRankingParams;
+    }
+
+    private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
         Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
         for (PathObject object : objects){
             ROI roi = object.getROI();
             Geometry geometry = roi.getGeometry();
-            Geometry geometry2 = BufferOp.bufferOp(geometry, 10, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
+            Geometry geometry2 = BufferOp.bufferOp(geometry, radius*10, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
             ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
             Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
@@ -143,7 +156,8 @@ public class ExpandObjectsCommand {
     }
 
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
-                                                                    Collection<PathObject> objectsToAddToHierarchy, Object priorityClass){
+                                                                    Collection<PathObject> objectsToAddToHierarchy,
+                                                                    List<String> priorityRanking){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
         Collection<PathObject> objectsToRemoveFromProcessed = new ArrayList<>();
@@ -168,27 +182,37 @@ public class ExpandObjectsCommand {
                     }
                     else{
                         isSameClass = false;
-                        if (priorityClass.equals("Exclude both")){
+                        if (priorityRanking.isEmpty()){
                             objectsToRemoveFromProcessed.add(object);
                             objectsToRemoveFromProcessed.add(otherObject);
                             break;
                         }
-                        else{ // else, i.e. two diffrent classes intersecting and priority class is set by the user.
-                            // Assumes max 2 class scenario.
-                            if (Objects.equals(priorityClass.toString(), objectClass != null ? objectClass.toString() : null)) {
-                                objectsToRemoveFromProcessed.add(otherObject); // other, non-priority object intersects object, so will be deleted
-                                // This is the only case when we don't break the loop.
-                                // After it is finished, we are sure the object doesn't intersect diffrent class object,
-                                // still may intersect same class object though.
+                        else{
+                            int objectIndex = priorityRanking.indexOf(objectClass != null ? objectClass.getName() : null);
+                            int otherObjectIndex = priorityRanking.indexOf(otherObjectClass != null ? otherObjectClass.getName() : null);
+                            // Since when not in the list -1 is returned, we make sure it doesn't become the highest priority
+                            objectIndex = objectIndex != -1 ? objectIndex : Integer.MAX_VALUE;
+                            otherObjectIndex = otherObjectIndex != -1 ? otherObjectIndex : Integer.MAX_VALUE;
+
+
+                            if (objectIndex < otherObjectIndex) { // lower index -> higher priority
+                                objectsToRemoveFromProcessed.add(otherObject); // deleting other, non-priority, intersecting object
+                                /*
+                                This is the only case when we don't break the loop, after it is finished,
+                                we are sure the object doesn't intersect diffrent class object,
+                                still may intersect same class object though, so we add it back to processed.
+                                */
                                 if (!objectsToAddToProcessed.contains(object)) {
                                     objectsToAddToProcessed.add(object);
                                 }
                             }
-                            else {
-                                // Here the object is non-priority, and it intersects priority otherObject (assuming two classes),
-                                // the object has been removed from remaining objects before the loop started, so we don't really do anything here.
-                                // I do not really understand why this actually ever happens as the collection should be sorted and all the
-                                // priority objects should delete other non-priority intersecting them objects. But it does happen sometimes for some reason.
+                            else if (otherObjectIndex < objectIndex){
+                                /*
+                                Here the object is non-priority, and it intersects priority otherObject (assuming two classes),
+                                the object has been removed from remaining objects before the loop started, so we don't really do anything here.
+                                I do not really understand why this actually ever happens as the collection should be sorted and all the
+                                priority objects should delete other non-priority intersecting them objects. But it does happen sometimes for some reason.
+                                */
                                 break;
                             }
                         }
@@ -264,23 +288,26 @@ public class ExpandObjectsCommand {
         return true;
     }
 
-    public static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, Object priorityClass) {
+    public static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, List<String> priorityRanking) {
         List<PathObject> sortedObjects = new ArrayList<>(objects);
 
         sortedObjects.sort((obj1, obj2) -> {
             PathClass class1 = obj1.getPathClass();
             PathClass class2 = obj2.getPathClass();
 
-            boolean isClass1Priority = Objects.equals(class1 != null ? class1.toString() : null, priorityClass.toString());
-            boolean isClass2Priority = Objects.equals(class2 != null ? class2.toString() : null, priorityClass.toString());
+            String class1Name = class1 != null ? class1.getName() : null;
+            String class2Name = class2 != null ? class2.getName() : null;
 
-            if (isClass1Priority && !isClass2Priority) {
+            int index1 = priorityRanking.indexOf(class1Name);
+            int index2 = priorityRanking.indexOf(class2Name);
+
+            if (index1 != -1 && index2 == -1) {
                 return -1; // obj1 comes before obj2
-            } else if (!isClass1Priority && isClass2Priority) {
+            } else if (index1 == -1 && index2 != -1) {
                 return 1; // obj2 comes before obj1
             }
 
-            return 0;
+            return Integer.compare(index1, index2);
         });
 
         return sortedObjects;
