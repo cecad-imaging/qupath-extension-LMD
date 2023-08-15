@@ -5,7 +5,6 @@ import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 
 import qupath.lib.common.GeneralTools;
-import qupath.lib.geom.Point2;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
 import qupath.lib.images.ImageData;
@@ -19,7 +18,6 @@ import qupath.lib.plugins.parameters.ParameterList;
 import qupath.lib.roi.interfaces.ROI;
 import qupath.lib.regions.ImagePlane;
 import qupath.lib.roi.GeometryTools;
-import qupath.lib.roi.RoiTools;
 
 import java.awt.image.BufferedImage;
 import java.util.*;
@@ -40,7 +38,7 @@ public class ExpandObjectsCommand {
             return false;
         }
 
-        Collection<PathObject> pathObjects = getSelected(hierarchy);
+        Collection<PathObject> pathObjects = ObjectUtils.getSelected(hierarchy);
 
         assert pathObjects != null;
 
@@ -67,6 +65,7 @@ public class ExpandObjectsCommand {
 
         Object differentClassesChoice = params.getChoiceParameterValue("differentClassesChoice");
         List<String> priorityRanking = new ArrayList<>();
+
         // Creating second window if the user wants to set priorities for classes
         if (differentClassesChoice.equals("Set priority for each class")){
             Set<PathClass> availableClasses = ClassUtils.getAllClasses(pathObjects);
@@ -84,6 +83,7 @@ public class ExpandObjectsCommand {
                 }
             }
         }
+
         // Enlarging the objects by creating new ones and deleting old ones
         double radiusPixels;
         PixelCalibration calibration = server.getPixelCalibration();
@@ -106,12 +106,15 @@ public class ExpandObjectsCommand {
         hierarchy.removeObjects(pathObjects, false); // remove old objects
         hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
 
+        //Steps for processing overlapping objects:
+
         // 1. Add 'background', i.e. already existing in hierarchy, not selected, objects to newObjects.
         newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
 
-        // 2. Check if differentClassesChoice is not exclude both and if !all objects have same class, if both are true -> sort newObjects
-        if (!areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")){
-            newObjects = sortObjectsByPriority(newObjects, priorityRanking);
+        // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
+        // if both are true -> sort newObjects
+        if (!ClassUtils.areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")){
+            newObjects = ObjectUtils.sortObjectsByPriority(newObjects, priorityRanking);
         }
 
         // 3. Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
@@ -122,44 +125,6 @@ public class ExpandObjectsCommand {
         hierarchy.addObjects(objectsToAddToHierarchy);
         return true;
     }
-
-    private static ParameterList createPriorityRankingParameterList(Set<PathClass> availableClasses){
-        List<String> classNames = new ArrayList<>(availableClasses.stream()
-                .map(PathClass::getName)
-                .toList());
-        ParameterList priorityRankingParams = new ParameterList();
-        priorityRankingParams.addEmptyParameter("""
-                Class 1 corresponds to the highest priority.
-                Lower prority object will be deleted if intersecting object of a higher priority.
-                
-                """);
-        for (int i = 1; i <= classNames.size(); i++){
-            priorityRankingParams.addChoiceParameter("priorityClass_" + i, "Class " + i, classNames.get(i-1), classNames);
-        }
-        return priorityRankingParams;
-    }
-
-    private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
-        Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
-        for (PathObject object : objects){
-            ROI roi = object.getROI();
-            Geometry geometry = roi.getGeometry();
-            Geometry geometry2 = BufferOp.bufferOp(geometry, radius*10, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
-            ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
-
-            Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
-            hierarchy.removeObjects(objectsInROI, false);
-            // this loop might be unnecessary and replaced with objects.addAll(objectsInROI) but idk, should be tested
-            for (PathObject roiObject : objectsInROI){
-                if (!enhancedObjects.contains(roiObject)){
-                    enhancedObjects.add(roiObject);
-                }
-            }
-            //
-        }
-        return enhancedObjects;
-    }
-
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
                                                                     Collection<PathObject> objectsToAddToHierarchy,
                                                                     List<String> priorityRanking){
@@ -172,12 +137,12 @@ public class ExpandObjectsCommand {
 
         for (PathObject object : newObjects){
             PathClass objectClass = object.getPathClass();
-            Polygon polygon = convertRoiToGeometry(object);
+            Polygon polygon = ObjectUtils.convertRoiToGeometry(object);
             remainingObjects.remove(object); // remove from processed now so there will be no intersection with itself check
 
             for (PathObject otherObject : remainingObjects){
                 PathClass otherObjectClass = otherObject.getPathClass();
-                Polygon otherPolygon = convertRoiToGeometry(otherObject);
+                Polygon otherPolygon = ObjectUtils.convertRoiToGeometry(otherObject);
                 if (polygon.intersects(otherPolygon)){
                     isOverlapping = true;
                     if (objectClass == otherObjectClass){
@@ -231,7 +196,7 @@ public class ExpandObjectsCommand {
 
             if (isSameClass) {
                 remainingObjects.removeAll(objectsToMerge);
-                remainingObjects.add(mergeObjects(objectsToMerge, objectClass));
+                remainingObjects.add(ObjectUtils.mergeObjects(objectsToMerge, objectClass));
             } else {
                 remainingObjects.removeAll(objectsToRemoveFromProcessed);
                 remainingObjects.addAll(objectsToAddToProcessed);
@@ -240,89 +205,39 @@ public class ExpandObjectsCommand {
         }
         return remainingObjects;
     }
+    private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
+        Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
+        for (PathObject object : objects){
+            ROI roi = object.getROI();
+            Geometry geometry = roi.getGeometry();
+            Geometry geometry2 = BufferOp.bufferOp(geometry, radius*10, BufferParameters.DEFAULT_QUADRANT_SEGMENTS);
+            ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
-    private static Polygon convertRoiToGeometry(PathObject object){
-        List<Point2> points = object.getROI().getAllPoints();
-
-        Coordinate[] coords = new Coordinate[points.size() + 1]; // +1 to close the polygon
-        for (int i = 0; i < points.size(); i++) {
-            Point2 point = points.get(i);
-            coords[i] = new Coordinate(point.getX(), point.getY());
-        }
-        coords[points.size()] = coords[0]; // Close the polygon
-
-        GeometryFactory geomFactory = new GeometryFactory();
-        LinearRing linearRing = geomFactory.createLinearRing(coords);
-        return geomFactory.createPolygon(linearRing, null);
-    }
-    private static PathObject mergeObjects(final Collection<PathObject> objects, final PathClass objectClass) {
-        ROI shapeNew = null;
-        for (PathObject object : objects) {
-            if (shapeNew == null)
-                shapeNew = object.getROI();
-            else if (shapeNew.getImagePlane().equals(object.getROI().getImagePlane()))
-                shapeNew = RoiTools.combineROIs(shapeNew, object.getROI(), RoiTools.CombineOp.ADD);
-            else {
-                Dialogs.showErrorMessage("Error", "It seems as if the processed objects were from different image planes. " +
-                        "Please reload the image and try again.");
-            }
-        }
-        assert shapeNew != null;
-        if (objectClass != null)
-            return PathObjects.createDetectionObject(shapeNew, objectClass);
-        else
-            return PathObjects.createDetectionObject(shapeNew);
-    }
-
-    public static boolean areAllObjectsOfSameClass(Collection<PathObject> objects) {
-        PathClass commonClass = null;
-
-        for (PathObject object : objects) {
-            if (object != null) {
-                PathClass currentClass = object.getPathClass();
-                if (currentClass != null) {
-                    if (commonClass == null) {
-                        commonClass = currentClass;
-                    } else if (!commonClass.equals(currentClass)) {
-                        return false; // Different classes found
-                    }
+            Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
+            hierarchy.removeObjects(objectsInROI, false);
+            // this loop might be unnecessary and replaced with objects.addAll(objectsInROI) but idk, should be tested
+            for (PathObject roiObject : objectsInROI){
+                if (!enhancedObjects.contains(roiObject)){
+                    enhancedObjects.add(roiObject);
                 }
             }
+            //
         }
-
-        return true;
+        return enhancedObjects;
     }
-
-    public static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, List<String> priorityRanking) {
-        List<PathObject> sortedObjects = new ArrayList<>(objects);
-
-        sortedObjects.sort((obj1, obj2) -> {
-            PathClass class1 = obj1.getPathClass();
-            PathClass class2 = obj2.getPathClass();
-
-            String class1Name = class1 != null ? class1.getName() : null;
-            String class2Name = class2 != null ? class2.getName() : null;
-
-            int index1 = priorityRanking.indexOf(class1Name);
-            int index2 = priorityRanking.indexOf(class2Name);
-
-            if (index1 != -1 && index2 == -1) {
-                return -1; // obj1 comes before obj2
-            } else if (index1 == -1 && index2 != -1) {
-                return 1; // obj2 comes before obj1
-            }
-
-            return Integer.compare(index1, index2);
-        });
-
-        return sortedObjects;
-    }
-
-    private static Collection<PathObject> getSelected(PathObjectHierarchy hierarchy){
-        if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorMessage("Error", "No selection. Please, select detections to expand.");
-            return null;
+    private static ParameterList createPriorityRankingParameterList(Set<PathClass> availableClasses){
+        List<String> classNames = new ArrayList<>(availableClasses.stream()
+                .map(PathClass::getName)
+                .toList());
+        ParameterList priorityRankingParams = new ParameterList();
+        priorityRankingParams.addEmptyParameter("""
+                Class 1 corresponds to the highest priority.
+                Lower prority object will be deleted if intersecting object of a higher priority.
+                
+                """);
+        for (int i = 1; i <= classNames.size(); i++){
+            priorityRankingParams.addChoiceParameter("priorityClass_" + i, "Class " + i, classNames.get(i-1), classNames);
         }
-        return hierarchy.getSelectionModel().getSelectedObjects();
+        return priorityRankingParams;
     }
 }

@@ -19,4 +19,22 @@ public class ClassUtils {
         }
         return uniqueClasses;
     }
+    static boolean areAllObjectsOfSameClass(Collection<PathObject> objects) {
+        PathClass commonClass = null;
+
+        for (PathObject object : objects) {
+            if (object != null) {
+                PathClass currentClass = object.getPathClass();
+                if (currentClass != null) {
+                    if (commonClass == null) {
+                        commonClass = currentClass;
+                    } else if (!commonClass.equals(currentClass)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 }

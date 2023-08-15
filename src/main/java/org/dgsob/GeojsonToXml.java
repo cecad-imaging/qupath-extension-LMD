@@ -145,6 +145,7 @@ public class GeojsonToXml {
         element.appendChild(textNode);
         return element;
     }
+    @SuppressWarnings("UnusedReturnValue")
     private boolean addCupID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
         if (!classificationNode.isMissingNode()) {
             String featureClassName = classificationNode.path("name").asText();
