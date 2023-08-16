@@ -50,7 +50,8 @@ public class ExportCommand {
         var comboChoice = exportParams.getChoiceParameterValue("exportOptions");
         if (comboChoice.equals("Selected detection objects")) {
             if (hierarchy.getSelectionModel().noSelection()) {
-                Dialogs.showErrorMessage("Error", "No selection detected!");
+                Dialogs.showErrorMessage("No selection detected",
+                        "You had chosen to export selected objects but no selection has been detected.");
                 return false;
             }
             chosenObjects = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
