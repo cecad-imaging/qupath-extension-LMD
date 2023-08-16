@@ -99,7 +99,11 @@ public class ExportCommand {
 
         int exportedShapesCount = xmlConverter.getShapeCount();
 
-        if (projectFilePath != null && exportedShapesCount != 0) {
+        if (projectFilePath != null && exportedShapesCount == 1){
+            Dialogs.showInfoNotification("Export successful",
+                    "1 shape succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
+        }
+        else if (projectFilePath != null && exportedShapesCount != 0) {
             Dialogs.showInfoNotification("Export successful",
                     exportedShapesCount + " shapes succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
         }
