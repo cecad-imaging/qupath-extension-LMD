@@ -87,7 +87,13 @@ public class ExportCommand {
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
         GeojsonToXml xmlConverter = new GeojsonToXml();
-        xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorParams);
+        boolean succesfulConversion = xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorParams);
+
+        if (!succesfulConversion) {
+            Dialogs.showErrorMessage("Calibration Points Required",
+                    "Please add a MultiPoint annotation with 3 points for calibration.");
+            return false;
+        }
 
         deleteTemporaryGeoJSON(pathGeoJSON);
 

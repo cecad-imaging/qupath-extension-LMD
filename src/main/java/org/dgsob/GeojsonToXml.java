@@ -17,7 +17,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 
 public class GeojsonToXml {
     public static class shapeType {
@@ -41,7 +40,7 @@ public class GeojsonToXml {
      * @param shapeType
      * @param collectorParams
      */
-    public void convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, ParameterList collectorParams) {
+    public boolean convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, ParameterList collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -68,8 +67,12 @@ public class GeojsonToXml {
                     break;
                 }
             }
-            // TODO: add proper handling of checking if calibrationPoints are not null in try catch block
-            for (int i = 0; i < Objects.requireNonNull(calibrationPoints).size(); i++) {
+
+            if (calibrationPoints == null || calibrationPoints.size() != 3){
+                return false;
+            }
+
+            for (int i = 0; i < calibrationPoints.size(); i++) {
                 double x = calibrationPoints.get(i).get(0).asDouble();
                 double y = calibrationPoints.get(i).get(1).asDouble();
                 Element xElement = createTextElement(xmlDoc, "X_CalibrationPoint_" + (i + 1), String.valueOf(x));
@@ -137,6 +140,7 @@ public class GeojsonToXml {
         } catch (IOException | ParserConfigurationException | TransformerException e) {
             e.printStackTrace();
         }
+        return true;
     }
 
     private Element createTextElement(Document doc, String tagName, String textContent) {
