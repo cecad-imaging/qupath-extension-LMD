@@ -109,7 +109,7 @@ public class ExportCommand {
         }
         else if (projectFilePath != null){
             Dialogs.showErrorNotification("Export completed",
-                    "Export completed but the number of exported objects is 0.");
+                    "Export completed but the number of exported detections is 0.");
         }
         else {
             Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
