@@ -97,10 +97,17 @@ public class ExportCommand {
 
         deleteTemporaryGeoJSON(pathGeoJSON);
 
-        if (projectFilePath != null) {
+        int exportedShapesCount = xmlConverter.getShapeCount();
+
+        if (projectFilePath != null && exportedShapesCount != 0) {
             Dialogs.showInfoNotification("Export successful",
-                    xmlConverter.getShapeCount() + " shapes succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
-        } else {
+                    exportedShapesCount + " shapes succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
+        }
+        else if (projectFilePath != null){
+            Dialogs.showErrorNotification("Export completed",
+                    "Export completed but the number of exported objects is 0.");
+        }
+        else {
             Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
                     "Check your home folder for the output files.");
         }
@@ -142,7 +149,8 @@ public class ExportCommand {
             collectorOptions.add("None");
             collectorOptions.add("All Objects");
             collectorOptions.addAll(classNames);
-            collectorOptions.add("Remaining Objects");
+            if (!classNames.isEmpty())
+                collectorOptions.add("Remaining Objects");
 
             if (collectorType.equals("PCR Tubes")) {
                 collectorParams
