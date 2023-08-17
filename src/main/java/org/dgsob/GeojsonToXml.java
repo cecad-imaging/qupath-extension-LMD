@@ -30,6 +30,7 @@ public class GeojsonToXml {
 //        public static final String POLYGON = "Polygon";
 //        public static final String POINT = "MultiPoint";
 //    }
+
     public GeojsonToXml(){
     }
     private int shapeCount = 0;
@@ -37,12 +38,12 @@ public class GeojsonToXml {
     /**
      * Reads a GeoJSON file from a specified location and converts to the XML format required by Leica's LMD software.
      * The saved image data is: calibration points, shapes' count and coordinates and optionally collector's cap ID for each shape.
-     * @param inputPath Path to GeoJSON file
-     * @param outputPath Path where the output XML file will be saved
-     * @param notShapeType An objectType property in GeoJSON file which will NOT be counted as 'shape' in the output XML file
+     *
+     * @param inputPath       Path to GeoJSON file
+     * @param outputPath      Path where the output XML file will be saved
      * @param collectorParams Classes which user assigned to collectors symbols (A, B, C, etc.), if null - collectors won't be assigned to a shape in the output XML file
      */
-    public boolean convertGeoJSONtoXML(String inputPath, String outputPath, String notShapeType, ParameterList collectorParams) {
+    boolean convertGeoJSONtoXML(String inputPath, String outputPath, ParameterList collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -96,7 +97,7 @@ public class GeojsonToXml {
             // Count shapes in GeoJSON and add ShapeCount element to XML
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (!notShapeType.equals(objectType)) {
+                if (!shapeType.ANNOTATION.equals(objectType)) {
                     shapeCount++;
                 }
             }
@@ -107,7 +108,7 @@ public class GeojsonToXml {
             int shapeIndex = 1;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (!notShapeType.equals(objectType)) {
+                if (!shapeType.ANNOTATION.equals(objectType)) {
                     Element shapeElement = xmlDoc.createElement("Shape_" + shapeIndex);
                     imageDataElement.appendChild(shapeElement);
 

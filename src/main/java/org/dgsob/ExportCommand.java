@@ -17,13 +17,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static org.dgsob.GeojsonToXml.shapeType.ANNOTATION;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 
 public class ExportCommand {
     private ExportCommand(){
 
     }
+
+    /**
+     * Static method responsible for the main export logic: sets GeoJSON and XML paths and names,
+     * exports objects from QuPath to GeoJSON, runs export to XML, deletes GeoJSON.
+     * @param qupath An instance of qupath needed to access project's directory
+     * @param imageData Current imaage's data needed to access hierarchy and thus objects to export
+     * @return returned boolean value is used to control the flow of the function
+     */
     @SuppressWarnings("UnusedReturnValue")
     public static boolean runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
@@ -88,7 +95,7 @@ public class ExportCommand {
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
         GeojsonToXml xmlConverter = new GeojsonToXml();
-        boolean succesfulConversion = xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorParams);
+        boolean succesfulConversion = xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, collectorParams);
 
         if (!succesfulConversion) {
             Dialogs.showErrorMessage("Incorrect Calibration Points",
