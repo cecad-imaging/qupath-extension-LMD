@@ -1,4 +1,4 @@
-## LMD Integration Extension for QuPath
+## LMD Export Extension for QuPath
 This extension aims to provide a way of exporting segmentations 
 created in QuPath to Leica's laser microdissection software.
 
