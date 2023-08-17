@@ -91,8 +91,9 @@ public class ExportCommand {
         boolean succesfulConversion = xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, ANNOTATION, collectorParams);
 
         if (!succesfulConversion) {
-            Dialogs.showErrorMessage("Calibration Points Required",
-                    "Please add a MultiPoint annotation with 3 points for calibration.");
+            Dialogs.showErrorMessage("Incorrect Calibration Points",
+                    "Please add either a MultiPoint annotation named 'calibration' consisting of exactly 3 points " +
+                              "or 3 separate annotations with a single point each, named 'calibration1', 'calibration2' and 'calibration3'.");
             return false;
         }
 

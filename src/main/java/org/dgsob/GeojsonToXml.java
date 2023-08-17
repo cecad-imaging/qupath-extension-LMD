@@ -1,6 +1,7 @@
 package org.dgsob;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -34,13 +35,14 @@ public class GeojsonToXml {
     private int shapeCount = 0;
 
     /**
-     *
-     * @param inputPath
-     * @param outputPath
-     * @param shapeType
-     * @param collectorParams
+     * Reads a GeoJSON file from a specified location and converts to the XML format required by Leica's LMD software.
+     * The saved image data is: calibration points, shapes' count and coordinates and optionally collector's cap ID for each shape.
+     * @param inputPath Path to GeoJSON file
+     * @param outputPath Path where the output XML file will be saved
+     * @param notShapeType An objectType property in GeoJSON file which will NOT be counted as 'shape' in the output XML file
+     * @param collectorParams Classes which user assigned to collectors symbols (A, B, C, etc.), if null - collectors won't be assigned to a shape in the output XML file
      */
-    public boolean convertGeoJSONtoXML(String inputPath, String outputPath, String shapeType, ParameterList collectorParams) {
+    public boolean convertGeoJSONtoXML(String inputPath, String outputPath, String notShapeType, ParameterList collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -57,17 +59,27 @@ public class GeojsonToXml {
             xmlDoc.appendChild(imageDataElement);
 
             // Extract calibration points from GeoJSON and add to XML
-            JsonNode calibrationPoints = null;
+            JsonNode calibrationPoints = new ObjectMapper().createArrayNode();
             JsonNode features = jsonNode.get("features");
             for (JsonNode feature : features) {
                 JsonNode geometry = feature.get("geometry");
                 String geometryType = geometry.get("type").asText();
-                if ("MultiPoint".equals(geometryType)) {
+                JsonNode properties = feature.get("properties");
+                String featureName = properties.has("name") ? properties.get("name").asText() : "Unnamed Feature";
+                // If one annotation of type 'MultiPoint'
+                if ("MultiPoint".equals(geometryType) && "calibration".equalsIgnoreCase(featureName)) {
                     calibrationPoints = geometry.path("coordinates");
                     break;
                 }
+                // If 3 annotations of type 'Point'
+                else if ("Point".equals(geometryType)){
+                    switch (featureName.toLowerCase()) {
+                        case "calibration1", "calibration2", "calibration3" -> ((ArrayNode) calibrationPoints).add(geometry.path("coordinates"));
+                    }
+                }
             }
 
+            // Abort if calibration data is invalid
             if (calibrationPoints == null || calibrationPoints.size() != 3){
                 return false;
             }
@@ -84,7 +96,7 @@ public class GeojsonToXml {
             // Count shapes in GeoJSON and add ShapeCount element to XML
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (!shapeType.equals(objectType)) {
+                if (!notShapeType.equals(objectType)) {
                     shapeCount++;
                 }
             }
@@ -95,7 +107,7 @@ public class GeojsonToXml {
             int shapeIndex = 1;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (!shapeType.equals(objectType)) {
+                if (!notShapeType.equals(objectType)) {
                     Element shapeElement = xmlDoc.createElement("Shape_" + shapeIndex);
                     imageDataElement.appendChild(shapeElement);
 
@@ -138,7 +150,7 @@ public class GeojsonToXml {
             System.out.println("Conversion completed successfully.");
 
         } catch (IOException | ParserConfigurationException | TransformerException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return true;
     }
