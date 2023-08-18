@@ -40,11 +40,13 @@ public class ExportCommand {
         String defaultObjects = hierarchy.getSelectionModel().noSelection() ? allObjects : selectedObjects;
 
         ParameterList exportParams = new ParameterList()
-                .addChoiceParameter("exportOptions", "Export", defaultObjects,
+                .addChoiceParameter("exportOptions", "Export:", defaultObjects,
                         Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.")
-                .addChoiceParameter("collectorChoice", "Choose the type of collector", "None",
-                        Arrays.asList("None", "PCR Tubes","8-fold-Strip", "96-Wellplate", "Petri"));
+                .addChoiceParameter("collectorChoice", "Collector type:", "None",
+                        Arrays.asList("None", "PCR Tubes","8-fold-Strip", "96-Wellplate", "Petri"),
+                        "Choose a type of your collector.\n" +
+                                  "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
 
         boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(exportParams).getPane());
 

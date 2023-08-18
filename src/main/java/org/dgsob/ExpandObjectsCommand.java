@@ -51,11 +51,14 @@ public class ExpandObjectsCommand {
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand.");
 
         ParameterList params = new ParameterList()
-                .addDoubleParameter("radiusMicrons", "Expansion radius", 3, GeneralTools.micrometerSymbol(),
+                .addDoubleParameter("radiusMicrons", "Expansion radius:", 3, GeneralTools.micrometerSymbol(),
                         "Distance to expand ROI")
                 .addChoiceParameter("differentClassesChoice",
-                        "When objects of two different classes intersect",
-                        "Exclude Both", Arrays.asList("Exclude Both", "Set priority for each class"));
+                        "If objects of two different classes intersect:",
+                        "Exclude Both", Arrays.asList("Exclude Both", "Set priority for each class"),
+                        """
+                                'Exclude Both' option will remove objects which intersect each other regardless of their class.
+                                'Set priority for each class' option keeps an object with the higher-priority class. You will be prompted to set priorities after confirming your choice.""");
 
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
