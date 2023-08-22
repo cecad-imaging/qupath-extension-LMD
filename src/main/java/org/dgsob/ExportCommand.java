@@ -169,34 +169,36 @@ public class ExportCommand {
             if (!classNames.isEmpty())
                 collectorOptions.add(REMAINING_OBJECTS);
 
+            String defaultValue = NO_ASSIGNMENT;
+
             if (collectorType.equals(PCR_TUBES)) {
                 collectorParams
-                        .addChoiceParameter("A", "A", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("B", "B", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("C", "C", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("D", "D", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("E", "E", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("ParkPosition", "No Cap", NO_ASSIGNMENT, collectorOptions);
+                        .addChoiceParameter("A", "A", defaultValue, collectorOptions)
+                        .addChoiceParameter("B", "B", defaultValue, collectorOptions)
+                        .addChoiceParameter("C", "C", defaultValue, collectorOptions)
+                        .addChoiceParameter("D", "D", defaultValue, collectorOptions)
+                        .addChoiceParameter("E", "E", defaultValue, collectorOptions)
+                        .addChoiceParameter("ParkPosition", "No Cap", defaultValue, collectorOptions);
             }
             else if (collectorType.equals(_8_FOLD_STRIP)) {
                 collectorParams
-                        .addChoiceParameter("A", "A", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("B", "B", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("C", "C", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("D", "D", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("E", "E", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("F", "F", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("G", "G", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("H", "H", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("ParkPosition", "No Cap", NO_ASSIGNMENT, collectorOptions);
+                        .addChoiceParameter("A", "A", defaultValue, collectorOptions)
+                        .addChoiceParameter("B", "B", defaultValue, collectorOptions)
+                        .addChoiceParameter("C", "C", defaultValue, collectorOptions)
+                        .addChoiceParameter("D", "D", defaultValue, collectorOptions)
+                        .addChoiceParameter("E", "E", defaultValue, collectorOptions)
+                        .addChoiceParameter("F", "F", defaultValue, collectorOptions)
+                        .addChoiceParameter("G", "G", defaultValue, collectorOptions)
+                        .addChoiceParameter("H", "H", defaultValue, collectorOptions)
+                        .addChoiceParameter("ParkPosition", "No Cap", defaultValue, collectorOptions);
             }
 //            else if (collectorType.equals(_96_WELL_PLATE)) {
 //            }
             else if (collectorType.equals(PETRI)) {
                 collectorParams
-                        .addChoiceParameter("A", "A", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("B", "B", NO_ASSIGNMENT, collectorOptions)
-                        .addChoiceParameter("ParkPosition", "No Cap", NO_ASSIGNMENT, collectorOptions);
+                        .addChoiceParameter("A", "A", defaultValue, collectorOptions)
+                        .addChoiceParameter("B", "B", defaultValue, collectorOptions)
+                        .addChoiceParameter("ParkPosition", "No Cap", defaultValue, collectorOptions);
             }
             return collectorParams;
         }
