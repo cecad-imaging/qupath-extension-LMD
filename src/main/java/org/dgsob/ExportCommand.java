@@ -157,7 +157,6 @@ public class ExportCommand {
             }
         }
         private static ParameterList createCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
-            // TODO: Add enum with values of collectorOptions, it should probably also be renamed to smth like classificationOptions
             ParameterList collectorParams = new ParameterList();
             Set<PathClass> availableClasses = ClassUtils.getAllClasses(chosenObjects);
             List<String> classNames = new ArrayList<>(availableClasses.stream().map(PathClass::getName).toList());
