@@ -19,6 +19,8 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 
+import static org.dgsob.ExportOptions.CapAssignments.*;
+
 public class GeojsonToXml {
     public static class shapeType {
         public static final String CELL = "cell";
@@ -121,7 +123,7 @@ public class GeojsonToXml {
 
                     if (collectorParams != null) {
                         JsonNode featureClassificationNode = feature.path("properties").path("classification");
-                        addCupID(xmlDoc, shapeElement, featureClassificationNode, collectorParams);
+                        addCapID(xmlDoc, shapeElement, featureClassificationNode, collectorParams);
                     }
 
                     int pointIndex = 1;
@@ -163,24 +165,24 @@ public class GeojsonToXml {
         return element;
     }
     @SuppressWarnings("UnusedReturnValue")
-    private boolean addCupID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
+    private boolean addCapID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
         if (!classificationNode.isMissingNode()) {
             String featureClassName = classificationNode.path("name").asText();
             for (String paramKey : paramsSetByUser.getParameters().keySet()){
                 Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
-                if (paramValue.equals("All objects")){
-                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                if (paramValue.equals(ALL_OBJECTS)){
+                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
                     return true;
                 }
                 if (featureClassName.equals(paramValue)){
-                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
                     return true;
                 }
-                if (paramValue.equals("Remaining objects")){
-                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                if (paramValue.equals(REMAINING_OBJECTS)){
+                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
                     return true;
                 }
-                if (paramValue.equals("None")){
+                if (paramValue.equals(NO_ASSIGNMENT)){
                     return false;
                 }
 
@@ -189,18 +191,18 @@ public class GeojsonToXml {
         else {
             for (String paramKey : paramsSetByUser.getParameters().keySet()){
                 Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
-                if (paramValue.equals("All objects")){
-                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                if (paramValue.equals(ALL_OBJECTS)){
+                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
                     return true;
                 }
                 if (paramValue.equals("Stroma") || paramValue.equals("Tumor") || paramValue.equals("Positive") || paramValue.equals("Negative")){
                     continue;
                 }
-                if (paramValue.equals("Remaining objects")){
-                    parentShape.appendChild(createTextElement(doc, "CupID", paramKey));
+                if (paramValue.equals(REMAINING_OBJECTS)){
+                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
                     return true;
                 }
-                if (paramValue.equals("None")){
+                if (paramValue.equals(NO_ASSIGNMENT)){
                     return false;
                 }
 

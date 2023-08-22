@@ -8,7 +8,7 @@ import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.extensions.QuPathExtension;
 import java.io.IOException;
 
-public class ExportToLMDExtension implements QuPathExtension {
+public class LMDExtension implements QuPathExtension {
     @Override
     public void installExtension(QuPathGUI qupath) {
         qupath.installActions(ActionTools.getAnnotatedActions(new ExportToLMDAction(qupath)));

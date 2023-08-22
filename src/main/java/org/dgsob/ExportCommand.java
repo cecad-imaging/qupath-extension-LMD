@@ -18,6 +18,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
+import static org.dgsob.ExportOptions.CollectorTypes.*;
+import static org.dgsob.ExportOptions.CapAssignments.*;
 
 public class ExportCommand {
     private ExportCommand(){
@@ -43,8 +45,8 @@ public class ExportCommand {
                 .addChoiceParameter("exportOptions", "Export:", defaultObjects,
                         Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.")
-                .addChoiceParameter("collectorChoice", "Collector type:", "None",
-                        Arrays.asList("None", "PCR Tubes","8-fold-Strip", "96-Wellplate", "Petri"),
+                .addChoiceParameter("collectorChoice", "Collector type:", NO_COLLECTOR,
+                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _96_WELL_PLATE, PETRI),
                         "Choose a type of your collector.\n" +
                                   "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
 
@@ -73,7 +75,7 @@ public class ExportCommand {
         //
 
         var collectorType = exportParams.getChoiceParameterValue("collectorChoice");
-        boolean processCollectors = !collectorType.equals("None");
+        boolean processCollectors = !collectorType.equals(NO_COLLECTOR);
         ParameterList collectorParams = null;
         if (processCollectors){
             collectorParams = createCollectorsParameterList(collectorType, chosenObjects);
@@ -161,40 +163,40 @@ public class ExportCommand {
             List<String> classNames = new ArrayList<>(availableClasses.stream().map(PathClass::getName).toList());
 
             List<String> collectorOptions = new ArrayList<>();
-            collectorOptions.add("None");
-            collectorOptions.add("All Objects");
+            collectorOptions.add(NO_ASSIGNMENT);
+            collectorOptions.add(ALL_OBJECTS);
             collectorOptions.addAll(classNames);
             if (!classNames.isEmpty())
-                collectorOptions.add("Remaining Objects");
+                collectorOptions.add(REMAINING_OBJECTS);
 
-            if (collectorType.equals("PCR Tubes")) {
+            if (collectorType.equals(PCR_TUBES)) {
                 collectorParams
-                        .addChoiceParameter("A", "A", "None", collectorOptions)
-                        .addChoiceParameter("B", "B", "None", collectorOptions)
-                        .addChoiceParameter("C", "C", "None", collectorOptions)
-                        .addChoiceParameter("D", "D", "None", collectorOptions)
-                        .addChoiceParameter("E", "E", "None", collectorOptions)
-                        .addChoiceParameter("No Cap", "No Cap", "None", collectorOptions); // TODO: No Cap ID is not No Cap, check in the LMD
+                        .addChoiceParameter("A", "A", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("B", "B", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("C", "C", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("D", "D", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("E", "E", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("ParkPosition", "No Cap", NO_ASSIGNMENT, collectorOptions);
             }
-            else if (collectorType.equals("8-fold-Strip")) {
+            else if (collectorType.equals(_8_FOLD_STRIP)) {
                 collectorParams
-                        .addChoiceParameter("A", "A", "None", collectorOptions)
-                        .addChoiceParameter("B", "B", "None", collectorOptions)
-                        .addChoiceParameter("C", "C", "None", collectorOptions)
-                        .addChoiceParameter("D", "D", "None", collectorOptions)
-                        .addChoiceParameter("E", "E", "None", collectorOptions)
-                        .addChoiceParameter("F", "F", "None", collectorOptions)
-                        .addChoiceParameter("G", "G", "None", collectorOptions)
-                        .addChoiceParameter("H", "H", "None", collectorOptions)
-                        .addChoiceParameter("No Cap", "No Cap", "None", collectorOptions); // TODO: No Cap ID is not No Cap, check in the LMD
+                        .addChoiceParameter("A", "A", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("B", "B", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("C", "C", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("D", "D", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("E", "E", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("F", "F", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("G", "G", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("H", "H", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("ParkPosition", "No Cap", NO_ASSIGNMENT, collectorOptions);
             }
-//            else if (collectorType.equals("96-Wellplate")) {
+//            else if (collectorType.equals(_96_WELL_PLATE)) {
 //            }
-            else if (collectorType.equals("Petri")) {
+            else if (collectorType.equals(PETRI)) {
                 collectorParams
-                        .addChoiceParameter("A", "A", "None", collectorOptions)
-                        .addChoiceParameter("B", "B", "None", collectorOptions)
-                        .addChoiceParameter("No Cap", "No Cap", "None", collectorOptions); // TODO: No Cap ID is not No Cap, check in the LMD
+                        .addChoiceParameter("A", "A", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("B", "B", NO_ASSIGNMENT, collectorOptions)
+                        .addChoiceParameter("ParkPosition", "No Cap", NO_ASSIGNMENT, collectorOptions);
             }
             return collectorParams;
         }
