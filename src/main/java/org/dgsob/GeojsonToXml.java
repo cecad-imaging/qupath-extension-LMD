@@ -18,6 +18,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 import static org.dgsob.ExportOptions.CapAssignments.*;
 
@@ -166,46 +167,57 @@ public class GeojsonToXml {
     }
     @SuppressWarnings("UnusedReturnValue")
     private boolean addCapID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
+
+        Set<String> paramKeys = paramsSetByUser.getParameters().keySet();
+        String[] paramKeysPriorities = new String[paramKeys.size()];
+
         if (!classificationNode.isMissingNode()) {
             String featureClassName = classificationNode.path("name").asText();
-            for (String paramKey : paramsSetByUser.getParameters().keySet()){
+            for (String paramKey : paramKeys){
                 Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
+                if (paramValue.equals(NO_ASSIGNMENT)){
+                    continue;
+                }
                 if (paramValue.equals(ALL_OBJECTS)){
-                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
-                    return true;
+                    paramKeysPriorities[0] = paramKey;
                 }
                 if (featureClassName.equals(paramValue)){
-                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
-                    return true;
+                    paramKeysPriorities[1] = paramKey;
                 }
                 if (paramValue.equals(REMAINING_OBJECTS)){
-                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
-                    return true;
-                }
-                if (paramValue.equals(NO_ASSIGNMENT)){
-                    return false;
+                    paramKeysPriorities[2] = paramKey;
                 }
 
             }
-        }
-        else {
-            for (String paramKey : paramsSetByUser.getParameters().keySet()){
-                Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
-                if (paramValue.equals(ALL_OBJECTS)){
+            for (String paramKey : paramKeysPriorities) {
+                if (paramKey != null) {
                     parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
                     return true;
+                }
+            }
+        }
+        else {
+            for (String paramKey : paramKeys){
+                Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
+                if (paramValue.equals(NO_ASSIGNMENT)){
+                    continue;
                 }
                 if (paramValue.equals("Stroma") || paramValue.equals("Tumor") || paramValue.equals("Positive") || paramValue.equals("Negative")){
                     continue;
                 }
+                if (paramValue.equals(ALL_OBJECTS)){
+                    paramKeysPriorities[0] = paramKey;
+
+                }
                 if (paramValue.equals(REMAINING_OBJECTS)){
+                    paramKeysPriorities[1] = paramKey;
+                }
+            }
+            for (String paramKey : paramKeysPriorities) {
+                if (paramKey != null) {
                     parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
                     return true;
                 }
-                if (paramValue.equals(NO_ASSIGNMENT)){
-                    return false;
-                }
-
             }
         }
         return false;
