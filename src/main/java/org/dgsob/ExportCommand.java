@@ -176,8 +176,7 @@ public class ExportCommand {
                         .addChoiceParameter("B", "B", defaultValue, collectorOptions)
                         .addChoiceParameter("C", "C", defaultValue, collectorOptions)
                         .addChoiceParameter("D", "D", defaultValue, collectorOptions)
-                        .addChoiceParameter("E", "E", defaultValue, collectorOptions)
-                        .addChoiceParameter("ParkPosition", "No Cap", defaultValue, collectorOptions);
+                        .addChoiceParameter("E", "E", defaultValue, collectorOptions);
             }
             else if (collectorType.equals(_8_FOLD_STRIP)) {
                 collectorParams
@@ -188,16 +187,14 @@ public class ExportCommand {
                         .addChoiceParameter("E", "E", defaultValue, collectorOptions)
                         .addChoiceParameter("F", "F", defaultValue, collectorOptions)
                         .addChoiceParameter("G", "G", defaultValue, collectorOptions)
-                        .addChoiceParameter("H", "H", defaultValue, collectorOptions)
-                        .addChoiceParameter("ParkPosition", "No Cap", defaultValue, collectorOptions);
+                        .addChoiceParameter("H", "H", defaultValue, collectorOptions);
             }
 //            else if (collectorType.equals(_96_WELL_PLATE)) {
 //            }
             else if (collectorType.equals(PETRI)) {
                 collectorParams
                         .addChoiceParameter("A", "A", defaultValue, collectorOptions)
-                        .addChoiceParameter("B", "B", defaultValue, collectorOptions)
-                        .addChoiceParameter("ParkPosition", "No Cap", defaultValue, collectorOptions);
+                        .addChoiceParameter("B", "B", defaultValue, collectorOptions);
             }
             return collectorParams;
         }
