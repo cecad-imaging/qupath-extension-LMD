@@ -1,7 +1,6 @@
 package org.dgsob;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -62,35 +61,33 @@ public class GeojsonToXml {
             Element imageDataElement = xmlDoc.createElement("ImageData");
             xmlDoc.appendChild(imageDataElement);
 
-            // Extract calibration points from GeoJSON and add to XML
-            JsonNode calibrationPoints = new ObjectMapper().createArrayNode();
+            // Extract calibration points from GeoJSON and save in an array
+            JsonNode[] calibrationPoints = new JsonNode[3];
             JsonNode features = jsonNode.get("features");
             for (JsonNode feature : features) {
                 JsonNode geometry = feature.get("geometry");
                 String geometryType = geometry.get("type").asText();
                 JsonNode properties = feature.get("properties");
                 String featureName = properties.has("name") ? properties.get("name").asText() : "Unnamed Feature";
-                // If one annotation of type 'MultiPoint'
-                if ("MultiPoint".equals(geometryType) && "calibration".equalsIgnoreCase(featureName)) {
-                    calibrationPoints = geometry.path("coordinates");
-                    break;
-                }
                 // If 3 annotations of type 'Point'
-                else if ("Point".equals(geometryType)){
+                if ("Point".equals(geometryType)){
                     switch (featureName.toLowerCase()) {
-                        case "calibration1", "calibration2", "calibration3" -> ((ArrayNode) calibrationPoints).add(geometry.path("coordinates"));
+                        case "calibration1" -> calibrationPoints[0] = geometry.path("coordinates");
+                        case "calibration2" -> calibrationPoints[1] = geometry.path("coordinates");
+                        case "calibration3" -> calibrationPoints[2] = geometry.path("coordinates");
                     }
                 }
             }
 
             // Abort if calibration data is invalid
-            if (calibrationPoints == null || calibrationPoints.size() != 3){
+            if (calibrationPoints[0] == null || calibrationPoints[1] == null || calibrationPoints[2] == null){
                 return false;
             }
 
-            for (int i = 0; i < calibrationPoints.size(); i++) {
-                double x = calibrationPoints.get(i).get(0).asDouble();
-                double y = calibrationPoints.get(i).get(1).asDouble();
+            // Add calibration points to the XML
+            for (int i = 0; i < calibrationPoints.length; i++) {
+                double x = calibrationPoints[i].get(0).asDouble();
+                double y = calibrationPoints[i].get(1).asDouble();
                 Element xElement = createTextElement(xmlDoc, "X_CalibrationPoint_" + (i + 1), String.valueOf(x));
                 imageDataElement.appendChild(xElement);
                 Element yElement = createTextElement(xmlDoc, "Y_CalibrationPoint_" + (i + 1), String.valueOf(y));
