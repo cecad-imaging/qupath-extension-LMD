@@ -55,26 +55,6 @@ public class ExportOptions {
           "properties": {
             "objectType": "annotation"
           }
-        },
-        {
-          "type": "Feature",
-          "id": "2776da45-a948-4d11-8f31-e3bcd955ab5f",
-          "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-              [
-                [10141, 26552],
-                [12087, 26552],
-                [12087, 27880],
-                [10141, 27880],
-                [10141, 26552]
-              ]
-            ]
-          },
-          "properties": {
-            "objectType": "annotation",
-            "isLocked": true
-          }
         }
       ]
     }
