@@ -20,19 +20,10 @@ import java.io.IOException;
 import java.util.Set;
 
 import static org.dgsob.ExportOptions.CapAssignments.*;
+import static org.dgsob.ExportOptions.ObjectTypes.*;
+import static org.dgsob.ExportOptions.FeatureGeoTypes.*;
 
 public class GeojsonToXml {
-    public static class shapeType {
-        public static final String CELL = "cell";
-        public static final String DETECTION = "detection";
-        public static final String ANNOTATION = "annotation";
-    }
-//    private static String featureType;
-//    public class featureType {
-//        public static final String POLYGON = "Polygon";
-//        public static final String POINT = "MultiPoint";
-//    }
-
     public GeojsonToXml(){
     }
     private int shapeCount = 0;
@@ -70,7 +61,7 @@ public class GeojsonToXml {
                 JsonNode properties = feature.get("properties");
                 String featureName = properties.has("name") ? properties.get("name").asText() : "Unnamed Feature";
                 // If 3 annotations of type 'Point'
-                if ("Point".equals(geometryType)){
+                if (POINT.equals(geometryType)){
                     switch (featureName.toLowerCase()) {
                         case "calibration1" -> calibrationPoints[0] = geometry.path("coordinates");
                         case "calibration2" -> calibrationPoints[1] = geometry.path("coordinates");
@@ -97,7 +88,7 @@ public class GeojsonToXml {
             // Count shapes in GeoJSON and add ShapeCount element to XML
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (!shapeType.ANNOTATION.equals(objectType)) {
+                if (!ANNOTATION.equals(objectType)) {
                     shapeCount++;
                 }
             }
@@ -108,7 +99,7 @@ public class GeojsonToXml {
             int shapeIndex = 1;
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
-                if (!shapeType.ANNOTATION.equals(objectType)) {
+                if (!ANNOTATION.equals(objectType)) {
                     Element shapeElement = xmlDoc.createElement("Shape_" + shapeIndex);
                     imageDataElement.appendChild(shapeElement);
 
