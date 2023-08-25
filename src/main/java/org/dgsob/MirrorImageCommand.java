@@ -8,10 +8,7 @@ import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.TransformedServerBuilder;
 import qupath.lib.objects.PathObject;
-import qupath.lib.objects.PathObjects;
-import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
-import qupath.lib.roi.interfaces.ROI;
 
 public class MirrorImageCommand {
     private MirrorImageCommand(){
@@ -24,7 +21,7 @@ public class MirrorImageCommand {
         ImageServer<BufferedImage> server = imageData.getServer();
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
         ImageData.ImageType imageType = imageData.getImageType();
-        Collection<PathObject> allObjects = hierarchy.getAllObjects(false);
+        Collection<PathObject> allParentObjects = hierarchy.getRootObject().getChildObjects();
         int imageWidth = server.getWidth();
         int imageHeight = server.getHeight();
 
@@ -62,48 +59,19 @@ public class MirrorImageCommand {
         PathObjectHierarchy newHierarchy = newImageData.getHierarchy();
 
         // Perform transformation on all objects from the original image and add each transformed object to the new hierarchy
-        for (PathObject object : allObjects){
-            ROI roi = object.getROI();
-            roi = roi.scale(scaleX, scaleY);
-            roi = roi.translate(-translateX, -translateY);
-            PathClass objectClass = object.getPathClass();
-            String objectName = object.getName();
-            // TODO: Check if object has a parent and deal with it somehow
-            if (object.isDetection()) {
-                PathObject newObject;
-
-                if (objectClass != null)
-                    newObject = PathObjects.createDetectionObject(roi, objectClass);
-                else
-                    newObject = PathObjects.createDetectionObject(roi);
-
-                if (objectName != null)
-                    newObject.setName(objectName);
-
-                newHierarchy.addObject(newObject);
-
-            }
-            else if (object.isAnnotation()) {
-                PathObject newObject;
-
-                if (objectClass != null)
-                    newObject = PathObjects.createAnnotationObject(roi, objectClass);
-                else
-                    newObject = PathObjects.createAnnotationObject(roi);
-
-                if (objectName != null)
-                    newObject.setName(objectName);
-
-                newHierarchy.addObject(newObject);
-
+        for (PathObject parent : allParentObjects){
+            PathObject mirroredParent = ObjectUtils.mirrorObject(parent, scaleX, scaleY, translateX, translateY);
+            ObjectUtils.addObjectAccountingForParent(newHierarchy, mirroredParent, null);
+            if (parent.hasChildObjects()){
+                for (PathObject child : parent.getChildObjects()){
+                    PathObject mirroredChild = ObjectUtils.mirrorObject(child, scaleX, scaleY, translateX, translateY);
+                    ObjectUtils.addObjectAccountingForParent(newHierarchy, mirroredChild, mirroredParent);
+                }
             }
         }
 
-        // TODO: If the two TODOs above work out, maybe change the behaviour from adding new image to changing the existing one?
+        // TODO: Maybe change the behaviour from adding new image to changing the existing one?
         qupath.getViewer().setImageData(newImageData);
         qupath.refreshProject();
-
-
     }
-
 }
