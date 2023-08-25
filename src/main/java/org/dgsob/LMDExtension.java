@@ -42,7 +42,7 @@ public class LMDExtension implements QuPathExtension {
 
         private ExportToLMDAction(QuPathGUI qupath) {
 
-            actionExpandObjects = qupath.createImageDataAction(imageData -> ExpandObjectsCommand.runObjectsExpansion(imageData));
+            actionExpandObjects = qupath.createImageDataAction(ExpandObjectsCommand::runObjectsExpansion);
 
             actionMirrorImageX = new Action(actionEvent -> MirrorImageCommand.mirrorImage(qupath, true, false));
 
