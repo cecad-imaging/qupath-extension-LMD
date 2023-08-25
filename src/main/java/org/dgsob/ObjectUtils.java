@@ -25,6 +25,7 @@ public class ObjectUtils {
         }
         return hierarchy.getSelectionModel().getSelectedObjects();
     }
+
     static PathObject mergeObjects(final Collection<PathObject> objects, final PathClass objectClass) {
         ROI shapeNew = null;
         for (PathObject object : objects) {
@@ -43,6 +44,7 @@ public class ObjectUtils {
         else
             return PathObjects.createDetectionObject(shapeNew);
     }
+
     static Polygon convertRoiToGeometry(PathObject object){
         List<Point2> points = object.getROI().getAllPoints();
 
@@ -57,6 +59,7 @@ public class ObjectUtils {
         LinearRing linearRing = geomFactory.createLinearRing(coords);
         return geomFactory.createPolygon(linearRing, null);
     }
+
     static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, List<String> priorityRanking) {
         List<PathObject> sortedObjects = new ArrayList<>(objects);
 
@@ -80,6 +83,57 @@ public class ObjectUtils {
         });
 
         return sortedObjects;
+    }
+
+    /**
+     * Mirrors object.
+     * @param object Objects to mirror.
+     * @param scaleX Horizontal scale value.
+     * @param scaleY Vertical scale value.
+     * @param translateX Horizontal translation.
+     * @param translateY Vertical translation.
+     * @return Return mirrored object.
+     */
+    static PathObject mirrorObject(PathObject object, int scaleX, int scaleY, int translateX, int translateY){
+        ROI roi = object.getROI();
+        roi = roi.scale(scaleX, scaleY);
+        roi = roi.translate(-translateX, -translateY);
+        PathClass objectClass = object.getPathClass();
+        String objectName = object.getName();
+        PathObject newObject = null;
+
+        if (object.isDetection()) {
+            if (objectClass != null)
+                newObject = PathObjects.createDetectionObject(roi, objectClass);
+            else
+                newObject = PathObjects.createDetectionObject(roi);
+
+            if (objectName != null)
+                newObject.setName(objectName);
+        }
+        else if (object.isAnnotation()) {
+            if (objectClass != null)
+                newObject = PathObjects.createAnnotationObject(roi, objectClass);
+            else
+                newObject = PathObjects.createAnnotationObject(roi);
+
+            if (objectName != null)
+                newObject.setName(objectName);
+        }
+        return newObject;
+    }
+
+    /**
+     * Adds object to hierarchy or inserts object as provided-object's child.
+     * @param hierarchy Current hierarchy to add object to.
+     * @param object Object to add.
+     * @param parent Already existing in hierarchy parent object.
+     */
+    static void addObjectAccountingForParent(PathObjectHierarchy hierarchy, PathObject object, PathObject parent) {
+        if (parent != null)
+            parent.addChildObject(object);
+        else
+            hierarchy.addObject(object);
     }
 
 }
