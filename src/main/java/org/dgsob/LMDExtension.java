@@ -31,7 +31,6 @@ public class LMDExtension implements QuPathExtension {
 
     @ActionMenu("Extensions>Export to LMD")
     public static class ExportToLMDAction {
-        private final QuPathGUI qupath;
         @ActionMenu("Expand selected objects")
         public final Action actionExpandObjects;
         @ActionMenu("Create New Mirrored Image>Mirrored Horizontally")
@@ -42,7 +41,6 @@ public class LMDExtension implements QuPathExtension {
         public final Action actionExport;
 
         private ExportToLMDAction(QuPathGUI qupath) {
-            this.qupath = qupath;
 
             actionExpandObjects = qupath.createImageDataAction(imageData -> {
                 ExpandObjectsCommand.runObjectsExpansion(imageData);

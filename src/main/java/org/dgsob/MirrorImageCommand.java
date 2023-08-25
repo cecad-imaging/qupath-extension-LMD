@@ -3,10 +3,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
-import javafx.application.Platform;
 import qupath.lib.gui.QuPathGUI;
-import qupath.lib.gui.dialogs.Dialogs;
-import qupath.lib.gui.scripting.QPEx;
 import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.TransformedServerBuilder;
@@ -14,8 +11,6 @@ import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
 import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
-import qupath.lib.projects.Project;
-import qupath.lib.roi.RoiTools;
 import qupath.lib.roi.interfaces.ROI;
 
 public class MirrorImageCommand {
