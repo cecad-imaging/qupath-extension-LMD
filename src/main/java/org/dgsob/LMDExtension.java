@@ -34,6 +34,10 @@ public class LMDExtension implements QuPathExtension {
         private final QuPathGUI qupath;
         @ActionMenu("Expand selected objects")
         public final Action actionExpandObjects;
+        @ActionMenu("Create New Mirrored Image>Mirrored Horizontally")
+        public final Action actionMirrorImageX;
+        @ActionMenu("Create New Mirrored Image>Mirrored Vertically")
+        public final Action actionMirrorImageY;
         @ActionMenu("Export")
         public final Action actionExport;
 
@@ -42,6 +46,14 @@ public class LMDExtension implements QuPathExtension {
 
             actionExpandObjects = qupath.createImageDataAction(imageData -> {
                 ExpandObjectsCommand.runObjectsExpansion(imageData);
+            });
+
+            actionMirrorImageX = new Action(actionEvent -> {
+                MirrorImageCommand.mirrorImage(qupath, true, false);
+            });
+
+            actionMirrorImageY = new Action(actionEvent -> {
+                MirrorImageCommand.mirrorImage(qupath, false, true);
             });
 
             actionExport = qupath.createImageDataAction(imageData -> {
