@@ -16,7 +16,7 @@ public class LMDExtension implements QuPathExtension {
 
     @Override
     public String getName() {
-        return "Export to LMD";
+        return "LMD Export Extension for QuPath";
     }
 
     @Override
@@ -33,9 +33,9 @@ public class LMDExtension implements QuPathExtension {
     public static class ExportToLMDAction {
         @ActionMenu("Expand selected objects")
         public final Action actionExpandObjects;
-        @ActionMenu("Create New Mirrored Image>Mirrored Horizontally")
+        @ActionMenu("Create New Mirrored Image>Mirror Horizontally")
         public final Action actionMirrorImageX;
-        @ActionMenu("Create New Mirrored Image>Mirrored Vertically")
+        @ActionMenu("Create New Mirrored Image>Mirror Vertically")
         public final Action actionMirrorImageY;
         @ActionMenu("Export")
         public final Action actionExport;
