@@ -34,12 +34,16 @@ public class ExpandObjectsCommand {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorMessage("Selection Required", "Please select detection objects to expand.");
+            Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
             return false;
         }
 
-        Collection<PathObject> pathObjects = hierarchy.getSelectionModel().getSelectedObjects();
-        pathObjects = ObjectUtils.getDetectionObjects(pathObjects);
+        Collection<PathObject> pathObjects = ObjectUtils.getDetectionObjects(hierarchy.getSelectionModel().getSelectedObjects());
+
+        if (pathObjects.isEmpty()){
+            Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
+            return false;
+        }
 
         Collection<PathObject> newObjects = new ArrayList<>();
 
@@ -110,7 +114,7 @@ public class ExpandObjectsCommand {
 
         //Steps for processing overlapping objects:
 
-        // 1. Add 'background', i.e. already existing in hierarchy, not selected, objects to newObjects.
+        // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
         newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
 
         // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
@@ -207,6 +211,16 @@ public class ExpandObjectsCommand {
         }
         return remainingObjects;
     }
+
+    /**
+     * For each object of the provided objects collection takes its ROI, multiplies by the given radius, and collects all
+     * non-annotation objects in such enlarged ROI, adding them to the copy of provided objects collection and deleting from hierarchy.
+     *
+     * @param hierarchy A hierarchy to delete the objectsfrom.
+     * @param objects Original collection of objects of interest.
+     * @param radius Int value to enlarge each object's ROI. 'Background' objects within this ROI are added to the collection.
+     * @return Provided objects + collected 'background' objects as one collection.
+     */
     private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
         Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
         for (PathObject object : objects){
@@ -216,14 +230,12 @@ public class ExpandObjectsCommand {
             ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
             Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
-            hierarchy.removeObjects(objectsInROI, false);
-            // this loop might be unnecessary and replaced with objects.addAll(objectsInROI) but idk, should be tested
             for (PathObject roiObject : objectsInROI){
-                if (!enhancedObjects.contains(roiObject)){
+                if (!enhancedObjects.contains(roiObject) && !roiObject.isAnnotation()){
                     enhancedObjects.add(roiObject);
+                    hierarchy.removeObject(roiObject, false);
                 }
             }
-            //
         }
         return enhancedObjects;
     }

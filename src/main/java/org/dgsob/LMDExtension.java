@@ -4,6 +4,7 @@ import org.controlsfx.control.action.Action;
 import qupath.lib.common.Version;
 import qupath.lib.gui.ActionTools;
 import qupath.lib.gui.ActionTools.ActionMenu;
+import qupath.lib.gui.ActionTools.ActionDescription;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.extensions.QuPathExtension;
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class LMDExtension implements QuPathExtension {
     @ActionMenu("Extensions>Export to LMD")
     public static class ExportToLMDAction {
         @ActionMenu("Expand selected objects")
+        @ActionDescription("Makes objects larger by the provided radius. Annotations not supported.")
         public final Action actionExpandObjects;
         @ActionMenu("Create New Mirrored Image>Mirror Horizontally")
         public final Action actionMirrorImageX;
