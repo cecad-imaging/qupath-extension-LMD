@@ -74,7 +74,7 @@ public class ExpandObjectsCommand {
 
         // Creating second window if the user wants to set priorities for classes
         if (differentClassesChoice.equals("Set priority for each class")){
-            Set<PathClass> availableClasses = ClassUtils.getAllClasses(pathObjects);
+            Set<PathClass> availableClasses = ClassUtils.getAllClasses(hierarchy.getAllObjects(false));
             ParameterList priorityRankingParams = createPriorityRankingParameterList(availableClasses);
             boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
 
@@ -244,13 +244,22 @@ public class ExpandObjectsCommand {
                 .map(PathClass::getName)
                 .toList());
         ParameterList priorityRankingParams = new ParameterList();
-        priorityRankingParams.addEmptyParameter("""
-                Class 1 corresponds to the highest priority.
-                Lower prority object will be deleted if intersecting object of a higher priority.
-                
-                """);
-        for (int i = 1; i <= classNames.size(); i++){
-            priorityRankingParams.addChoiceParameter("priorityClass_" + i, "Class " + i, classNames.get(i-1), classNames);
+
+        if (!classNames.isEmpty()) {
+            priorityRankingParams.addEmptyParameter("""
+                    Class 1 corresponds to the highest priority.
+                    Lower prority object will be deleted if intersecting object of a higher priority.
+                                        
+                    """);
+            for (int i = 1; i <= classNames.size(); i++) {
+                priorityRankingParams.addChoiceParameter("priorityClass_" + i, "Class " + i, classNames.get(i - 1), classNames);
+            }
+        }
+        else{
+            priorityRankingParams.addEmptyParameter("""
+                    No classifications detected.
+                                        
+                    """);
         }
         return priorityRankingParams;
     }
