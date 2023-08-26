@@ -34,13 +34,12 @@ public class ExpandObjectsCommand {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorMessage("Selection Required", "Please select objects to expand.");
+            Dialogs.showErrorMessage("Selection Required", "Please select detection objects to expand.");
             return false;
         }
 
-        Collection<PathObject> pathObjects = ObjectUtils.getSelected(hierarchy);
-
-        assert pathObjects != null;
+        Collection<PathObject> pathObjects = hierarchy.getSelectionModel().getSelectedObjects();
+        pathObjects = ObjectUtils.getDetectionObjects(pathObjects);
 
         Collection<PathObject> newObjects = new ArrayList<>();
 
