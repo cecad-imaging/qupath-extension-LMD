@@ -51,6 +51,9 @@ public class MirrorImageCommand {
         builder.transform(transform);
         ImageServer<BufferedImage> newServer = builder.build();
 
+        //TODO: Change new server's name in metadata
+
+
         // Use the newly built server to create new imageData
         ImageData<BufferedImage> newImageData = new ImageData<>(newServer);
         newImageData.setImageType(imageType);
@@ -70,7 +73,6 @@ public class MirrorImageCommand {
             }
         }
 
-        // TODO: Maybe change the behaviour from adding new image to changing the existing one?
         qupath.getViewer().setImageData(newImageData);
         qupath.refreshProject();
     }
