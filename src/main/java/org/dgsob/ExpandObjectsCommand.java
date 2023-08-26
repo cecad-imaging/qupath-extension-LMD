@@ -26,6 +26,15 @@ public class ExpandObjectsCommand {
     private ExpandObjectsCommand(){
 
     }
+
+    /**
+     * In first stage collects selected detection objects in pathObjects, creates new bigger ones based on the selected objects ROIs and provided by the user radius,
+     * appends them to newObjects and removes the smaller ones from hierarchy.
+     * In second stage it processes overlapping objects.
+     *
+     * @param imageData ImageData.
+     * @return Boolean flag.
+     */
     @SuppressWarnings("UnusedReturnValue")
     public static boolean runObjectsExpansion(ImageData<BufferedImage> imageData){
 
@@ -131,6 +140,15 @@ public class ExpandObjectsCommand {
         hierarchy.addObjects(objectsToAddToHierarchy);
         return true;
     }
+
+    /**
+     * I don't remember how it works.
+     *
+     * @param newObjects
+     * @param objectsToAddToHierarchy
+     * @param priorityRanking
+     * @return
+     */
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
                                                                     Collection<PathObject> objectsToAddToHierarchy,
                                                                     List<String> priorityRanking){
@@ -239,6 +257,13 @@ public class ExpandObjectsCommand {
         }
         return enhancedObjects;
     }
+
+    /**
+     * Creates a list of parameters from provided classes.
+     *
+     * @param availableClasses Set of classes, their names will be options for a user to choose from while assigning priorities to the classes.
+     * @return ParameterList of classes names or a ParameterList with an empty parameter message if availableClasses were empty.
+     */
     private static ParameterList createPriorityRankingParameterList(Set<PathClass> availableClasses){
         List<String> classNames = new ArrayList<>(availableClasses.stream()
                 .map(PathClass::getName)
