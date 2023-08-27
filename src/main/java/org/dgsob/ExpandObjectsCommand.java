@@ -250,8 +250,9 @@ public class ExpandObjectsCommand {
             ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
             Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
+            objectsInROI = ObjectUtils.getDetectionObjects(objectsInROI); // remove all annotations from the collection
             for (PathObject roiObject : objectsInROI){
-                if (!enhancedObjects.contains(roiObject) && !roiObject.isAnnotation()){
+                if (!enhancedObjects.contains(roiObject)/*&& !roiObject.isAnnotation()*/){
                     enhancedObjects.add(roiObject);
                 }
             }
