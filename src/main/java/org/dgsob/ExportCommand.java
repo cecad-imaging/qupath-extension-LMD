@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
@@ -86,8 +87,10 @@ public class ExportCommand {
         }
 
         // Set default names for geojson and xml files
-        final String DEFAULT_GeoJSON_NAME = "temp.geojson";
-        final String DEFAULT_XML_NAME = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", ".xml");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        String currentTime = dateFormat.format(new Date());
+        final String DEFAULT_GeoJSON_NAME = currentTime + ".geojson";
+        final String DEFAULT_XML_NAME = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", "_" + currentTime + ".xml");
 
         // Get the current project.qpproj file path
         Path projectFilePath = qupath.getProject().getPath();
