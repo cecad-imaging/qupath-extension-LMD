@@ -121,7 +121,7 @@ public class ExpandObjectsCommand {
         hierarchy.removeObjects(pathObjects, false); // remove old objects
         hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
 
-        //Steps for processing overlapping objects:
+        // Steps for processing overlapping objects:
 
         // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
         newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
@@ -137,17 +137,19 @@ public class ExpandObjectsCommand {
         while(!newObjects.isEmpty()) {
             newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
         }
+
         hierarchy.addObjects(objectsToAddToHierarchy);
         return true;
     }
 
     /**
-     * I don't remember how it works.
+     * I don't remember how it works but should be called recursively. It appends an object to objectsToAddToHierarchy
+     * if it doesn't intersect any other object.
      *
-     * @param newObjects
-     * @param objectsToAddToHierarchy
-     * @param priorityRanking
-     * @return
+     * @param newObjects Collection of objects to process. Only one is processed witch each call of the function.
+     * @param objectsToAddToHierarchy Collection of objects to add to hierarchy.
+     * @param priorityRanking List of calsses names as strings which is the order of priority.
+     * @return newObjects - one object
      */
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
                                                                     Collection<PathObject> objectsToAddToHierarchy,
