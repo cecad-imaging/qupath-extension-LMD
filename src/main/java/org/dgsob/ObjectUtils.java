@@ -18,14 +18,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class ObjectUtils {
-    static Collection<PathObject> getSelected(PathObjectHierarchy hierarchy){
-        if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorMessage("Error", "No selection. Please, select detections to expand.");
-            return null;
-        }
-        return hierarchy.getSelectionModel().getSelectedObjects();
-    }
-
     static PathObject mergeObjects(final Collection<PathObject> objects, final PathClass objectClass) {
         ROI shapeNew = null;
         for (PathObject object : objects) {
@@ -86,13 +78,14 @@ public class ObjectUtils {
     }
 
     /**
-     * Mirrors object.
-     * @param object Objects to mirror.
+     * Mirrors an object.
+     *
+     * @param object Object to mirror.
      * @param scaleX Horizontal scale value.
      * @param scaleY Vertical scale value.
      * @param translateX Horizontal translation.
      * @param translateY Vertical translation.
-     * @return Return mirrored object.
+     * @return The mirrored object.
      */
     static PathObject mirrorObject(PathObject object, int scaleX, int scaleY, int translateX, int translateY){
         ROI roi = object.getROI();
@@ -124,7 +117,8 @@ public class ObjectUtils {
     }
 
     /**
-     * Adds object to hierarchy or inserts object as provided-object's child.
+     * Adds an object to the hierarchy or inserts an object as a child of the provided parent object.
+     *
      * @param hierarchy Current hierarchy to add object to.
      * @param object Object to add.
      * @param parent Already existing in hierarchy parent object.
@@ -134,6 +128,22 @@ public class ObjectUtils {
             parent.addChildObject(object);
         else
             hierarchy.addObject(object);
+    }
+
+    /**
+     * Iterates over provided PathObject collection and looks for objects which are not annotations. Returns them.
+     *
+     * @param objects Collection of PathObjects.
+     * @return The collection of non-annotation objects.
+     */
+    static Collection<PathObject> getDetectionObjects(Collection<PathObject> objects){
+        Collection<PathObject> detectionObjects = new ArrayList<>();
+        for (PathObject object : objects){
+            if (!object.isAnnotation()){
+                detectionObjects.add(object);
+            }
+        }
+        return detectionObjects;
     }
 
 }

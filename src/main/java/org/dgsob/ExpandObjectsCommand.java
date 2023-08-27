@@ -26,6 +26,15 @@ public class ExpandObjectsCommand {
     private ExpandObjectsCommand(){
 
     }
+
+    /**
+     * In first stage collects selected detection objects in pathObjects, creates new bigger ones based on the selected objects ROIs and provided by the user radius,
+     * appends them to newObjects and removes the smaller ones from hierarchy.
+     * In second stage it processes overlapping objects.
+     *
+     * @param imageData ImageData.
+     * @return Boolean flag.
+     */
     @SuppressWarnings("UnusedReturnValue")
     public static boolean runObjectsExpansion(ImageData<BufferedImage> imageData){
 
@@ -34,13 +43,16 @@ public class ExpandObjectsCommand {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorMessage("Selection Required", "Please select objects to expand.");
+            Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
             return false;
         }
 
-        Collection<PathObject> pathObjects = ObjectUtils.getSelected(hierarchy);
+        Collection<PathObject> pathObjects = ObjectUtils.getDetectionObjects(hierarchy.getSelectionModel().getSelectedObjects());
 
-        assert pathObjects != null;
+        if (pathObjects.isEmpty()){
+            Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
+            return false;
+        }
 
         Collection<PathObject> newObjects = new ArrayList<>();
 
@@ -71,7 +83,7 @@ public class ExpandObjectsCommand {
 
         // Creating second window if the user wants to set priorities for classes
         if (differentClassesChoice.equals("Set priority for each class")){
-            Set<PathClass> availableClasses = ClassUtils.getAllClasses(pathObjects);
+            Set<PathClass> availableClasses = ClassUtils.getAllClasses(hierarchy.getAllObjects(false));
             ParameterList priorityRankingParams = createPriorityRankingParameterList(availableClasses);
             boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
 
@@ -109,9 +121,9 @@ public class ExpandObjectsCommand {
         hierarchy.removeObjects(pathObjects, false); // remove old objects
         hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
 
-        //Steps for processing overlapping objects:
+        // Steps for processing overlapping objects:
 
-        // 1. Add 'background', i.e. already existing in hierarchy, not selected, objects to newObjects.
+        // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
         newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
 
         // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
@@ -125,9 +137,20 @@ public class ExpandObjectsCommand {
         while(!newObjects.isEmpty()) {
             newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
         }
+
         hierarchy.addObjects(objectsToAddToHierarchy);
         return true;
     }
+
+    /**
+     * I don't remember how it works but should be called recursively. It appends an object to objectsToAddToHierarchy
+     * if it doesn't intersect any other object.
+     *
+     * @param newObjects Collection of objects to process. Only one is processed witch each call of the function.
+     * @param objectsToAddToHierarchy Collection of objects to add to hierarchy.
+     * @param priorityRanking List of calsses names as strings which is the order of priority.
+     * @return newObjects - one object
+     */
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
                                                                     Collection<PathObject> objectsToAddToHierarchy,
                                                                     List<String> priorityRanking){
@@ -208,6 +231,16 @@ public class ExpandObjectsCommand {
         }
         return remainingObjects;
     }
+
+    /**
+     * For each object of the provided objects collection takes its ROI, multiplies by the given radius, and collects all
+     * non-annotation objects in such enlarged ROI, adding them to the copy of provided objects collection and deleting from hierarchy.
+     *
+     * @param hierarchy A hierarchy to delete the objectsfrom.
+     * @param objects Original collection of objects of interest.
+     * @param radius Int value to enlarge each object's ROI. 'Background' objects within this ROI are added to the collection.
+     * @return Provided objects + collected 'background' objects as one collection.
+     */
     private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
         Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
         for (PathObject object : objects){
@@ -217,29 +250,44 @@ public class ExpandObjectsCommand {
             ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
             Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
-            hierarchy.removeObjects(objectsInROI, false);
-            // this loop might be unnecessary and replaced with objects.addAll(objectsInROI) but idk, should be tested
+            objectsInROI = ObjectUtils.getDetectionObjects(objectsInROI); // remove all annotations from the collection
             for (PathObject roiObject : objectsInROI){
-                if (!enhancedObjects.contains(roiObject)){
+                if (!enhancedObjects.contains(roiObject)/*&& !roiObject.isAnnotation()*/){
                     enhancedObjects.add(roiObject);
                 }
             }
-            //
+            hierarchy.removeObjects(objectsInROI, true);
         }
         return enhancedObjects;
     }
+
+    /**
+     * Creates a list of parameters from provided classes.
+     *
+     * @param availableClasses Set of classes, their names will be options for a user to choose from while assigning priorities to the classes.
+     * @return ParameterList of classes names or a ParameterList with an empty parameter message if availableClasses were empty.
+     */
     private static ParameterList createPriorityRankingParameterList(Set<PathClass> availableClasses){
         List<String> classNames = new ArrayList<>(availableClasses.stream()
                 .map(PathClass::getName)
                 .toList());
         ParameterList priorityRankingParams = new ParameterList();
-        priorityRankingParams.addEmptyParameter("""
-                Class 1 corresponds to the highest priority.
-                Lower prority object will be deleted if intersecting object of a higher priority.
-                
-                """);
-        for (int i = 1; i <= classNames.size(); i++){
-            priorityRankingParams.addChoiceParameter("priorityClass_" + i, "Class " + i, classNames.get(i-1), classNames);
+
+        if (!classNames.isEmpty()) {
+            priorityRankingParams.addEmptyParameter("""
+                    Class 1 corresponds to the highest priority.
+                    Lower prority object will be deleted if intersecting object of a higher priority.
+                                        
+                    """);
+            for (int i = 1; i <= classNames.size(); i++) {
+                priorityRankingParams.addChoiceParameter("priorityClass_" + i, "Class " + i, classNames.get(i - 1), classNames);
+            }
+        }
+        else{
+            priorityRankingParams.addEmptyParameter("""
+                    No classifications detected.
+                                        
+                    """);
         }
         return priorityRankingParams;
     }
