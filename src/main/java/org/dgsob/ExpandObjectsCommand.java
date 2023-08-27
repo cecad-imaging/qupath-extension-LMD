@@ -251,9 +251,9 @@ public class ExpandObjectsCommand {
             for (PathObject roiObject : objectsInROI){
                 if (!enhancedObjects.contains(roiObject) && !roiObject.isAnnotation()){
                     enhancedObjects.add(roiObject);
-                    hierarchy.removeObject(roiObject, false);
                 }
             }
+            hierarchy.removeObjects(objectsInROI, true);
         }
         return enhancedObjects;
     }
