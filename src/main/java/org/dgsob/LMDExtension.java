@@ -12,7 +12,7 @@ import java.io.IOException;
 public class LMDExtension implements QuPathExtension {
     @Override
     public void installExtension(QuPathGUI qupath) {
-        qupath.installActions(ActionTools.getAnnotatedActions(new ExportToLMDAction(qupath)));
+        qupath.installActions(ActionTools.getAnnotatedActions(new LMDActions(qupath)));
     }
 
     @Override
@@ -31,30 +31,35 @@ public class LMDExtension implements QuPathExtension {
     }
 
     @ActionMenu("Extensions>Export to LMD")
-    public static class ExportToLMDAction {
-        @ActionMenu("Utilities>Create Image Copy>Mirror Horizontally")
-        public final Action actionMirrorImageX;
-        @ActionMenu("Utilities>Create Image Copy>Mirror Vertically")
-        public final Action actionMirrorImageY;
-        @ActionMenu("Utilities>Create Image Copy>Do Not Mirror")
-        public final Action actionMirrorImageNone;
-        @ActionMenu("Utilities>Expand selected objects")
+    public static class LMDActions {
+        @ActionMenu("Utilities>Convert Selected Objects>To Detections")
+        public final Action convertToDetections;
+        @ActionMenu("Utilities>Convert Selected Objects>To Annotations")
+        public final Action convertToAnnotations;
+        @ActionMenu("Utilities>Create Mirrored Image>Horizontal")
+        public final Action mirrorImageX;
+        @ActionMenu("Utilities>Create Mirrored Image>Vertical")
+        public final Action mirrorImageY;
+        @ActionMenu("Utilities>Expand Selected Objects")
         @ActionDescription("Makes objects larger by the provided radius. Annotations not supported.")
-        public final Action actionExpandObjects;
+        public final Action expandObjects;
         @ActionMenu("Export")
-        public final Action actionExport;
+        @ActionDescription("Exports objects to an XML file. Annotations not supported.")
+        public final Action export;
 
-        private ExportToLMDAction(QuPathGUI qupath) {
+        private LMDActions(QuPathGUI qupath) {
 
-            actionMirrorImageX = qupath.createImageDataAction(imageData -> MirrorImageCommand.mirrorImage(qupath, true, false));
+            convertToDetections = qupath.createImageDataAction(imageData -> ConvertObjectsCommand.convertObjects(imageData, true));
 
-            actionMirrorImageY = qupath.createImageDataAction(imageData -> MirrorImageCommand.mirrorImage(qupath, false, true));
+            convertToAnnotations = qupath.createImageDataAction(imageData -> ConvertObjectsCommand.convertObjects(imageData, false));
 
-            actionMirrorImageNone = qupath.createImageDataAction(imageData -> MirrorImageCommand.mirrorImage(qupath, false, false));
+            mirrorImageX = qupath.createImageDataAction(imageData -> MirrorImageCommand.mirrorImage(qupath, true, false));
 
-            actionExpandObjects = qupath.createImageDataAction(ExpandObjectsCommand::runObjectsExpansion);
+            mirrorImageY = qupath.createImageDataAction(imageData -> MirrorImageCommand.mirrorImage(qupath, false, true));
 
-            actionExport = qupath.createImageDataAction(imageData -> {
+            expandObjects = qupath.createImageDataAction(ExpandObjectsCommand::runObjectsExpansion);
+
+            export = qupath.createImageDataAction(imageData -> {
                 try {
                     ExportCommand.runExport(qupath.getProject().getPath(), imageData);
                 } catch (IOException e) {

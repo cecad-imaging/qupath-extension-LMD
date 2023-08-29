@@ -146,4 +146,30 @@ public class ObjectUtils {
         return detectionObjects;
     }
 
+    static void convertToDetections(PathObjectHierarchy hierarchy, Collection<PathObject> objects){
+        Collection<PathObject> detectionObjects = new ArrayList<>();
+        for (PathObject object : objects){
+            PathClass pathClass = object.getPathClass();
+            if (pathClass != null)
+                detectionObjects.add(PathObjects.createDetectionObject(object.getROI(), pathClass));
+            else
+                detectionObjects.add(PathObjects.createDetectionObject(object.getROI()));
+        }
+        hierarchy.removeObjects(objects, true);
+        hierarchy.addObjects(detectionObjects);
+    }
+
+    static void convertToAnnotations(PathObjectHierarchy hierarchy, Collection<PathObject> objects){
+        Collection<PathObject> annotationObjects = new ArrayList<>();
+        for (PathObject object : objects){
+            PathClass pathClass = object.getPathClass();
+            if (pathClass != null)
+                annotationObjects.add(PathObjects.createAnnotationObject(object.getROI(), pathClass));
+            else
+                annotationObjects.add(PathObjects.createAnnotationObject(object.getROI()));
+        }
+        hierarchy.removeObjects(objects, true);
+        hierarchy.addObjects(annotationObjects);
+    }
+
 }
