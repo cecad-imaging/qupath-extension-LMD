@@ -14,7 +14,6 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
@@ -26,7 +25,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.RowConstraints;
 
 public class ProgressMonitorFX implements SimpleProgressMonitor {
-    private static final Logger logger = LoggerFactory.getLogger(ProgressBar.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProgressMonitorFX.class);
 
     private final Stage owner;
 
@@ -188,7 +187,6 @@ public class ProgressMonitorFX implements SimpleProgressMonitor {
             Node node = nodes[i];
             pane.add(node, 0, i);
             if (node instanceof Control) {
-//				((Control)node).setMinSize(((Control) node).getPrefWidth(), ((Control) node).getPrefHeight());
                 ((Control)node).prefWidthProperty().bind(pane.widthProperty());
             }
         }

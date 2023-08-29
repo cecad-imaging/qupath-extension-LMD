@@ -56,7 +56,7 @@ public class LMDExtension implements QuPathExtension {
 
             actionExport = qupath.createImageDataAction(imageData -> {
                 try {
-                    ExportCommand.runExport(qupath, imageData);
+                    ExportCommand.runExport(qupath.getProject().getPath(), imageData);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

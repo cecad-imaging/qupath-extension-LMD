@@ -1,6 +1,5 @@
 package org.dgsob;
 
-import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
 import qupath.lib.images.ImageData;
@@ -28,14 +27,15 @@ public class ExportCommand {
     }
 
     /**
-     * Static method responsible for the main export logic: sets GeoJSON and XML paths and names,
+     * Main export logic: sets GeoJSON and XML paths and names,
      * exports objects from QuPath to GeoJSON, runs export to XML, deletes GeoJSON.
-     * @param qupath An instance of qupath needed to access project's directory
-     * @param imageData Current imaage's data needed to access hierarchy and thus objects to export
-     * @return Boolean flag for flow control.
+     *
+     * @param projectFilePath project.qpproj directory, e.g. /home/user/QuPath/Projects/Project/project.qpproj
+     * @param imageData Current image's data needed to access hierarchy and thus objects to export
+     * @return Boolean flag for flow control
      */
     @SuppressWarnings("UnusedReturnValue")
-    public static boolean runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData ) throws IOException {
+    public static boolean runExport(Path projectFilePath, ImageData<BufferedImage> imageData ) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         String allObjects = "All detection objects";
@@ -92,8 +92,8 @@ public class ExportCommand {
         final String DEFAULT_GeoJSON_NAME = currentTime + ".geojson";
         final String DEFAULT_XML_NAME = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", "_" + currentTime + ".xml");
 
-        // Get the current project.qpproj file path
-        Path projectFilePath = qupath.getProject().getPath();
+//        // Get the current project.qpproj file path
+//        Path projectFilePath = qupath.getProject().getPath();
 
         // Set files' default paths
         final String pathGeoJSON = getProjectDirectory(projectFilePath, "LMD data" + File.separator + ".temp").resolve(DEFAULT_GeoJSON_NAME).toString();
