@@ -99,6 +99,8 @@ public class ExpandObjectsCommand {
             }
         }
 
+        long startTime = System.nanoTime();
+
         // Enlarging the objects by creating new ones and deleting old ones
         double radiusPixels;
         PixelCalibration calibration = server.getPixelCalibration();
@@ -139,6 +141,11 @@ public class ExpandObjectsCommand {
         }
 
         hierarchy.addObjects(objectsToAddToHierarchy);
+        long endTime = System.nanoTime();
+        long duration = endTime - startTime;
+        double seconds = (double) duration / 1_000_000_000.0;
+        Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
+                + objectsToAddToHierarchy.size() + " output objects.");
         return true;
     }
 

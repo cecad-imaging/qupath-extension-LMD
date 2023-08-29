@@ -3,22 +3,24 @@ plugins {
 }
 
 group = "org.dgsob"
-version = "0.0.9-7"
+version = "0.0.9-8"
 
 repositories {
     mavenCentral()
     maven("https://maven.scijava.org/content/repositories/releases")
     maven("https://maven.scijava.org/content/repositories/snapshots")
+    maven("https://maven.imagej.net/content/repositories/releases/")
 }
 
 dependencies {
-    val qupathVersion = "0.4.3" // For now
+    val qupathVersion = "0.4.3"
+    val slf4jVersion = "1.7.9"
     // https://mvnrepository.com/artifact/io.github.qupath/qupath-gui-fx
     implementation("io.github.qupath:qupath-gui-fx:$qupathVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.1")
     testImplementation(platform("org.junit:junit-bom:5.9.2"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
-
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
 }
 
 tasks.test {

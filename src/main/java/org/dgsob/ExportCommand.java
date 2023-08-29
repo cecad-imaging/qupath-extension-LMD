@@ -32,10 +32,10 @@ public class ExportCommand {
      * exports objects from QuPath to GeoJSON, runs export to XML, deletes GeoJSON.
      * @param qupath An instance of qupath needed to access project's directory
      * @param imageData Current imaage's data needed to access hierarchy and thus objects to export
-     * @return returned boolean value is used to control the flow of the function
+     * @return Boolean flag for flow control.
      */
     @SuppressWarnings("UnusedReturnValue")
-    public static boolean runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
+    public static boolean runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData ) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         String allObjects = "All detection objects";
