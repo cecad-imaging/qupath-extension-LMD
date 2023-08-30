@@ -1,4 +1,4 @@
-package org.dgsob;
+package org.dgsob.common;
 
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.classes.PathClass;
@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class ClassUtils {
 
-    static Set<PathClass> getAllClasses(Collection<PathObject> objects){
+    public static Set<PathClass> getAllClasses(Collection<PathObject> objects){
         Set<PathClass> uniqueClasses = new HashSet<>();
         for (PathObject object : objects) {
             PathClass objectClass = object.getPathClass();
@@ -19,7 +19,7 @@ public class ClassUtils {
         }
         return uniqueClasses;
     }
-    static boolean areAllObjectsOfSameClass(Collection<PathObject> objects) {
+    public static boolean areAllObjectsOfSameClass(Collection<PathObject> objects) {
         PathClass commonClass = null;
 
         for (PathObject object : objects) {

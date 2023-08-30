@@ -1,8 +1,11 @@
-package org.dgsob;
+package org.dgsob.utilities;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
+import org.dgsob.common.ObjectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
@@ -11,6 +14,7 @@ import qupath.lib.objects.PathObject;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 
 public class MirrorImageCommand {
+    private static final Logger logger = LoggerFactory.getLogger(MirrorImageCommand.class);
     private MirrorImageCommand(){
 
     }
@@ -51,8 +55,10 @@ public class MirrorImageCommand {
         builder.transform(transform);
         ImageServer<BufferedImage> newServer = builder.build();
 
-        //TODO: Change new server's name in metadata
-
+        //Changing new server's metadata for the old one, because new only adds affine transform details to the image's name
+//        logger.trace("newServer metadata: " + newServer.getMetadata());
+//        logger.trace("original server metadata: " + server.getMetadata());
+        newServer.setMetadata(server.getMetadata());
 
         // Use the newly built server to create new imageData
         ImageData<BufferedImage> newImageData = new ImageData<>(newServer);

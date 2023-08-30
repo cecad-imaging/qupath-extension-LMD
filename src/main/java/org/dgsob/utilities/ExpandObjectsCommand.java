@@ -1,5 +1,7 @@
-package org.dgsob;
+package org.dgsob.utilities;
 
+import org.dgsob.common.ClassUtils;
+import org.dgsob.common.ObjectUtils;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
@@ -47,7 +49,7 @@ public class ExpandObjectsCommand {
             return false;
         }
 
-        Collection<PathObject> pathObjects = ObjectUtils.getDetectionObjects(hierarchy.getSelectionModel().getSelectedObjects());
+        Collection<PathObject> pathObjects = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
 
         if (pathObjects.isEmpty()){
             Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
@@ -99,6 +101,8 @@ public class ExpandObjectsCommand {
             }
         }
 
+        long startTime = System.nanoTime();
+
         // Enlarging the objects by creating new ones and deleting old ones
         double radiusPixels;
         PixelCalibration calibration = server.getPixelCalibration();
@@ -139,6 +143,11 @@ public class ExpandObjectsCommand {
         }
 
         hierarchy.addObjects(objectsToAddToHierarchy);
+        long endTime = System.nanoTime();
+        long duration = endTime - startTime;
+        double seconds = (double) duration / 1_000_000_000.0;
+        Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
+                + objectsToAddToHierarchy.size() + " output objects.");
         return true;
     }
 
@@ -250,7 +259,7 @@ public class ExpandObjectsCommand {
             ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
             Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
-            objectsInROI = ObjectUtils.getDetectionObjects(objectsInROI); // remove all annotations from the collection
+            objectsInROI = ObjectUtils.filterOutAnnotations(objectsInROI); // remove all annotations from the collection
             for (PathObject roiObject : objectsInROI){
                 if (!enhancedObjects.contains(roiObject)/*&& !roiObject.isAnnotation()*/){
                     enhancedObjects.add(roiObject);

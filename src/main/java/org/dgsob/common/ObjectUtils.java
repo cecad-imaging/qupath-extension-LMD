@@ -1,4 +1,4 @@
-package org.dgsob;
+package org.dgsob.common;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class ObjectUtils {
-    static PathObject mergeObjects(final Collection<PathObject> objects, final PathClass objectClass) {
+    public static PathObject mergeObjects(final Collection<PathObject> objects, final PathClass objectClass) {
         ROI shapeNew = null;
         for (PathObject object : objects) {
             if (shapeNew == null)
@@ -37,7 +37,7 @@ public class ObjectUtils {
             return PathObjects.createDetectionObject(shapeNew);
     }
 
-    static Polygon convertRoiToGeometry(PathObject object){
+    public static Polygon convertRoiToGeometry(PathObject object){
         List<Point2> points = object.getROI().getAllPoints();
 
         Coordinate[] coords = new Coordinate[points.size() + 1]; // +1 to close the polygon
@@ -52,7 +52,7 @@ public class ObjectUtils {
         return geomFactory.createPolygon(linearRing, null);
     }
 
-    static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, List<String> priorityRanking) {
+    public static List<PathObject> sortObjectsByPriority(final Collection<PathObject> objects, List<String> priorityRanking) {
         List<PathObject> sortedObjects = new ArrayList<>(objects);
 
         sortedObjects.sort((obj1, obj2) -> {
@@ -87,7 +87,7 @@ public class ObjectUtils {
      * @param translateY Vertical translation.
      * @return The mirrored object.
      */
-    static PathObject mirrorObject(PathObject object, int scaleX, int scaleY, int translateX, int translateY){
+    public static PathObject mirrorObject(PathObject object, int scaleX, int scaleY, int translateX, int translateY){
         ROI roi = object.getROI();
         roi = roi.scale(scaleX, scaleY);
         roi = roi.translate(-translateX, -translateY);
@@ -123,7 +123,7 @@ public class ObjectUtils {
      * @param object Object to add.
      * @param parent Already existing in hierarchy parent object.
      */
-    static void addObjectAccountingForParent(PathObjectHierarchy hierarchy, PathObject object, PathObject parent) {
+    public static void addObjectAccountingForParent(PathObjectHierarchy hierarchy, PathObject object, PathObject parent) {
         if (parent != null)
             parent.addChildObject(object);
         else
@@ -136,7 +136,7 @@ public class ObjectUtils {
      * @param objects Collection of PathObjects.
      * @return The collection of non-annotation objects.
      */
-    static Collection<PathObject> getDetectionObjects(Collection<PathObject> objects){
+    public static Collection<PathObject> filterOutAnnotations(Collection<PathObject> objects){
         Collection<PathObject> detectionObjects = new ArrayList<>();
         for (PathObject object : objects){
             if (!object.isAnnotation()){
@@ -145,5 +145,45 @@ public class ObjectUtils {
         }
         return detectionObjects;
     }
+
+    public static void convertToDetections(PathObjectHierarchy hierarchy, Collection<PathObject> objects){
+        Collection<PathObject> detectionObjects = new ArrayList<>();
+        for (PathObject object : objects){
+            PathClass pathClass = object.getPathClass();
+            if (pathClass != null)
+                detectionObjects.add(PathObjects.createDetectionObject(object.getROI(), pathClass));
+            else
+                detectionObjects.add(PathObjects.createDetectionObject(object.getROI()));
+        }
+        hierarchy.removeObjects(objects, true);
+        hierarchy.addObjects(detectionObjects);
+    }
+
+    public static void convertToAnnotations(PathObjectHierarchy hierarchy, Collection<PathObject> objects){
+        Collection<PathObject> annotationObjects = new ArrayList<>();
+        for (PathObject object : objects){
+            PathClass pathClass = object.getPathClass();
+            if (pathClass != null)
+                annotationObjects.add(PathObjects.createAnnotationObject(object.getROI(), pathClass));
+            else
+                annotationObjects.add(PathObjects.createAnnotationObject(object.getROI()));
+        }
+        hierarchy.removeObjects(objects, true);
+        hierarchy.addObjects(annotationObjects);
+    }
+
+//    static Collection<PathObject> getCalbrationPoints(Collection<PathObject> objects, String... names) {
+//        return objects.stream()
+//                .filter(p -> p.isAnnotation() && p.getROI().isPoint() && containsName(p.getDisplayedName(), names))
+//                .collect(Collectors.toList());
+//    }
+//    static boolean containsName(String targetName, String... names) {
+//        for (String name : names) {
+//            if (targetName.equals(name)) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
 }

@@ -1,6 +1,6 @@
-package org.dgsob;
+package org.dgsob.exporting;
 
-import qupath.lib.gui.QuPathGUI;
+import org.dgsob.common.ClassUtils;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
 import qupath.lib.images.ImageData;
@@ -19,8 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
-import static org.dgsob.ExportOptions.CollectorTypes.*;
-import static org.dgsob.ExportOptions.CapAssignments.*;
+import static org.dgsob.exporting.ExportOptions.CollectorTypes.*;
+import static org.dgsob.exporting.ExportOptions.CapAssignments.*;
 
 public class ExportCommand {
     private ExportCommand(){
@@ -28,14 +28,15 @@ public class ExportCommand {
     }
 
     /**
-     * Static method responsible for the main export logic: sets GeoJSON and XML paths and names,
+     * Main export logic: sets GeoJSON and XML paths and names,
      * exports objects from QuPath to GeoJSON, runs export to XML, deletes GeoJSON.
-     * @param qupath An instance of qupath needed to access project's directory
-     * @param imageData Current imaage's data needed to access hierarchy and thus objects to export
-     * @return returned boolean value is used to control the flow of the function
+     *
+     * @param projectFilePath project.qpproj directory, e.g. /home/user/QuPath/Projects/Project/project.qpproj
+     * @param imageData Current image's data needed to access hierarchy and thus objects to export
+     * @return Boolean flag for flow control
      */
     @SuppressWarnings("UnusedReturnValue")
-    public static boolean runExport(QuPathGUI qupath, ImageData<BufferedImage> imageData) throws IOException {
+    public static boolean runExport(Path projectFilePath, ImageData<BufferedImage> imageData) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         String allObjects = "All detection objects";
@@ -50,6 +51,8 @@ public class ExportCommand {
                         Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _96_WELL_PLATE, PETRI),
                         "Choose a type of your collector.\n" +
                                   "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
+//                .addBooleanParameter("excludeAnnotations", "Exclude Annotations", true,
+//                        "If checked, all annotation objects (except calibration points) won't be exported.");
 
         boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(exportParams).getPane());
 
@@ -67,13 +70,13 @@ public class ExportCommand {
                 return false;
             }
             chosenObjects = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
-            // Automatically include MultiPoint even if not selected, other annotations will be ignored
+            // Include Callibration even if not selected (by adding all annotations, they will be filtered out in GeojsonToXml anyway).
             chosenObjects.addAll(hierarchy.getAnnotationObjects());
         }
         else {
             chosenObjects = hierarchy.getAllObjects(false);
         }
-        //
+
 
         var collectorType = exportParams.getChoiceParameterValue("collectorChoice");
         boolean processCollectors = !collectorType.equals(NO_COLLECTOR);
@@ -91,9 +94,6 @@ public class ExportCommand {
         String currentTime = dateFormat.format(new Date());
         final String DEFAULT_GeoJSON_NAME = currentTime + ".geojson";
         final String DEFAULT_XML_NAME = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", "_" + currentTime + ".xml");
-
-        // Get the current project.qpproj file path
-        Path projectFilePath = qupath.getProject().getPath();
 
         // Set files' default paths
         final String pathGeoJSON = getProjectDirectory(projectFilePath, "LMD data" + File.separator + ".temp").resolve(DEFAULT_GeoJSON_NAME).toString();
