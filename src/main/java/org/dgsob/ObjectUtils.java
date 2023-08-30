@@ -136,7 +136,7 @@ public class ObjectUtils {
      * @param objects Collection of PathObjects.
      * @return The collection of non-annotation objects.
      */
-    static Collection<PathObject> getDetectionObjects(Collection<PathObject> objects){
+    static Collection<PathObject> filterOutAnnotations(Collection<PathObject> objects){
         Collection<PathObject> detectionObjects = new ArrayList<>();
         for (PathObject object : objects){
             if (!object.isAnnotation()){
@@ -171,5 +171,19 @@ public class ObjectUtils {
         hierarchy.removeObjects(objects, true);
         hierarchy.addObjects(annotationObjects);
     }
+
+//    static Collection<PathObject> getCalbrationPoints(Collection<PathObject> objects, String... names) {
+//        return objects.stream()
+//                .filter(p -> p.isAnnotation() && p.getROI().isPoint() && containsName(p.getDisplayedName(), names))
+//                .collect(Collectors.toList());
+//    }
+//    static boolean containsName(String targetName, String... names) {
+//        for (String name : names) {
+//            if (targetName.equals(name)) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
 }

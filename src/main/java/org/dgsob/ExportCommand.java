@@ -50,6 +50,8 @@ public class ExportCommand {
                         Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _96_WELL_PLATE, PETRI),
                         "Choose a type of your collector.\n" +
                                   "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
+//                .addBooleanParameter("excludeAnnotations", "Exclude Annotations", true,
+//                        "If checked, all annotation objects (except calibration points) won't be exported.");
 
         boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(exportParams).getPane());
 
@@ -67,13 +69,13 @@ public class ExportCommand {
                 return false;
             }
             chosenObjects = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
-            // Automatically include MultiPoint even if not selected, other annotations will be ignored
+            // Include Callibration even if not selected (by adding all annotations, they will be filtered out in GeojsonToXml anyway).
             chosenObjects.addAll(hierarchy.getAnnotationObjects());
         }
         else {
             chosenObjects = hierarchy.getAllObjects(false);
         }
-        //
+
 
         var collectorType = exportParams.getChoiceParameterValue("collectorChoice");
         boolean processCollectors = !collectorType.equals(NO_COLLECTOR);
@@ -91,9 +93,6 @@ public class ExportCommand {
         String currentTime = dateFormat.format(new Date());
         final String DEFAULT_GeoJSON_NAME = currentTime + ".geojson";
         final String DEFAULT_XML_NAME = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", "_" + currentTime + ".xml");
-
-//        // Get the current project.qpproj file path
-//        Path projectFilePath = qupath.getProject().getPath();
 
         // Set files' default paths
         final String pathGeoJSON = getProjectDirectory(projectFilePath, "LMD data" + File.separator + ".temp").resolve(DEFAULT_GeoJSON_NAME).toString();

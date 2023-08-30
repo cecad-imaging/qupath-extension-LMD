@@ -59,4 +59,11 @@ public class ExportOptions {
       ]
     }
     */
+
+    public static class CalibrationPointsNames {
+        public static final String CP1 = "calibration1";
+        public static final String CP2 = "calibration2";
+        public static final String CP3 = "calibration3";
+
+    }
 }

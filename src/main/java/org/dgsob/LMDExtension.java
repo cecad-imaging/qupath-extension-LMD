@@ -40,7 +40,7 @@ public class LMDExtension implements QuPathExtension {
         public final Action mirrorImageX;
         @ActionMenu("Utilities>Create Mirrored Image>Vertical")
         public final Action mirrorImageY;
-        @ActionMenu("Utilities>Expand Selected Objects")
+        @ActionMenu("Utilities>Expand Selected Detections")
         @ActionDescription("Makes objects larger by the provided radius. Annotations not supported.")
         public final Action expandObjects;
         @ActionMenu("Export")

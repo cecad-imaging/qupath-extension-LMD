@@ -47,7 +47,7 @@ public class ExpandObjectsCommand {
             return false;
         }
 
-        Collection<PathObject> pathObjects = ObjectUtils.getDetectionObjects(hierarchy.getSelectionModel().getSelectedObjects());
+        Collection<PathObject> pathObjects = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
 
         if (pathObjects.isEmpty()){
             Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
@@ -257,7 +257,7 @@ public class ExpandObjectsCommand {
             ROI roi2 = GeometryTools.geometryToROI(geometry2, ImagePlane.getPlane(roi));
 
             Collection<PathObject> objectsInROI = hierarchy.getObjectsForROI(null, roi2);
-            objectsInROI = ObjectUtils.getDetectionObjects(objectsInROI); // remove all annotations from the collection
+            objectsInROI = ObjectUtils.filterOutAnnotations(objectsInROI); // remove all annotations from the collection
             for (PathObject roiObject : objectsInROI){
                 if (!enhancedObjects.contains(roiObject)/*&& !roiObject.isAnnotation()*/){
                     enhancedObjects.add(roiObject);

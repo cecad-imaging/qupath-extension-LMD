@@ -22,6 +22,7 @@ import java.util.Set;
 import static org.dgsob.ExportOptions.CapAssignments.*;
 import static org.dgsob.ExportOptions.ObjectTypes.*;
 import static org.dgsob.ExportOptions.FeatureGeoTypes.*;
+import static org.dgsob.ExportOptions.CalibrationPointsNames.*;
 
 public class GeojsonToXml {
     public GeojsonToXml(){
@@ -31,6 +32,7 @@ public class GeojsonToXml {
     /**
      * Reads a GeoJSON file from a specified location and converts to the XML format required by Leica's LMD software.
      * The saved image data is: calibration points, shapes' count and coordinates and optionally collector's cap ID for each shape.
+     * It filters out annotations from GeoJSON and doesn't count them as shapes in the XML, so the two files actually contain different objects.
      *
      * @param inputPath       Path to GeoJSON file
      * @param outputPath      Path where the output XML file will be saved
@@ -63,9 +65,9 @@ public class GeojsonToXml {
                 // If 3 annotations of type 'Point'
                 if (POINT.equals(geometryType)){
                     switch (featureName.toLowerCase()) {
-                        case "calibration1" -> calibrationPoints[0] = geometry.path("coordinates");
-                        case "calibration2" -> calibrationPoints[1] = geometry.path("coordinates");
-                        case "calibration3" -> calibrationPoints[2] = geometry.path("coordinates");
+                        case CP1 -> calibrationPoints[0] = geometry.path("coordinates");
+                        case CP2 -> calibrationPoints[1] = geometry.path("coordinates");
+                        case CP3 -> calibrationPoints[2] = geometry.path("coordinates");
                     }
                 }
             }
