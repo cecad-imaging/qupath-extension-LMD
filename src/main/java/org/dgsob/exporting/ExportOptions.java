@@ -1,4 +1,4 @@
-package org.dgsob;
+package org.dgsob.exporting;
 
 public class ExportOptions {
     /*

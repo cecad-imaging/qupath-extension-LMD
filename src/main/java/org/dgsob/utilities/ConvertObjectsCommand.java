@@ -1,5 +1,6 @@
-package org.dgsob;
+package org.dgsob.utilities;
 
+import org.dgsob.common.ObjectUtils;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.images.ImageData;
 import qupath.lib.objects.PathObject;

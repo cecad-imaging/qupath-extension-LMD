@@ -1,8 +1,9 @@
-package org.dgsob;
+package org.dgsob.utilities;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
+import org.dgsob.common.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;

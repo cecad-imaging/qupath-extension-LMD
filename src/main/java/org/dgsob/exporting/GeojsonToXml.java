@@ -1,4 +1,4 @@
-package org.dgsob;
+package org.dgsob.exporting;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.w3c.dom.Document;
@@ -19,10 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-import static org.dgsob.ExportOptions.CapAssignments.*;
-import static org.dgsob.ExportOptions.ObjectTypes.*;
-import static org.dgsob.ExportOptions.FeatureGeoTypes.*;
-import static org.dgsob.ExportOptions.CalibrationPointsNames.*;
+import static org.dgsob.exporting.ExportOptions.CapAssignments.*;
+import static org.dgsob.exporting.ExportOptions.ObjectTypes.*;
+import static org.dgsob.exporting.ExportOptions.FeatureGeoTypes.*;
+import static org.dgsob.exporting.ExportOptions.CalibrationPointsNames.*;
 
 public class GeojsonToXml {
     public GeojsonToXml(){

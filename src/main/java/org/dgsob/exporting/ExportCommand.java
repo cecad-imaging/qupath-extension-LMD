@@ -1,5 +1,6 @@
-package org.dgsob;
+package org.dgsob.exporting;
 
+import org.dgsob.common.ClassUtils;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
 import qupath.lib.images.ImageData;
@@ -18,8 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
-import static org.dgsob.ExportOptions.CollectorTypes.*;
-import static org.dgsob.ExportOptions.CapAssignments.*;
+import static org.dgsob.exporting.ExportOptions.CollectorTypes.*;
+import static org.dgsob.exporting.ExportOptions.CapAssignments.*;
 
 public class ExportCommand {
     private ExportCommand(){
@@ -35,7 +36,7 @@ public class ExportCommand {
      * @return Boolean flag for flow control
      */
     @SuppressWarnings("UnusedReturnValue")
-    public static boolean runExport(Path projectFilePath, ImageData<BufferedImage> imageData ) throws IOException {
+    public static boolean runExport(Path projectFilePath, ImageData<BufferedImage> imageData) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         String allObjects = "All detection objects";

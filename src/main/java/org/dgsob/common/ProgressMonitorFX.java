@@ -1,4 +1,4 @@
-package org.dgsob;
+package org.dgsob.common;
 
 import javafx.animation.Timeline;
 import javafx.scene.Node;

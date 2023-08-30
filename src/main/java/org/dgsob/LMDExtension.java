@@ -1,6 +1,10 @@
 package org.dgsob;
 
 import org.controlsfx.control.action.Action;
+import org.dgsob.exporting.ExportCommand;
+import org.dgsob.utilities.ConvertObjectsCommand;
+import org.dgsob.utilities.ExpandObjectsCommand;
+import org.dgsob.utilities.MirrorImageCommand;
 import qupath.lib.common.Version;
 import qupath.lib.gui.ActionTools;
 import qupath.lib.gui.ActionTools.ActionMenu;
