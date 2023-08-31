@@ -34,7 +34,7 @@ public class LMDExtension implements QuPathExtension {
         return QuPathExtension.super.getQuPathVersion();
     }
 
-    @ActionMenu("Extensions>Export to LMD")
+    @ActionMenu("Extensions>LMD Support")
     public static class LMDActions {
         @ActionMenu("Utilities>Convert Selected Objects>To Detections")
         @ActionDescription("Converts any object which encloses an area to a detection object.")
@@ -49,8 +49,8 @@ public class LMDExtension implements QuPathExtension {
         @ActionMenu("Utilities>Expand Selected Detections")
         @ActionDescription("Makes objects larger by the provided radius. Annotations not supported.")
         public final Action expandObjects;
-        @ActionMenu("Export")
-        @ActionDescription("Exports objects to an XML file. Annotations not supported.")
+        @ActionMenu("Export Detections to LMD")
+        @ActionDescription("Exports detections to an XML file. Annotations not supported.")
         public final Action export;
 
         private LMDActions(QuPathGUI qupath) {
