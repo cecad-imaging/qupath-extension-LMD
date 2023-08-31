@@ -150,10 +150,15 @@ public class ObjectUtils {
         Collection<PathObject> detectionObjects = new ArrayList<>();
         for (PathObject object : objects){
             PathClass pathClass = object.getPathClass();
+            String objectName = object.getName();
+            PathObject detectionObject;
             if (pathClass != null)
-                detectionObjects.add(PathObjects.createDetectionObject(object.getROI(), pathClass));
+                detectionObject = PathObjects.createDetectionObject(object.getROI(), pathClass);
             else
-                detectionObjects.add(PathObjects.createDetectionObject(object.getROI()));
+                detectionObject = PathObjects.createDetectionObject(object.getROI());
+            if (objectName != null)
+                detectionObject.setName(objectName);
+            detectionObjects.add(detectionObject);
         }
         hierarchy.removeObjects(objects, true);
         hierarchy.addObjects(detectionObjects);
@@ -163,11 +168,16 @@ public class ObjectUtils {
         Collection<PathObject> annotationObjects = new ArrayList<>();
         for (PathObject object : objects){
             PathClass pathClass = object.getPathClass();
+            String objectName = object.getName();
+            PathObject annotationObject;
             if (pathClass != null)
-                annotationObjects.add(PathObjects.createAnnotationObject(object.getROI(), pathClass));
+                annotationObject = PathObjects.createDetectionObject(object.getROI(), pathClass);
             else
-                annotationObjects.add(PathObjects.createAnnotationObject(object.getROI()));
-        }
+                annotationObject = PathObjects.createDetectionObject(object.getROI());
+            if (objectName != null)
+                annotationObject.setName(objectName);
+            annotationObjects.add(annotationObject);
+            }
         hierarchy.removeObjects(objects, true);
         hierarchy.addObjects(annotationObjects);
     }

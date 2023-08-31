@@ -62,7 +62,7 @@ public class GeojsonToXml {
                 String geometryType = geometry.get("type").asText();
                 JsonNode properties = feature.get("properties");
                 String featureName = properties.has("name") ? properties.get("name").asText() : "Unnamed Feature";
-                // If 3 annotations of type 'Point'
+                // If 3 objects of type 'Point' (their objectType doesn't matter)
                 if (POINT.equals(geometryType)){
                     switch (featureName.toLowerCase()) {
                         case CP1 -> calibrationPoints[0] = geometry.path("coordinates");
