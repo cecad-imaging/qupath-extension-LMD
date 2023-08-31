@@ -1,7 +1,7 @@
 ## LMD Support for QuPath
 This extension aims to provide an open-source solution for automating 
 the segmentation process within Leica's laser microdissection software. It exports 
-detections from QuPath to a file format compatible with LMD7.
+detections from [QuPath](https://qupath.github.io/) to a file format compatible with LMD7.
 
 ### Installation
 Download a JAR file from releases and drag it into QuPath's main 
@@ -58,10 +58,6 @@ converting in-between annotations and detections (which enclose an area) is prov
 This preserves only the features, which matter in the context of LMD, i.e. object's 
 ROI, its class and potential name, and won't account e.g. for parent/child relations 
 (similarly to expanding).
-
-### QuPath
-
-https://github.com/qupath/qupath
 
 
 
