@@ -37,8 +37,10 @@ public class LMDExtension implements QuPathExtension {
     @ActionMenu("Extensions>Export to LMD")
     public static class LMDActions {
         @ActionMenu("Utilities>Convert Selected Objects>To Detections")
+        @ActionDescription("Converts any object which encloses an area to a detection object.")
         public final Action convertToDetections;
         @ActionMenu("Utilities>Convert Selected Objects>To Annotations")
+        @ActionDescription("Converts any object which encloses an area to an annotation object.")
         public final Action convertToAnnotations;
         @ActionMenu("Utilities>Create Mirrored Image>Horizontal")
         public final Action mirrorImageX;

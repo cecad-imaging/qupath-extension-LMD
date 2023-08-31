@@ -146,42 +146,6 @@ public class ObjectUtils {
         return detectionObjects;
     }
 
-    public static void convertToDetections(PathObjectHierarchy hierarchy, Collection<PathObject> objects){
-        Collection<PathObject> detectionObjects = new ArrayList<>();
-        for (PathObject object : objects){
-            PathClass pathClass = object.getPathClass();
-            String objectName = object.getName();
-            PathObject detectionObject;
-            if (pathClass != null)
-                detectionObject = PathObjects.createDetectionObject(object.getROI(), pathClass);
-            else
-                detectionObject = PathObjects.createDetectionObject(object.getROI());
-            if (objectName != null)
-                detectionObject.setName(objectName);
-            detectionObjects.add(detectionObject);
-        }
-        hierarchy.removeObjects(objects, true);
-        hierarchy.addObjects(detectionObjects);
-    }
-
-    public static void convertToAnnotations(PathObjectHierarchy hierarchy, Collection<PathObject> objects){
-        Collection<PathObject> annotationObjects = new ArrayList<>();
-        for (PathObject object : objects){
-            PathClass pathClass = object.getPathClass();
-            String objectName = object.getName();
-            PathObject annotationObject;
-            if (pathClass != null)
-                annotationObject = PathObjects.createDetectionObject(object.getROI(), pathClass);
-            else
-                annotationObject = PathObjects.createDetectionObject(object.getROI());
-            if (objectName != null)
-                annotationObject.setName(objectName);
-            annotationObjects.add(annotationObject);
-            }
-        hierarchy.removeObjects(objects, true);
-        hierarchy.addObjects(annotationObjects);
-    }
-
 //    static Collection<PathObject> getCalbrationPoints(Collection<PathObject> objects, String... names) {
 //        return objects.stream()
 //                .filter(p -> p.isAnnotation() && p.getROI().isPoint() && containsName(p.getDisplayedName(), names))

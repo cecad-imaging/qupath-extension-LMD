@@ -1,12 +1,14 @@
 package org.dgsob.utilities;
 
-import org.dgsob.common.ObjectUtils;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.images.ImageData;
 import qupath.lib.objects.PathObject;
+import qupath.lib.objects.PathObjects;
+import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class ConvertObjectsCommand {
@@ -17,12 +19,35 @@ public class ConvertObjectsCommand {
             return false;
         }
         Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
-        if (toDetections){
-            ObjectUtils.convertToDetections(hierarchy, objects);
+        Collection<PathObject> onlyAreasObjects = new ArrayList<>(objects);
+        Collection<PathObject> convertedObjects = new ArrayList<>();
+        for (PathObject object : objects) {
+            if (!object.getROI().isArea()) {
+                onlyAreasObjects.remove(object);
+                continue;
+            }
+            PathClass pathClass = object.getPathClass();
+            String objectName = object.getName();
+            PathObject convertedObject;
+
+            if (toDetections) {
+                if (pathClass != null)
+                    convertedObject = PathObjects.createDetectionObject(object.getROI(), pathClass);
+                else
+                    convertedObject = PathObjects.createDetectionObject(object.getROI());
+            }
+            else {
+                if (pathClass != null)
+                    convertedObject = PathObjects.createAnnotationObject(object.getROI(), pathClass);
+                else
+                    convertedObject = PathObjects.createAnnotationObject(object.getROI());
+            }
+            if (objectName != null)
+                convertedObject.setName(objectName);
+            convertedObjects.add(convertedObject);
         }
-        else {
-            ObjectUtils.convertToAnnotations(hierarchy, objects);
-        }
+        hierarchy.removeObjects(onlyAreasObjects, true);
+        hierarchy.addObjects(convertedObjects);
         return true;
     }
 }
