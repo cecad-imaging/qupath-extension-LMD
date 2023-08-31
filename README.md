@@ -1,7 +1,7 @@
 ## LMD Support for QuPath
-This extension aims to provide a way of exporting segmentations 
-created in QuPath to Leica's laser microdissection software. The goal is to
-provide an open-source solution for automating segmentation for the LMD7 microscope.
+This extension aims to provide an open-source solution for automating 
+the segmentation process within Leica's laser microdissection software. It exports 
+detections from QuPath to a file format compatible with LMD7.
 
 ### Installation
 Download a JAR file from releases and drag it into QuPath's main 
@@ -15,6 +15,11 @@ window as described [here](https://qupath.readthedocs.io/en/0.4/docs/intro/exten
 5. Export the objects, optionally choose a collector 
 and assign object classifications to its caps.
 6. Import the XML into Leica's software.
+
+### Examples
+
+- Link 1
+- Link 2
 
 ### Some Usage Details
  - **Calibration Points**: In order to add calibration points, create 3 separate 
@@ -31,7 +36,7 @@ bottom right, top right and top left corner in QuPath).
 
 - **Objects Expanding**: You will most likely need to expand your segmentations 
 having the laser's aperture in mind. To do so, select objects to expand 
-(Ctrl+Alt+D for all detections) and head to 'Utilities/Expand Selected Objects'.
+(Ctrl+Alt+D for all detections) and head to 'Utilities/Expand Selected Detections'.
 Set the radius and the desired behaviour when two objects of different classes 
 intersect - you can either exclude these objects or set an order of priority for 
 objects of diffferent classes. An object with higher priority will be preserved.
@@ -49,27 +54,14 @@ collector and upon confirmation, you'll be prompted to assign the classes.
 with microscope's view. Creates an image's copy.
 
 - **Converting**: Since only detections processing is supported, the utility for 
-converting in-between annotations and detections is provided. This preserves 
-only the features of an object, which matter in context of LMD, i.e. object's 
-ROI and its class, and won't account e.g. for parent/child relations (similarly 
-to expanding).
+converting in-between annotations and detections (which enclose an area) is provided. 
+This preserves only the features, which matter in the context of LMD, i.e. object's 
+ROI, its class and potential name, and won't account e.g. for parent/child relations 
+(similarly to expanding).
 
-### Example
-(#### In the LMD software
-1. Place your slide in the slide holder and your collector in the collector holder.
-2. Import shapes from an XML.
-3. Choose your exported XML file.
-4. You will be prompted to choose calibration points. If it is the first time, choose
-to set them manually, and navigate to each point's location. You can save these points to another XML
-file for later reuse if needed.
-5. When asked if you want to use actual magnification, 
-set your desired magnification (40 should usually work well)
-and choose yes.
-6. You should now see the imported shapes. If you don't see them, make sure 
-the collectors are assigned to the shapes, then they should appear with different collors
-for each collector symbol.
-7. No matter how hard you've tried to find exactly the same spots you chose previously
-in QuPath as calibration points, you will probably need to adjust your shapes 
-now by simply dragging them a little bit.
-8. Adjust the laser's settings and cut out the cells. )
+### QuPath
+
+https://github.com/qupath/qupath
+
+
 
