@@ -13,12 +13,22 @@ import qupath.lib.images.servers.TransformedServerBuilder;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 
-public class MirrorImageCommand {
+public class MirrorImageCommand implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(MirrorImageCommand.class);
-    private MirrorImageCommand(){
+    QuPathGUI qupath;
+    boolean mirrorHorizontally;
+    boolean mirrorVertically;
 
+    public MirrorImageCommand(QuPathGUI qupath, boolean mirrorHorizontally, boolean mirrorVertically){
+        this.qupath = qupath;
+        this.mirrorHorizontally = mirrorHorizontally;
+        this.mirrorVertically = mirrorVertically;
     }
-    public static void mirrorImage(QuPathGUI qupath, boolean mirrorHorizontally, boolean mirrorVertically){
+    @Override
+    public void run() {
+        mirrorImage();
+    }
+    private void mirrorImage(){
 
         // Collect all data from original image
         ImageData<BufferedImage> imageData = qupath.getImageData();

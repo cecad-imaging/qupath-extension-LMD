@@ -24,21 +24,23 @@ import qupath.lib.roi.GeometryTools;
 import java.awt.image.BufferedImage;
 import java.util.*;
 
-public class ExpandObjectsCommand {
-    private ExpandObjectsCommand(){
+public class ExpandObjectsCommand implements Runnable {
+    ImageData<BufferedImage> imageData;
+    public ExpandObjectsCommand(ImageData<BufferedImage> imageData){
+        this.imageData = imageData;
+    }
 
+    @Override
+    public void run() {
+        runObjectsExpansion();
     }
 
     /**
      * In first stage collects selected detection objects in pathObjects, creates new bigger ones based on the selected objects ROIs and provided by the user radius,
      * appends them to newObjects and removes the smaller ones from hierarchy.
      * In second stage it processes overlapping objects.
-     *
-     * @param imageData ImageData.
-     * @return Boolean flag.
      */
-    @SuppressWarnings("UnusedReturnValue")
-    public static boolean runObjectsExpansion(ImageData<BufferedImage> imageData){
+    private void runObjectsExpansion(){
 
         ImageServer<BufferedImage> server = imageData.getServer();
 
@@ -46,14 +48,14 @@ public class ExpandObjectsCommand {
 
         if (hierarchy.getSelectionModel().noSelection()) {
             Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
-            return false;
+            return;
         }
 
         Collection<PathObject> pathObjects = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
 
         if (pathObjects.isEmpty()){
             Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
-            return false;
+            return;
         }
 
         Collection<PathObject> newObjects = new ArrayList<>();
@@ -77,7 +79,7 @@ public class ExpandObjectsCommand {
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
         if(!confirmed) {
-            return false;
+            return;
         }
 
         Object differentClassesChoice = params.getChoiceParameterValue("differentClassesChoice");
@@ -90,7 +92,7 @@ public class ExpandObjectsCommand {
             boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
 
             if (!confirmedPriorityRanking){
-                return false;
+                return;
             }
 
             for (int i = 1; i <= availableClasses.size(); i++){
@@ -148,11 +150,10 @@ public class ExpandObjectsCommand {
         double seconds = (double) duration / 1_000_000_000.0;
         Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
                 + objectsToAddToHierarchy.size() + " output objects.");
-        return true;
     }
 
     /**
-     * I don't remember how it works but should be called recursively. It appends an object to objectsToAddToHierarchy
+     * Should be called recursively. It appends an object to objectsToAddToHierarchy
      * if it doesn't intersect any other object.
      *
      * @param newObjects Collection of objects to process. Only one is processed witch each call of the function.

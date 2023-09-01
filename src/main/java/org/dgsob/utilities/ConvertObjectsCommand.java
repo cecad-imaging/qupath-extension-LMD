@@ -11,12 +11,23 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ConvertObjectsCommand {
-    public static boolean convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
+public class ConvertObjectsCommand implements Runnable {
+    private final ImageData<BufferedImage> imageData;
+    private final boolean toDetections;
+
+    public ConvertObjectsCommand(ImageData<BufferedImage> imageData, boolean toDetections) {
+        this.imageData = imageData;
+        this.toDetections = toDetections;
+    }
+    @Override
+    public void run() {
+        convertObjects();
+    }
+    private void convertObjects(){
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
         if (hierarchy.getSelectionModel().noSelection()){
             Dialogs.showErrorMessage("Selection Required", "Please select objects to convert.");
-            return false;
+            return;
         }
         Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
         Collection<PathObject> onlyAreasObjects = new ArrayList<>(objects);
@@ -48,6 +59,5 @@ public class ConvertObjectsCommand {
         }
         hierarchy.removeObjects(onlyAreasObjects, true);
         hierarchy.addObjects(convertedObjects);
-        return true;
     }
 }

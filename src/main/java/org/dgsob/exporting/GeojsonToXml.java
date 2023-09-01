@@ -25,9 +25,10 @@ import static org.dgsob.exporting.ExportOptions.FeatureGeoTypes.*;
 import static org.dgsob.exporting.ExportOptions.CalibrationPointsNames.*;
 
 public class GeojsonToXml {
+    private int shapeCount = 0;
+
     public GeojsonToXml(){
     }
-    private int shapeCount = 0;
 
     /**
      * Reads a GeoJSON file from a specified location and converts to the XML format required by Leica's LMD software.
