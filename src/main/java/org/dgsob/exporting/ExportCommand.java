@@ -160,7 +160,7 @@ public class ExportCommand {
                 Path geoJSONPath = Path.of(pathGeoJSON);
                 Files.deleteIfExists(geoJSONPath);
             } catch (IOException e) {
-                logger.error("Error deleting GeoJSON interim file: " + e.getMessage(), e);
+                logger.warn("Error deleting GeoJSON interim file: " + e.getMessage(), e);
             }
         }
         private static ParameterList createCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
