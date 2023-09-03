@@ -13,22 +13,11 @@ import qupath.lib.images.servers.TransformedServerBuilder;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 
-public class MirrorImageCommand implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(MirrorImageCommand.class);
-    QuPathGUI qupath;
-    boolean mirrorHorizontally;
-    boolean mirrorVertically;
+public class MirrorImageCommand {
 
-    public MirrorImageCommand(QuPathGUI qupath, boolean mirrorHorizontally, boolean mirrorVertically){
-        this.qupath = qupath;
-        this.mirrorHorizontally = mirrorHorizontally;
-        this.mirrorVertically = mirrorVertically;
-    }
-    @Override
-    public void run() {
-        mirrorImage();
-    }
-    private void mirrorImage(){
+    private static final Logger logger = LoggerFactory.getLogger(MirrorImageCommand.class);
+
+    public static void mirrorImage(QuPathGUI qupath, boolean mirrorX, boolean mirrorY){
 
         // Collect all data from original image
         ImageData<BufferedImage> imageData = qupath.getImageData();
@@ -46,11 +35,11 @@ public class MirrorImageCommand implements Runnable {
         int translateY = 0;
 
         // Set factors according to requested transformation
-        if (mirrorHorizontally){
+        if (mirrorX){
             scaleX = -1;
             translateX = -imageWidth;
         }
-        if (mirrorVertically){
+        if (mirrorY){
             scaleY = -1;
             translateY = -imageHeight;
         }

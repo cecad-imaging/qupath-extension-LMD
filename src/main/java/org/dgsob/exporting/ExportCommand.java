@@ -23,6 +23,7 @@ import java.util.*;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 import static org.dgsob.exporting.ExportOptions.CollectorTypes.*;
 import static org.dgsob.exporting.ExportOptions.CapAssignments.*;
+import static org.dgsob.exporting.ExportOptions.CalibrationPointsNames.*;
 
 public class ExportCommand {
 
@@ -100,12 +101,12 @@ public class ExportCommand {
 
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
-        GeojsonToXml xmlConverter = new GeojsonToXml();
-        boolean succesfulConversion = xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, collectorParams);
+        GeojsonToXml xmlConverter = new GeojsonToXml(pathGeoJSON, pathXML);
+        boolean succesfulConversion = xmlConverter.createLeicaXML(collectorParams);
 
         if (!succesfulConversion) {
             Dialogs.showErrorMessage("Incorrect Calibration Points",
-                    "Please add 3 'Point' annotations, named 'calibration1', 'calibration2' and 'calibration3'.");
+                    "Please add 3 'Point' annotations, named " + CP1 + ", " + CP2 + " and " + CP3 + ".");
             return;
         }
 

@@ -11,19 +11,16 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ConvertObjectsCommand implements Runnable {
-    private final ImageData<BufferedImage> imageData;
-    private final boolean toDetections;
+public class ConvertObjectsCommand {
 
-    public ConvertObjectsCommand(ImageData<BufferedImage> imageData, boolean toDetections) {
-        this.imageData = imageData;
-        this.toDetections = toDetections;
-    }
-    @Override
-    public void run() {
-        convertObjects();
-    }
-    private void convertObjects(){
+    /**
+     * Operates on hierarchy. Deletes selected objects and inserts objects of chosen type with the same ROI,
+     * preserving old objects' PathClass and name.
+     *
+     * @param imageData
+     * @param toDetections
+     */
+    public static void convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
         if (hierarchy.getSelectionModel().noSelection()){
             Dialogs.showErrorMessage("Selection Required", "Please select objects to convert.");
@@ -57,6 +54,7 @@ public class ConvertObjectsCommand implements Runnable {
                 convertedObject.setName(objectName);
             convertedObjects.add(convertedObject);
         }
+        hierarchy.getSelectionModel().clearSelection();
         hierarchy.removeObjects(onlyAreasObjects, true);
         hierarchy.addObjects(convertedObjects);
     }

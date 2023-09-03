@@ -56,23 +56,19 @@ public class LMDExtension implements QuPathExtension {
         private LMDActions(QuPathGUI qupath) {
 
             convertToDetections = qupath.createImageDataAction(imageData -> {
-                ConvertObjectsCommand converting = new ConvertObjectsCommand(imageData, true);
-                converting.run();
+                ConvertObjectsCommand.convertObjects(imageData, true);
             });
 
             convertToAnnotations = qupath.createImageDataAction(imageData -> {
-                ConvertObjectsCommand converting = new ConvertObjectsCommand(imageData, false);
-                converting.run();
+                ConvertObjectsCommand.convertObjects(imageData, false);
             });
 
             mirrorImageX = qupath.createImageDataAction(imageData -> {
-                MirrorImageCommand mirroring = new MirrorImageCommand(qupath, true, false);
-                mirroring.run();
+                MirrorImageCommand.mirrorImage(qupath, true, false);
             });
 
             mirrorImageY = qupath.createImageDataAction(imageData -> {
-                MirrorImageCommand mirroring = new MirrorImageCommand(qupath, false, true);
-                mirroring.run();
+                MirrorImageCommand.mirrorImage(qupath, false, true);
             });
 
             expandObjects = qupath.createImageDataAction(imageData -> {
