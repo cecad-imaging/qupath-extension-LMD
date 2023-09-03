@@ -61,6 +61,7 @@ public class LMDExtension implements QuPathExtension {
         private LMDActions(QuPathGUI qupath) {
 
             // Converting
+            // TODO: Add a way to undo converting
             convertToDetections = qupath.createImageDataAction(imageData -> {
                 ConvertObjectsCommand.convertObjects(imageData, true);
             });
@@ -83,6 +84,8 @@ public class LMDExtension implements QuPathExtension {
             });
 
             // Expanding
+            // TODO: Add a way to undo expanding
+            // TODO: Display progress bar in case there is a lot of detections to process
             expandObjects = qupath.createImageDataAction(imageData -> {
                 ExpandObjectsCommand expanding = new ExpandObjectsCommand(imageData);
                 expanding.run();
