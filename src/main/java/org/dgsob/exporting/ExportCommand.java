@@ -48,7 +48,7 @@ public class ExportCommand {
                         Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.")
                 .addChoiceParameter("collectorChoice", "Collector type:", NO_COLLECTOR,
-                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _96_WELL_PLATE, PETRI),
+                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _12_FOLD_STRIP, PETRI),
                         "Choose a type of your collector.\n" +
                                   "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
 //                .addBooleanParameter("excludeAnnotations", "Exclude Annotations", true,
@@ -196,6 +196,21 @@ public class ExportCommand {
                         .addChoiceParameter("F", "F", defaultValue, collectorOptions)
                         .addChoiceParameter("G", "G", defaultValue, collectorOptions)
                         .addChoiceParameter("H", "H", defaultValue, collectorOptions);
+            }
+            else if (collectorType.equals(_12_FOLD_STRIP)) {
+                collectorParams
+                        .addChoiceParameter("A", "A", defaultValue, collectorOptions)
+                        .addChoiceParameter("B", "B", defaultValue, collectorOptions)
+                        .addChoiceParameter("C", "C", defaultValue, collectorOptions)
+                        .addChoiceParameter("D", "D", defaultValue, collectorOptions)
+                        .addChoiceParameter("E", "E", defaultValue, collectorOptions)
+                        .addChoiceParameter("F", "F", defaultValue, collectorOptions)
+                        .addChoiceParameter("G", "G", defaultValue, collectorOptions)
+                        .addChoiceParameter("H", "H", defaultValue, collectorOptions)
+                        .addChoiceParameter("I", "I", defaultValue, collectorOptions)
+                        .addChoiceParameter("J", "J", defaultValue, collectorOptions)
+                        .addChoiceParameter("K", "K", defaultValue, collectorOptions)
+                        .addChoiceParameter("L", "L", defaultValue, collectorOptions);
             }
 //            else if (collectorType.equals(_96_WELL_PLATE)) {
 //            }
