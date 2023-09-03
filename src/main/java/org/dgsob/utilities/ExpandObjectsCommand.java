@@ -63,6 +63,8 @@ public class ExpandObjectsCommand implements Runnable {
         int objectsNumber = pathObjects.size();
         if(objectsNumber == 1)
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " object to expand.");
+        else if(objectsNumber > 5000)
+            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + objectsNumber + ". Consider processing them in chunks.");
         else
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand.");
 
