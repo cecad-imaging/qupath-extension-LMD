@@ -42,10 +42,15 @@ public class LMDExtension implements QuPathExtension {
         @ActionMenu("Utilities>Convert Selected Objects>To Annotations")
         @ActionDescription("Converts any object which encloses an area to an annotation object.")
         public final Action convertToAnnotations;
-        @ActionMenu("Utilities>Create Mirrored Image>Horizontal")
+        @ActionMenu("Utilities>Create Image Copy>Mirror Horizontally")
+        @ActionDescription("Creates a new image with the objects from the original image, mirrored along horizontal axis.")
         public final Action mirrorImageX;
-        @ActionMenu("Utilities>Create Mirrored Image>Vertical")
+        @ActionMenu("Utilities>Create Image Copy>Mirror Vertically")
+        @ActionDescription("Creates a new image with the objects from the original image, mirrored along vertical axis.")
         public final Action mirrorImageY;
+        @ActionMenu("Utilities>Create Image Copy>Do Not Mirror")
+        @ActionDescription("Creates a new image with the objects from the original image.")
+        public final Action mirrorImageNone;
         @ActionMenu("Utilities>Expand Selected Detections")
         @ActionDescription("Makes objects larger by the provided radius. Annotations not supported.")
         public final Action expandObjects;
@@ -55,6 +60,7 @@ public class LMDExtension implements QuPathExtension {
 
         private LMDActions(QuPathGUI qupath) {
 
+            // Converting
             convertToDetections = qupath.createImageDataAction(imageData -> {
                 ConvertObjectsCommand.convertObjects(imageData, true);
             });
@@ -63,6 +69,7 @@ public class LMDExtension implements QuPathExtension {
                 ConvertObjectsCommand.convertObjects(imageData, false);
             });
 
+            // Mirroring
             mirrorImageX = qupath.createImageDataAction(imageData -> {
                 MirrorImageCommand.mirrorImage(qupath, true, false);
             });
@@ -71,11 +78,17 @@ public class LMDExtension implements QuPathExtension {
                 MirrorImageCommand.mirrorImage(qupath, false, true);
             });
 
+            mirrorImageNone = qupath.createImageDataAction(imageData -> {
+                MirrorImageCommand.mirrorImage(qupath, false, false);
+            });
+
+            // Expanding
             expandObjects = qupath.createImageDataAction(imageData -> {
                 ExpandObjectsCommand expanding = new ExpandObjectsCommand(imageData);
                 expanding.run();
             });
 
+            // Exporting
             export = qupath.createImageDataAction(imageData -> {
                 try {
                     ExportCommand.runExport(qupath.getProject().getPath(), imageData);
