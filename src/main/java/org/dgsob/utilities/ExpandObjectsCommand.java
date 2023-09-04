@@ -23,7 +23,7 @@ import qupath.lib.roi.GeometryTools;
 
 import java.awt.image.BufferedImage;
 import java.util.*;
-
+// TODO: Convert ExpandObjectsCommand into ExpandDetectionsPlugin.
 public class ExpandObjectsCommand implements Runnable {
     ImageData<BufferedImage> imageData;
     public ExpandObjectsCommand(ImageData<BufferedImage> imageData){
@@ -129,6 +129,8 @@ public class ExpandObjectsCommand implements Runnable {
         hierarchy.removeObjects(pathObjects, false); // remove old objects
         hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
 
+        // TODO: Encapsulate processing overlapping in a separate method, add deleted objects back in case of failure.
+        // TODO: Take pathObjects and potentially other parameters out of the function.
         // Steps for processing overlapping objects:
 
         // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
