@@ -16,9 +16,11 @@ window as described [here](https://qupath.readthedocs.io/en/0.4/docs/intro/exten
 and assign object classifications to its caps.
 6. Import the XML into Leica's software.
 
+TODO: Add notes on QuPath usage. Explain briefly annotation vs detection and why only these two. 
+
 ### Examples
 
-- Link 1
+- [Basic Example](./examples/Basic_Example.md)
 - Link 2
 
 ### Usage Details
@@ -26,11 +28,12 @@ and assign object classifications to its caps.
 annotations with a single point each and name the first one "calibration1" 
 and the rest accordingly. Note that although the points' locations technically 
 can be random, you will need to find the exact same 3 points in Leica's LMD 
-software viewer. The default 
-recommendation is to put the first point around top left, second - top right 
-and third - bottom right corner. These are corners of the slide as seen 
-in the microscope's viewer, not QuPath (a standard scan would have these at 
-bottom right, top right and top left corner in QuPath).
+software viewer. The easiest way to do this is to put them around default locations,
+to which the stage moves for each point during calibration process.
+These locations are: top left area for the first one, top right for the second 
+and bottom right for the third one. Note that these are corners of the slide as seen 
+in the microscope's viewer when the slide is flipped and ready for the regions to be cut out.
+See [example of calibration]() (TODO: Add this example) for more detail.
 
 
 - **Objects Expanding**: You will most likely need to expand your segmentations 
@@ -42,8 +45,8 @@ objects of diffferent classes. An object with higher priority will be preserved.
 Objects of the same class will be merged if intersecting. Note that this won't 
 process annotations and the new, enlarged objects will be generic detections 
 regardless of their previous type. The processing may take some time in case 
-of many objects (>5000) and may result in data loss. The smaller the number of
-processed objects, the better. 
+of many objects (>5000). The smaller the number of
+processed objects at once, the better. 
 
 
 - **Exporting**: Each object which is not an 'annotation' will be counted
@@ -53,12 +56,11 @@ classifications to a specific collector's cap at this point. Choose a desired
 collector and upon confirmation, you'll be prompted to assign the classes.
 
 
-- **Mirroring**: This aims to help in case the view of your slide in QuPath and LMD
-software do not match (e.g. due to flipping slide to cut ROIs). It creates a copy
-of the image and its content mirrored either horizontally or vertically. 
-It is also possible to create a copy without mirroring, which differs from
-QuPath's image duplication in a way, that it will also copy all objects present in
-the image.
+- **Mirroring**: This aims to help in case the views of your slide in QuPath and LMD
+software do not match, for example due to flipping slide when 
+putting it onto microscope's slide holder to cut the ROIs out. 
+It creates a copy of the image and its content mirrored either horizontally or 
+vertically.
 
 
 - **Converting**: Since only detections processing is supported, the utility for 
