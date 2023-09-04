@@ -6,6 +6,8 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.lib.common.GeneralTools;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
@@ -25,6 +27,8 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 // TODO: Convert ExpandObjectsCommand into ExpandDetectionsPlugin.
 public class ExpandObjectsCommand implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(ExpandObjectsCommand.class);
+
     ImageData<BufferedImage> imageData;
     public ExpandObjectsCommand(ImageData<BufferedImage> imageData){
         this.imageData = imageData;
@@ -131,29 +135,35 @@ public class ExpandObjectsCommand implements Runnable {
 
         // TODO: Encapsulate processing overlapping in a separate method, add deleted objects back in case of failure.
         // TODO: Take pathObjects and potentially other parameters out of the function.
-        // Steps for processing overlapping objects:
 
-        // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
-        newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
+        try {
+            // Steps for processing overlapping objects:
 
-        // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
-        // if both are true -> sort newObjects
-        if (!ClassUtils.areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")){
-            newObjects = ObjectUtils.sortObjectsByPriority(newObjects, priorityRanking);
+            // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
+            newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
+
+            // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
+            // if both are true -> sort newObjects
+            if (!ClassUtils.areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")) {
+                newObjects = ObjectUtils.sortObjectsByPriority(newObjects, priorityRanking);
+            }
+
+            // 3. Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
+            Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
+            while (!newObjects.isEmpty()) {
+                newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
+            }
+
+            hierarchy.addObjects(objectsToAddToHierarchy);
+            long endTime = System.nanoTime();
+            long duration = endTime - startTime;
+            double seconds = (double) duration / 1_000_000_000.0;
+            Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
+                    + objectsToAddToHierarchy.size() + " output objects.");
+        } catch (Throwable t){
+            logger.error("Error processing overlapping objects: " + t.getMessage());
+            hierarchy.addObjects(pathObjects);
         }
-
-        // 3. Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
-        Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
-        while(!newObjects.isEmpty()) {
-            newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
-        }
-
-        hierarchy.addObjects(objectsToAddToHierarchy);
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-        double seconds = (double) duration / 1_000_000_000.0;
-        Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
-                + objectsToAddToHierarchy.size() + " output objects.");
     }
 
     /**
