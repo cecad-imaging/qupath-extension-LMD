@@ -14,11 +14,10 @@ import qupath.lib.objects.PathObject;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 
 public class MirrorImageCommand {
-    private static final Logger logger = LoggerFactory.getLogger(MirrorImageCommand.class);
-    private MirrorImageCommand(){
 
-    }
-    public static void mirrorImage(QuPathGUI qupath, boolean mirrorHorizontally, boolean mirrorVertically){
+    private static final Logger logger = LoggerFactory.getLogger(MirrorImageCommand.class);
+
+    public static void mirrorImage(QuPathGUI qupath, boolean mirrorX, boolean mirrorY){
 
         // Collect all data from original image
         ImageData<BufferedImage> imageData = qupath.getImageData();
@@ -36,11 +35,11 @@ public class MirrorImageCommand {
         int translateY = 0;
 
         // Set factors according to requested transformation
-        if (mirrorHorizontally){
+        if (mirrorX){
             scaleX = -1;
             translateX = -imageWidth;
         }
-        if (mirrorVertically){
+        if (mirrorY){
             scaleY = -1;
             translateY = -imageHeight;
         }

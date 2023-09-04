@@ -14,6 +14,8 @@ public class ExportOptions {
         public static final String NO_COLLECTOR = "None";
         public static final String PCR_TUBES = "PCR Tubes";
         public static final String _8_FOLD_STRIP = "8-fold-Strip";
+        public static final String _12_FOLD_STRIP = "12-fold-Strip";
+
         public static final String _96_WELL_PLATE = "96-Wellplate";
         public static final String PETRI = "Petri";
 

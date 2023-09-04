@@ -1,6 +1,8 @@
 package org.dgsob.exporting;
 
 import org.dgsob.common.ClassUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
 import qupath.lib.images.ImageData;
@@ -21,22 +23,20 @@ import java.util.*;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 import static org.dgsob.exporting.ExportOptions.CollectorTypes.*;
 import static org.dgsob.exporting.ExportOptions.CapAssignments.*;
+import static org.dgsob.exporting.ExportOptions.CalibrationPointsNames.*;
 
 public class ExportCommand {
-    private ExportCommand(){
 
-    }
+    private static final Logger logger = LoggerFactory.getLogger(ExportCommand.class);
 
     /**
      * Main export logic: sets GeoJSON and XML paths and names,
      * exports objects from QuPath to GeoJSON, runs export to XML, deletes GeoJSON.
      *
-     * @param projectFilePath project.qpproj directory, e.g. /home/user/QuPath/Projects/Project/project.qpproj
+     * @param projectFilePath project.qpproj file location, e.g. /home/user/QuPath/Projects/Project/project.qpproj
      * @param imageData Current image's data needed to access hierarchy and thus objects to export
-     * @return Boolean flag for flow control
      */
-    @SuppressWarnings("UnusedReturnValue")
-    public static boolean runExport(Path projectFilePath, ImageData<BufferedImage> imageData) throws IOException {
+    public static void runExport(Path projectFilePath, ImageData<BufferedImage> imageData) throws IOException {
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
 
         String allObjects = "All detection objects";
@@ -48,7 +48,7 @@ public class ExportCommand {
                         Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.")
                 .addChoiceParameter("collectorChoice", "Collector type:", NO_COLLECTOR,
-                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _96_WELL_PLATE, PETRI),
+                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _12_FOLD_STRIP, PETRI),
                         "Choose a type of your collector.\n" +
                                   "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
 //                .addBooleanParameter("excludeAnnotations", "Exclude Annotations", true,
@@ -57,7 +57,7 @@ public class ExportCommand {
         boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(exportParams).getPane());
 
         if (!confirmed) {
-            return false;
+            return;
         }
 
         // Part of the code responsible for setting objects to export to either selected or all detections.
@@ -67,7 +67,7 @@ public class ExportCommand {
             if (hierarchy.getSelectionModel().noSelection()) {
                 Dialogs.showErrorMessage("No selection detected",
                         "You had chosen to export selected objects but no selection has been detected.");
-                return false;
+                return;
             }
             chosenObjects = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
             // Include Callibration even if not selected (by adding all annotations, they will be filtered out in GeojsonToXml anyway).
@@ -85,7 +85,7 @@ public class ExportCommand {
             collectorParams = createCollectorsParameterList(collectorType, chosenObjects);
             boolean confirmedSecondWindow = Dialogs.showConfirmDialog("Collector Assignment", new ParameterPanelFX(collectorParams).getPane());
             if (!confirmedSecondWindow){
-                return false;
+                return;
             }
         }
 
@@ -96,18 +96,18 @@ public class ExportCommand {
         final String DEFAULT_XML_NAME = imageData.getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", "_" + currentTime + ".xml");
 
         // Set files' default paths
-        final String pathGeoJSON = getProjectDirectory(projectFilePath, "LMD data" + File.separator + ".temp").resolve(DEFAULT_GeoJSON_NAME).toString();
-        final String pathXML = getProjectDirectory(projectFilePath, "LMD data").resolve(DEFAULT_XML_NAME).toString();
+        final String pathGeoJSON = createSubdirectory(projectFilePath, "LMD data" + File.separator + ".temp").resolve(DEFAULT_GeoJSON_NAME).toString();
+        final String pathXML = createSubdirectory(projectFilePath, "LMD data").resolve(DEFAULT_XML_NAME).toString();
 
         exportObjectsToGeoJson(chosenObjects, pathGeoJSON, "FEATURE_COLLECTION");
 
-        GeojsonToXml xmlConverter = new GeojsonToXml();
-        boolean succesfulConversion = xmlConverter.convertGeoJSONtoXML(pathGeoJSON, pathXML, collectorParams);
+        GeojsonToXml xmlConverter = new GeojsonToXml(pathGeoJSON, pathXML);
+        boolean succesfulConversion = xmlConverter.createLeicaXML(collectorParams);
 
         if (!succesfulConversion) {
             Dialogs.showErrorMessage("Incorrect Calibration Points",
-                    "Please add 3 'Point' annotations, named 'calibration1', 'calibration2' and 'calibration3'.");
-            return false;
+                    "Please add 3 'Point' annotations, named " + CP1 + ", " + CP2 + " and " + CP3 + ".");
+            return;
         }
 
         deleteTemporaryGeoJSON(pathGeoJSON);
@@ -130,10 +130,16 @@ public class ExportCommand {
             Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
                     "Check your home folder for the output files.");
         }
-        return true;
     }
-        private static Path getProjectDirectory (Path projectFilePath, String subdirectory){
-            // Return the path to the project directory, i.e. projectFilePath's parent.
+
+    /**
+     * Creates subdirectories in QuPath project folder.
+     *
+     * @param projectFilePath project.qpproj file location, e.g. /home/user/QuPath/Projects/Project/project.qpproj
+     * @param subdirectory Name of the subdirectory to create
+     * @return subdirectory path
+     */
+        private static Path createSubdirectory(Path projectFilePath, String subdirectory){
             if (projectFilePath != null) {
                 Path projectDirectory = projectFilePath.getParent();
                 if (projectDirectory != null) {
@@ -141,7 +147,7 @@ public class ExportCommand {
                     try {
                         Files.createDirectories(subdirectoryPath); // Create the directory if it doesn't exist
                     } catch (IOException e) {
-                        // I don't know what to do here
+                        logger.error("Error creating subdirectories: " + e.getMessage(), e);
                     }
                     return subdirectoryPath;
                 }
@@ -155,7 +161,7 @@ public class ExportCommand {
                 Path geoJSONPath = Path.of(pathGeoJSON);
                 Files.deleteIfExists(geoJSONPath);
             } catch (IOException e) {
-                // Well, I guess it doesn't matter if it fails or not.
+                logger.warn("Error deleting GeoJSON interim file: " + e.getMessage(), e);
             }
         }
         private static ParameterList createCollectorsParameterList(Object collectorType, Collection<PathObject> chosenObjects){
@@ -190,6 +196,21 @@ public class ExportCommand {
                         .addChoiceParameter("F", "F", defaultValue, collectorOptions)
                         .addChoiceParameter("G", "G", defaultValue, collectorOptions)
                         .addChoiceParameter("H", "H", defaultValue, collectorOptions);
+            }
+            else if (collectorType.equals(_12_FOLD_STRIP)) {
+                collectorParams
+                        .addChoiceParameter("A", "A", defaultValue, collectorOptions)
+                        .addChoiceParameter("B", "B", defaultValue, collectorOptions)
+                        .addChoiceParameter("C", "C", defaultValue, collectorOptions)
+                        .addChoiceParameter("D", "D", defaultValue, collectorOptions)
+                        .addChoiceParameter("E", "E", defaultValue, collectorOptions)
+                        .addChoiceParameter("F", "F", defaultValue, collectorOptions)
+                        .addChoiceParameter("G", "G", defaultValue, collectorOptions)
+                        .addChoiceParameter("H", "H", defaultValue, collectorOptions)
+                        .addChoiceParameter("I", "I", defaultValue, collectorOptions)
+                        .addChoiceParameter("J", "J", defaultValue, collectorOptions)
+                        .addChoiceParameter("K", "K", defaultValue, collectorOptions)
+                        .addChoiceParameter("L", "L", defaultValue, collectorOptions);
             }
 //            else if (collectorType.equals(_96_WELL_PLATE)) {
 //            }

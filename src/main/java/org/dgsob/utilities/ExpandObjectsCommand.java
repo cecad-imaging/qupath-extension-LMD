@@ -6,6 +6,8 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.lib.common.GeneralTools;
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.dialogs.ParameterPanelFX;
@@ -23,22 +25,26 @@ import qupath.lib.roi.GeometryTools;
 
 import java.awt.image.BufferedImage;
 import java.util.*;
+// TODO: Convert ExpandObjectsCommand into ExpandDetectionsPlugin.
+public class ExpandObjectsCommand implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(ExpandObjectsCommand.class);
 
-public class ExpandObjectsCommand {
-    private ExpandObjectsCommand(){
+    ImageData<BufferedImage> imageData;
+    public ExpandObjectsCommand(ImageData<BufferedImage> imageData){
+        this.imageData = imageData;
+    }
 
+    @Override
+    public void run() {
+        runObjectsExpansion();
     }
 
     /**
      * In first stage collects selected detection objects in pathObjects, creates new bigger ones based on the selected objects ROIs and provided by the user radius,
      * appends them to newObjects and removes the smaller ones from hierarchy.
      * In second stage it processes overlapping objects.
-     *
-     * @param imageData ImageData.
-     * @return Boolean flag.
      */
-    @SuppressWarnings("UnusedReturnValue")
-    public static boolean runObjectsExpansion(ImageData<BufferedImage> imageData){
+    private void runObjectsExpansion(){
 
         ImageServer<BufferedImage> server = imageData.getServer();
 
@@ -46,14 +52,14 @@ public class ExpandObjectsCommand {
 
         if (hierarchy.getSelectionModel().noSelection()) {
             Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
-            return false;
+            return;
         }
 
         Collection<PathObject> pathObjects = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
 
         if (pathObjects.isEmpty()){
             Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
-            return false;
+            return;
         }
 
         Collection<PathObject> newObjects = new ArrayList<>();
@@ -61,6 +67,8 @@ public class ExpandObjectsCommand {
         int objectsNumber = pathObjects.size();
         if(objectsNumber == 1)
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " object to expand.");
+        else if(objectsNumber > 5000)
+            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + objectsNumber + ". Consider processing them in chunks.");
         else
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand.");
 
@@ -77,7 +85,7 @@ public class ExpandObjectsCommand {
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
         if(!confirmed) {
-            return false;
+            return;
         }
 
         Object differentClassesChoice = params.getChoiceParameterValue("differentClassesChoice");
@@ -90,7 +98,7 @@ public class ExpandObjectsCommand {
             boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
 
             if (!confirmedPriorityRanking){
-                return false;
+                return;
             }
 
             for (int i = 1; i <= availableClasses.size(); i++){
@@ -125,34 +133,41 @@ public class ExpandObjectsCommand {
         hierarchy.removeObjects(pathObjects, false); // remove old objects
         hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
 
-        // Steps for processing overlapping objects:
+        // TODO: Encapsulate processing overlapping in a separate method, add deleted objects back in case of failure.
+        // TODO: Take pathObjects and potentially other parameters out of the function.
 
-        // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
-        newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
+        try {
+            // Steps for processing overlapping objects:
 
-        // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
-        // if both are true -> sort newObjects
-        if (!ClassUtils.areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")){
-            newObjects = ObjectUtils.sortObjectsByPriority(newObjects, priorityRanking);
+            // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
+            newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
+
+            // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
+            // if both are true -> sort newObjects
+            if (!ClassUtils.areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")) {
+                newObjects = ObjectUtils.sortObjectsByPriority(newObjects, priorityRanking);
+            }
+
+            // 3. Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
+            Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
+            while (!newObjects.isEmpty()) {
+                newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
+            }
+
+            hierarchy.addObjects(objectsToAddToHierarchy);
+            long endTime = System.nanoTime();
+            long duration = endTime - startTime;
+            double seconds = (double) duration / 1_000_000_000.0;
+            Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
+                    + objectsToAddToHierarchy.size() + " output objects.");
+        } catch (Throwable t){
+            logger.error("Error processing overlapping objects: " + t.getMessage());
+            hierarchy.addObjects(pathObjects);
         }
-
-        // 3. Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
-        Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
-        while(!newObjects.isEmpty()) {
-            newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
-        }
-
-        hierarchy.addObjects(objectsToAddToHierarchy);
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-        double seconds = (double) duration / 1_000_000_000.0;
-        Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
-                + objectsToAddToHierarchy.size() + " output objects.");
-        return true;
     }
 
     /**
-     * I don't remember how it works but should be called recursively. It appends an object to objectsToAddToHierarchy
+     * Should be called recursively. It appends an object to objectsToAddToHierarchy
      * if it doesn't intersect any other object.
      *
      * @param newObjects Collection of objects to process. Only one is processed witch each call of the function.

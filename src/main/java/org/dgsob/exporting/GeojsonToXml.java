@@ -25,20 +25,28 @@ import static org.dgsob.exporting.ExportOptions.FeatureGeoTypes.*;
 import static org.dgsob.exporting.ExportOptions.CalibrationPointsNames.*;
 
 public class GeojsonToXml {
-    public GeojsonToXml(){
-    }
     private int shapeCount = 0;
+    private final String inputPath;
+    private final String outputPath;
+
+    /**
+     *
+     * @param inputPath Path to the input GeoJSON file.
+     * @param outputPath Path where the output XML file will be saved.
+     */
+    public GeojsonToXml(String inputPath, String outputPath){
+        this.inputPath = inputPath;
+        this.outputPath = outputPath;
+    }
 
     /**
      * Reads a GeoJSON file from a specified location and converts to the XML format required by Leica's LMD software.
-     * The saved image data is: calibration points, shapes' count and coordinates and optionally collector's cap ID for each shape.
+     * The saved image data is: calibration points, shapes' count and coordinates and optionally collector's cap ID for each shape taken from collectorParams.
      * It filters out annotations from GeoJSON and doesn't count them as shapes in the XML, so the two files actually contain different objects.
      *
-     * @param inputPath       Path to GeoJSON file
-     * @param outputPath      Path where the output XML file will be saved
      * @param collectorParams Classes which user assigned to collectors symbols (A, B, C, etc.), if null - collectors won't be assigned to a shape in the output XML file
      */
-    boolean convertGeoJSONtoXML(String inputPath, String outputPath, ParameterList collectorParams) {
+    boolean createLeicaXML(ParameterList collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);

@@ -12,11 +12,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class ConvertObjectsCommand {
-    public static boolean convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
+
+    /**
+     * Operates on hierarchy. Deletes selected objects and inserts objects of chosen type with the same ROI,
+     * preserving old objects' PathClass and name.
+     *
+     * @param imageData
+     * @param toDetections
+     */
+    public static void convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
         if (hierarchy.getSelectionModel().noSelection()){
             Dialogs.showErrorMessage("Selection Required", "Please select objects to convert.");
-            return false;
+            return;
         }
         Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
         Collection<PathObject> onlyAreasObjects = new ArrayList<>(objects);
@@ -46,8 +54,8 @@ public class ConvertObjectsCommand {
                 convertedObject.setName(objectName);
             convertedObjects.add(convertedObject);
         }
+        hierarchy.getSelectionModel().clearSelection();
         hierarchy.removeObjects(onlyAreasObjects, true);
         hierarchy.addObjects(convertedObjects);
-        return true;
     }
 }
