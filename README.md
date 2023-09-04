@@ -26,9 +26,7 @@ and assign object classifications to its caps.
 annotations with a single point each and name the first one "calibration1" 
 and the rest accordingly. Note that although the points' locations technically 
 can be random, you will need to find the exact same 3 points in Leica's LMD 
-software viewer (you can leverage Leica's built-in calibration feature which 
-will burn 3 marks in your slide, then scan it and place the annotations in these 
-marks or just mark them yourself e.g. with a permanent marker). The default 
+software viewer. The default 
 recommendation is to put the first point around top left, second - top right 
 and third - bottom right corner. These are corners of the slide as seen 
 in the microscope's viewer, not QuPath (a standard scan would have these at 
@@ -44,7 +42,7 @@ objects of diffferent classes. An object with higher priority will be preserved.
 Objects of the same class will be merged if intersecting. Note that this won't 
 process annotations and the new, enlarged objects will be generic detections 
 regardless of their previous type. The processing may take some time in case 
-of many objects (>5000) and may result in data loss. The small the number of
+of many objects (>5000) and may result in data loss. The smaller the number of
 processed objects, the better. 
 
 
