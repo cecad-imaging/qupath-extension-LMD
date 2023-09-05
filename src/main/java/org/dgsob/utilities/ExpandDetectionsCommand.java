@@ -25,13 +25,29 @@ import qupath.lib.roi.GeometryTools;
 
 import java.awt.image.BufferedImage;
 import java.util.*;
-// TODO: Convert ExpandObjectsCommand into ExpandDetectionsPlugin.
-public class ExpandObjectsCommand implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(ExpandObjectsCommand.class);
-
+public class ExpandDetectionsCommand implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(ExpandDetectionsCommand.class);
     ImageData<BufferedImage> imageData;
-    public ExpandObjectsCommand(ImageData<BufferedImage> imageData){
+    ImageServer<BufferedImage> server;
+    PathObjectHierarchy hierarchy;
+    Collection<PathObject> selectedDetectionsToExpand;
+    Collection<PathObject> expandedFinalDetections;
+    private int objectsNumber;
+    public ExpandDetectionsCommand(ImageData<BufferedImage> imageData){
         this.imageData = imageData;
+        this.server = imageData.getServer();
+        this.hierarchy = imageData.getHierarchy();
+
+        if (hierarchy.getSelectionModel().noSelection()) {
+            Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
+            return;
+        }
+        this.selectedDetectionsToExpand = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
+        if (selectedDetectionsToExpand.isEmpty()){
+            Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
+            return;
+        }
+        this.objectsNumber = selectedDetectionsToExpand.size();
     }
 
     @Override
@@ -46,25 +62,8 @@ public class ExpandObjectsCommand implements Runnable {
      */
     private void runObjectsExpansion(){
 
-        ImageServer<BufferedImage> server = imageData.getServer();
-
-        PathObjectHierarchy hierarchy = imageData.getHierarchy();
-
-        if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
-            return;
-        }
-
-        Collection<PathObject> pathObjects = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
-
-        if (pathObjects.isEmpty()){
-            Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
-            return;
-        }
-
         Collection<PathObject> newObjects = new ArrayList<>();
 
-        int objectsNumber = pathObjects.size();
         if(objectsNumber == 1)
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " object to expand.");
         else if(objectsNumber > 5000)
@@ -72,6 +71,7 @@ public class ExpandObjectsCommand implements Runnable {
         else
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand.");
 
+        // TODO: Separate GUI dialogs creation from expansion logic.
         ParameterList params = new ParameterList()
                 .addDoubleParameter("radiusMicrons", "Expansion radius:", 3, GeneralTools.micrometerSymbol(),
                         "Distance to expand ROI")
@@ -119,7 +119,7 @@ public class ExpandObjectsCommand implements Runnable {
         else
             radiusPixels = params.getDoubleParameterValue("radiusMicrons");
         // Iterate over old objects and create a new one for each
-        for (PathObject pathObject : pathObjects) {
+        for (PathObject pathObject : selectedDetectionsToExpand) {
 
             ROI roi = pathObject.getROI();
             Geometry geometry = roi.getGeometry();
@@ -130,12 +130,8 @@ public class ExpandObjectsCommand implements Runnable {
             detection2.setColor(pathObject.getColor());
             newObjects.add(detection2); // append newly created objects for processing instead of adding them to hierarchy
         }
-        hierarchy.removeObjects(pathObjects, false); // remove old objects
+        hierarchy.removeObjects(selectedDetectionsToExpand, false); // remove old objects
         hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
-
-        // TODO: Encapsulate processing overlapping in a separate method, add deleted objects back in case of failure.
-        // TODO: Take pathObjects and potentially other parameters out of the function.
-
         try {
             // Steps for processing overlapping objects:
 
@@ -155,14 +151,16 @@ public class ExpandObjectsCommand implements Runnable {
             }
 
             hierarchy.addObjects(objectsToAddToHierarchy);
+            this.expandedFinalDetections = objectsToAddToHierarchy;
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
             double seconds = (double) duration / 1_000_000_000.0;
             Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
                     + objectsToAddToHierarchy.size() + " output objects.");
         } catch (Throwable t){
+            hierarchy.addObjects(selectedDetectionsToExpand);
             logger.error("Error processing overlapping objects: " + t.getMessage());
-            hierarchy.addObjects(pathObjects);
+            Dialogs.showErrorNotification("Operation Failed", "Trying processing smaller number of objects than " + objectsNumber + ".");
         }
     }
 
@@ -314,5 +312,9 @@ public class ExpandObjectsCommand implements Runnable {
                     """);
         }
         return priorityRankingParams;
+    }
+
+    public int getObjectsNumber(){
+        return objectsNumber;
     }
 }

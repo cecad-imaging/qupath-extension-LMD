@@ -3,7 +3,7 @@ package org.dgsob;
 import org.controlsfx.control.action.Action;
 import org.dgsob.exporting.ExportCommand;
 import org.dgsob.utilities.ConvertObjectsCommand;
-import org.dgsob.utilities.ExpandObjectsCommand;
+import org.dgsob.utilities.ExpandDetectionsCommand;
 import org.dgsob.utilities.MirrorImageCommand;
 import qupath.lib.common.Version;
 import qupath.lib.gui.ActionTools;
@@ -85,10 +85,11 @@ public class LMDExtension implements QuPathExtension {
 
             // Expanding
             // TODO: Add a way to undo expanding
-            // TODO: Display progress bar in case there is a lot of detections to process
             expandObjects = qupath.createImageDataAction(imageData -> {
-                ExpandObjectsCommand expanding = new ExpandObjectsCommand(imageData);
-                expanding.run();
+                ExpandDetectionsCommand expanding = new ExpandDetectionsCommand(imageData);
+                // TODO: Display progress bar in case there is a lot of detections to process
+                Thread expandingObjectThread = new Thread(expanding);
+                expandingObjectThread.start();
             });
 
             // Exporting
