@@ -20,7 +20,7 @@ TODO: Add notes on QuPath usage. Explain briefly annotation vs detection and why
 
 ### Examples
 
-- [Basic Example](./examples/Basic_Example.md)
+- [Basic Example](./examples/Example_Basic.md)
 - Link 2
 
 ### Usage Details
@@ -33,7 +33,6 @@ to which the stage moves for each point during calibration process.
 These locations are: top left area for the first one, top right for the second 
 and bottom right for the third one. Note that these are corners of the slide as seen 
 in the microscope's viewer when the slide is flipped and ready for the regions to be cut out.
-See [example of calibration]() (TODO: Add this example) for more detail.
 
 
 - **Objects Expanding**: You will most likely need to expand your segmentations 
