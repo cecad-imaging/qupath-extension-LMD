@@ -16,12 +16,10 @@ window as described [here](https://qupath.readthedocs.io/en/0.4/docs/intro/exten
 and assign object classifications to its caps.
 6. Import the XML into Leica's software.
 
-TODO: Add notes on QuPath usage. Explain briefly annotation vs detection and why only these two. 
-
 ### Examples
 
-- [Basic Example](./examples/Example_Basic.md)
-- Link 2
+- [Basic example with LMD slide](./examples/Example_Basic.md)
+- [Example with LMD plate](./examples/Example_Hela_PKmO.md)
 
 ### Usage Details
  - **Calibration Points**: In order to add calibration points, create 3 separate 

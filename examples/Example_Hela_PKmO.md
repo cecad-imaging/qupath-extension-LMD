@@ -1,6 +1,6 @@
 ### Example with Hela cells
 
-Example of the workflow with using LMD dish.
+Example of the workflow with LMD Petri dish.
 
 **First step**: Acquiring an image.
 
