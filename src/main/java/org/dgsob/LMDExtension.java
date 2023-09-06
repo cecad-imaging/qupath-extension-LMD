@@ -21,7 +21,7 @@ public class LMDExtension implements QuPathExtension {
 
     @Override
     public String getName() {
-        return "LMD Export Extension for QuPath";
+        return "LMD Support for QuPath";
     }
 
     @Override
@@ -48,9 +48,6 @@ public class LMDExtension implements QuPathExtension {
         @ActionMenu("Utilities>Create Image Copy>Mirror Vertically")
         @ActionDescription("Creates a new image with the objects from the original image, mirrored along vertical axis.")
         public final Action mirrorImageY;
-        @ActionMenu("Utilities>Create Image Copy>Do Not Mirror")
-        @ActionDescription("Creates a new image with the objects from the original image.")
-        public final Action mirrorImageNone;
         @ActionMenu("Utilities>Expand Selected Detections")
         @ActionDescription("Makes objects larger by the provided radius. Annotations not supported.")
         public final Action expandObjects;
@@ -77,10 +74,6 @@ public class LMDExtension implements QuPathExtension {
 
             mirrorImageY = qupath.createImageDataAction(imageData -> {
                 MirrorImageCommand.mirrorImage(qupath, false, true);
-            });
-
-            mirrorImageNone = qupath.createImageDataAction(imageData -> {
-                MirrorImageCommand.mirrorImage(qupath, false, false);
             });
 
             // Expanding

@@ -54,10 +54,9 @@ public class MirrorImageCommand {
         builder.transform(transform);
         ImageServer<BufferedImage> newServer = builder.build();
 
-        //Changing new server's metadata for the old one, because new only adds affine transform details to the image's name
 //        logger.trace("newServer metadata: " + newServer.getMetadata());
 //        logger.trace("original server metadata: " + server.getMetadata());
-        newServer.setMetadata(server.getMetadata());
+//        newServer.setMetadata(server.getMetadata());
 
         // Use the newly built server to create new imageData
         ImageData<BufferedImage> newImageData = new ImageData<>(newServer);
