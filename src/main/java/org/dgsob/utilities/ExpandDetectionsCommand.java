@@ -30,9 +30,10 @@ public class ExpandDetectionsCommand implements Runnable {
     ImageData<BufferedImage> imageData;
     ImageServer<BufferedImage> server;
     PathObjectHierarchy hierarchy;
-    Collection<PathObject> selectedDetectionsToExpand;
-    Collection<PathObject> expandedFinalDetections;
-    private int objectsNumber;
+    Collection<PathObject> selectedDetections;
+    Collection<PathObject> expandedDetections;
+    private int selectedDetectionsNumber;
+    private boolean noSelection = false;
     public ExpandDetectionsCommand(ImageData<BufferedImage> imageData){
         this.imageData = imageData;
         this.server = imageData.getServer();
@@ -40,18 +41,25 @@ public class ExpandDetectionsCommand implements Runnable {
 
         if (hierarchy.getSelectionModel().noSelection()) {
             Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
+            noSelection = true;
             return;
         }
-        this.selectedDetectionsToExpand = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
-        if (selectedDetectionsToExpand.isEmpty()){
-            Dialogs.showErrorNotification("Annotations not supported","Please select a detection object.");
+
+        this.selectedDetections = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
+
+        if (selectedDetections.isEmpty()) {
+            Dialogs.showErrorNotification("Annotations not supported", "Please select a detection object.");
+            noSelection = true;
             return;
         }
-        this.objectsNumber = selectedDetectionsToExpand.size();
+
+        this.selectedDetectionsNumber = selectedDetections.size();
     }
 
     @Override
     public void run() {
+        if (noSelection)
+            return;
         runObjectsExpansion();
     }
 
@@ -64,23 +72,26 @@ public class ExpandDetectionsCommand implements Runnable {
 
         Collection<PathObject> newObjects = new ArrayList<>();
 
-        if(objectsNumber == 1)
-            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " object to expand.");
-        else if(objectsNumber > 5000)
-            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + objectsNumber + ". Consider processing less objects at once.");
+        if(selectedDetectionsNumber == 1)
+            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " object to expand.");
+        else if(selectedDetectionsNumber > 5000)
+            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + selectedDetectionsNumber + ". Consider processing less objects at once.");
         else
-            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + objectsNumber + " objects to expand.");
+            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " objects to expand.");
 
         // TODO: Separate GUI dialogs creation from expansion logic.
         ParameterList params = new ParameterList()
                 .addDoubleParameter("radiusMicrons", "Expansion radius:", 3, GeneralTools.micrometerSymbol(),
                         "Distance to expand ROI")
+                .addChoiceParameter("sameClassChoice",
+                        "If objects of the same class intersect:",
+                        "Merge objects", Arrays.asList("Merge objects", "Exclude one, keep another"),
+                        "Either merge or randomly delete one of the two intersecting objects")
                 .addChoiceParameter("differentClassesChoice",
                         "If objects of two different classes intersect:",
                         "Exclude Both", Arrays.asList("Exclude Both", "Set priority for each class"),
-                        """
-                                'Exclude Both' option will remove objects which intersect each other regardless of their class.
-                                'Set priority for each class' option keeps an object with the higher-priority class. You will be prompted to set priorities after confirming your choice.""");
+                        "Either remove intersecting or choose a class of which object should be preserved when two objects intersect\n" +
+                                "You will be prompted to set priorities after confirming your choice");
 
         boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
 
@@ -88,6 +99,7 @@ public class ExpandDetectionsCommand implements Runnable {
             return;
         }
 
+        boolean mergeSameClass = params.getChoiceParameterValue("sameClassChoice").equals("Merge objects");
         Object differentClassesChoice = params.getChoiceParameterValue("differentClassesChoice");
         List<String> priorityRanking = new ArrayList<>();
 
@@ -119,7 +131,7 @@ public class ExpandDetectionsCommand implements Runnable {
         else
             radiusPixels = params.getDoubleParameterValue("radiusMicrons");
         // Iterate over old objects and create a new one for each
-        for (PathObject pathObject : selectedDetectionsToExpand) {
+        for (PathObject pathObject : selectedDetections) {
 
             ROI roi = pathObject.getROI();
             Geometry geometry = roi.getGeometry();
@@ -130,7 +142,7 @@ public class ExpandDetectionsCommand implements Runnable {
             detection2.setColor(pathObject.getColor());
             newObjects.add(detection2); // append newly created objects for processing instead of adding them to hierarchy
         }
-        hierarchy.removeObjects(selectedDetectionsToExpand, false); // remove old objects
+        hierarchy.removeObjects(selectedDetections, false); // remove old objects
         hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
         try {
             // Steps for processing overlapping objects:
@@ -147,20 +159,20 @@ public class ExpandDetectionsCommand implements Runnable {
             // 3. Process overlapping objects: merge, exclude both or exclude one of the two overlapping depending on their class
             Collection<PathObject> objectsToAddToHierarchy = new ArrayList<>();
             while (!newObjects.isEmpty()) {
-                newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, priorityRanking);
+                newObjects = processOverlappingObjects(newObjects, objectsToAddToHierarchy, mergeSameClass, priorityRanking);
             }
 
             hierarchy.addObjects(objectsToAddToHierarchy);
-            this.expandedFinalDetections = objectsToAddToHierarchy;
+            this.expandedDetections = objectsToAddToHierarchy;
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
             double seconds = (double) duration / 1_000_000_000.0;
-            Dialogs.showInfoNotification("Operation Succesful", objectsNumber + " objects processed in " + seconds + " seconds.\n"
+            Dialogs.showInfoNotification("Operation Succesful", selectedDetectionsNumber + " objects processed in " + seconds + " seconds.\n"
                     + objectsToAddToHierarchy.size() + " output objects.");
         } catch (Throwable t){
-            hierarchy.addObjects(selectedDetectionsToExpand);
+            hierarchy.addObjects(selectedDetections);
             logger.error("Error processing overlapping objects: " + t.getMessage());
-            Dialogs.showErrorNotification("Operation Failed", "Expanding objects failed.");
+            Dialogs.showErrorNotification("Operation Failed", "Expanding objects failed. Please, try again.");
         }
     }
 
@@ -175,6 +187,7 @@ public class ExpandDetectionsCommand implements Runnable {
      */
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
                                                                     Collection<PathObject> objectsToAddToHierarchy,
+                                                                    boolean mergeSameClass,
                                                                     List<String> priorityRanking){
         Collection<PathObject> remainingObjects = new ArrayList<>(newObjects);
         Collection<PathObject> objectsToMerge = new ArrayList<>();
@@ -194,9 +207,20 @@ public class ExpandDetectionsCommand implements Runnable {
                 if (polygon.intersects(otherPolygon)){
                     isOverlapping = true;
                     if (objectClass == otherObjectClass){
-                        objectsToMerge.add(object);
-                        objectsToMerge.add(otherObject);
-                        break;
+                        if (mergeSameClass) {
+                            objectsToMerge.add(object);
+                            objectsToMerge.add(otherObject);
+                            break;
+                        }
+                        else{
+                            if (new Random().nextBoolean()) {
+                                objectsToRemoveFromProcessed.add(object);
+                                objectsToAddToProcessed.add(otherObject);
+                            } else {
+                                objectsToRemoveFromProcessed.add(otherObject);
+                                objectsToAddToProcessed.add(object);
+                            }
+                        }
                     }
                     else{
                         isSameClass = false;
@@ -243,8 +267,14 @@ public class ExpandDetectionsCommand implements Runnable {
             }
 
             if (isSameClass) {
-                remainingObjects.removeAll(objectsToMerge);
-                remainingObjects.add(ObjectUtils.mergeObjects(objectsToMerge, objectClass));
+                if (mergeSameClass) {
+                    remainingObjects.removeAll(objectsToMerge);
+                    remainingObjects.add(ObjectUtils.mergeObjects(objectsToMerge, objectClass));
+                }
+                else {
+                    remainingObjects.removeAll(objectsToRemoveFromProcessed);
+                    remainingObjects.addAll(objectsToAddToProcessed);
+                }
             } else {
                 remainingObjects.removeAll(objectsToRemoveFromProcessed);
                 remainingObjects.addAll(objectsToAddToProcessed);
@@ -314,7 +344,7 @@ public class ExpandDetectionsCommand implements Runnable {
         return priorityRankingParams;
     }
 
-    public int getObjectsNumber(){
-        return objectsNumber;
+    public int getSelectedDetectionsNumber(){
+        return selectedDetectionsNumber;
     }
 }

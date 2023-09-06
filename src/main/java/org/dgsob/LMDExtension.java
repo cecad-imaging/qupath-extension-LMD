@@ -5,6 +5,8 @@ import org.dgsob.exporting.ExportCommand;
 import org.dgsob.utilities.ConvertObjectsCommand;
 import org.dgsob.utilities.ExpandDetectionsCommand;
 import org.dgsob.utilities.MirrorImageCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.lib.common.Version;
 import qupath.lib.gui.ActionTools;
 import qupath.lib.gui.ActionTools.ActionMenu;
@@ -14,6 +16,8 @@ import qupath.lib.gui.extensions.QuPathExtension;
 import java.io.IOException;
 
 public class LMDExtension implements QuPathExtension {
+    private static final Logger logger = LoggerFactory.getLogger(LMDExtension.class);
+
     @Override
     public void installExtension(QuPathGUI qupath) {
         qupath.installActions(ActionTools.getAnnotatedActions(new LMDActions(qupath)));
@@ -90,7 +94,7 @@ public class LMDExtension implements QuPathExtension {
                 try {
                     ExportCommand.runExport(qupath.getProject().getPath(), imageData);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    logger.error("Export failed: " + e.getMessage());
                 }
             });
 
