@@ -210,7 +210,6 @@ public class ExpandDetectionsCommand implements Runnable {
                         if (mergeSameClass) {
                             objectsToMerge.add(object);
                             objectsToMerge.add(otherObject);
-                            break;
                         }
                         else{
                             if (new Random().nextBoolean()) {
@@ -221,6 +220,7 @@ public class ExpandDetectionsCommand implements Runnable {
                                 objectsToAddToProcessed.add(object);
                             }
                         }
+                        break;
                     }
                     else{
                         isSameClass = false;
@@ -235,7 +235,6 @@ public class ExpandDetectionsCommand implements Runnable {
                             // Since when not in the list -1 is returned, we make sure it doesn't become the highest priority
                             objectIndex = objectIndex != -1 ? objectIndex : Integer.MAX_VALUE;
                             otherObjectIndex = otherObjectIndex != -1 ? otherObjectIndex : Integer.MAX_VALUE;
-
 
                             if (objectIndex < otherObjectIndex) { // lower index -> higher priority
                                 objectsToRemoveFromProcessed.add(otherObject); // deleting other, non-priority, intersecting object
