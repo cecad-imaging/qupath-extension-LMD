@@ -29,7 +29,7 @@ Choosing a class priority will result in preserving an object of this
 class if object
 of different class intersects it while expanding. When
 same class objects intersect, we chose to keep one of the objects because merging them
-would sometimes result in large objects of bright cells encapsulating
+would sometimes result in larger clusters of bright cells encapsulating
 a dark cell, which would inevitably fall down to the same collector when cutting 
 out. On the other hand, 
 removing some objects didn't make that much of a difference.
