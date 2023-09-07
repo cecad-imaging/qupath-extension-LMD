@@ -81,7 +81,7 @@ public class ExpandDetectionsCommand implements Runnable {
 
         // TODO: Separate GUI dialogs creation from expansion logic.
         ParameterList params = new ParameterList()
-                .addDoubleParameter("radiusMicrons", "Expansion radius:", 3, GeneralTools.micrometerSymbol(),
+                .addDoubleParameter("radiusMicrons", "Expansion radius:", 10, GeneralTools.micrometerSymbol(),
                         "Distance to expand ROI")
                 .addChoiceParameter("sameClassChoice",
                         "If objects of the same class intersect:",
