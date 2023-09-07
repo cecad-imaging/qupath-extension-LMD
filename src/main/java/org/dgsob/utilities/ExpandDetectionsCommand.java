@@ -85,10 +85,10 @@ public class ExpandDetectionsCommand implements Runnable {
                         "Distance to expand ROI")
                 .addChoiceParameter("sameClassChoice",
                         "If objects of the same class intersect:",
-                        "Merge objects", Arrays.asList("Merge objects", "Exclude one, keep another"),
-                        "Either merge or randomly delete one of the two intersecting objects")
+                        "Merge objects", Arrays.asList("Merge objects", "Exclude one, keep the other"),
+                        "Either merge the intersecting objects or randomly delete one of them")
                 .addChoiceParameter("differentClassesChoice",
-                        "If objects of two different classes intersect:",
+                        "If objects of different classes intersect:",
                         "Exclude Both", Arrays.asList("Exclude Both", "Set priority for each class"),
                         "Either remove intersecting or choose a class of which object should be preserved when two objects intersect\n" +
                                 "You will be prompted to set priorities after confirming your choice");
