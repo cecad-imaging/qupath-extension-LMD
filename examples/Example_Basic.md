@@ -1,5 +1,5 @@
 ### Basic Example 
-This is a simple example to showcase the workflow using 
+This is a simple example to showcase the workflow with slides using 
 a lung tissue as a sample.
 
 **First step**: Acquiring an image.
@@ -53,18 +53,19 @@ Then, we deleted unnecessary parent annotation.
 like magnification, laser settings, kind of tissue you're working with, and will
 likely require some testing.*
 
-*If you have only one class, the second option in "Expand selected" dialog below 
-doesn't matter. In case of 
-intersecting each other, the shapes will be merged. As above, see "[Usage Details]()"
-for more information.*
+*In the same dialog you also set a behaviour when enlarged
+detections intersect each other. If both
+have the same class you can merge them or keep one of the objects removing the
+other. First option will likely result in acquiring more objects in general marked
+with ROIs extending over many cells. Second option will keep fewer objects but
+will not include any other potentailly unwanted areas. Creating a copy of your
+image and testing different settings is advisible.*
 
-![Expand options](./assets/example1/expand_options.png)
+![Expand options](./assets/example1/Expand_optionen.png)
 
 
 *You can convert in between simple detections and annotations like this e.g. to 
-use tools dedicated for annotations from QuPath's "Objects/Annotations..." menu.
-Here we converted our shapes to annotations to fill unnecessary holes contained within
-single shapes and then converted back them to detections.*
+use tools dedicated for annotations from QuPath's "Objects/Annotations..." menu.*
 
 ![Expanded cells zoomed](./assets/example1/after_expanding.png)
 
@@ -83,8 +84,11 @@ in assests folder).
 **Fourth step**: Import to the LMD software.
 
 Head to "File/Import Shapes..."
+
 ![Importing menu](./assets/example1/importing_option.PNG)
+
 First it asks if the calibration used last time is the one you want to use now.
+
 ![Importing window](./assets/example1/importing_window1.PNG)
 
 Then if you have a file with reference points.
@@ -100,13 +104,16 @@ in QuPath. Here is an example of the same point from above, this time in the LMD
 
 ![Calibration](./assets/example1/calibrationpoint3.PNG)
 
-In the next dialog the software asks if you want to use actual magnification:
-![Magnification](./assets/example1/magnification.PNG)
-Just choose the magnification you want to work on and select "yes".
-After this, the shapes should be loaded and visible:
+In the next dialog the software asks if you want to use 
+"the actual magnification".
+Set the magnification you want to use to cut the cells out and select "yes".
+
+After loading the shapes, their counturs should be visible:
 ![Magnification](./assets/example1/succesful_loading.PNG)
-Depending on accuracy of your calibration points, these shapes will be more or less
-shifted, you can move them all at once to adjust. 
+Depending on the accuracy of your calibration points, 
+these shapes will be more or less
+shifted, you can move them all at once to adjust. To select all shapes, press
+shift and select the last one on the shape list. 
 
 
 
