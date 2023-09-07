@@ -25,12 +25,14 @@ and we have run a custom cellpose script for that purpose with following result:
 In order to cut the cells out, we expanded them by the radius of 20 um.
 Just in case we worked on a copy of our image.
 
-Choosing a class priority will result in preserving this class if object
-of different class intersects it while expanding. Regarding the option when 
-same class intersects, we chose to keep one of the objects because merging them
-would sometimes result in large objects of bright class cells encapsulating
+Choosing a class priority will result in preserving an object of this 
+class if object
+of different class intersects it while expanding. When
+same class objects intersect, we chose to keep one of the objects because merging them
+would sometimes result in large objects of bright cells encapsulating
 a dark cell, which would inevitably fall down to the same collector when cutting 
-out. Removing some objects didn't make that much of a difference.
+out. On the other hand, 
+removing some objects didn't make that much of a difference.
 
 ![Gif showing expanding](./assets/example2/Processing.gif)
 
