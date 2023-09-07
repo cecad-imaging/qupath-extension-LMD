@@ -21,9 +21,8 @@ The aim here was to discriminate between darker and brigther mitochondria:
 and we have run a custom cellpose script for that purpose with following result:
 ![Image](./assets/example2/Cells_zoomed_segmented.png)
 
-1. Just in case we worked on a copy of our image.
-2. In order to cut the cells out, we expanded them by the radius of 15 um.
-3. We filled the holes within all objects to prevent unnecessary cutting. 
+In order to cut the cells out, we expanded them by the radius of 25 um.
+Just in case we worked on a copy of our image.
 
 'Other' class correspanded to bright, 'Stroma' to dark cells.
 Choosing a class priority will result in preserving this class if object

@@ -33,13 +33,19 @@ and bottom right for the third one. Note that these are corners of the slide as 
 in the microscope's viewer when the slide is flipped and ready for the regions to be cut out.
 
 
-- **Objects Expanding**: You will most likely need to expand your segmentations 
+- **Detections Expanding**: You will most likely need to expand your segmentations 
 having the laser's aperture in mind. To do so, select objects to expand 
 (Ctrl+Alt+D for all detections) and head to 'Utilities/Expand Selected Detections'.
-Set the radius and the desired behaviour when two objects of different classes 
-intersect - you can either exclude these objects or set an order of priority for 
+Set the radius and the desired behaviour when two objects intersect. 
+If they have different class, you can either 
+exclude these objects or set an order of priority for 
 objects of diffferent classes. An object with higher priority will be preserved.
-Objects of the same class will be merged if intersecting. Note that this won't 
+Setting a priority is probably almost always a desired choice.
+Objects of the same class can be either merged or one of them can be deleted. 
+The assumpton on the second option is that if the objects are of same class, 
+it means they are equally important, and we don't discriminate further between them,
+removing a random one. Which option to choose dependes on your particular case.
+Note that the expanding won't 
 process annotations and the new, enlarged objects will be generic detections 
 regardless of their previous type. The processing may take some time in case 
 of many objects (>5000). The smaller the number of
