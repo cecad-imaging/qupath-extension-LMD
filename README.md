@@ -9,7 +9,7 @@ Download a JAR file from releases and drag it into QuPath's main
 window as described [here](https://qupath.readthedocs.io/en/0.4/docs/intro/extensions.html#installing-extensions).
 
 ### Workflow overview
-1. Acquire an image of your slide (e.g. with a slide scanner).
+1. Acquire an image of your slide.
 2. Segment cells in QuPath. 
 3. Expand segmentations if needed.
 4. Add calibration points to your image.
