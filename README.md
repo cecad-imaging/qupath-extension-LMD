@@ -1,7 +1,8 @@
 ## LMD Support for QuPath
 This extension aims to provide an open-source solution for automating 
 the segmentation process within Leica's laser microdissection software. It exports 
-detections from [QuPath](https://qupath.github.io/) to a file format compatible with LMD7.
+detections from [QuPath](https://qupath.github.io/) to an XML file, which can be imported into 
+[LMD7](https://www.leica-microsystems.com/products/light-microscopes/p/leica-lmd7/).
 
 ### Installation
 Download a JAR file from releases and drag it into QuPath's main 
@@ -19,7 +20,7 @@ and assign object classifications to its caps.
 ### Examples
 
 - [Basic example with LMD slide](./examples/Example_Basic.md)
-- [Example with LMD plate](./examples/Example_Hela_PKmO.md)
+- [Example with fluorescent probe on LMD plate](./examples/Example_Hela_PKmO.md)
 
 ### Usage Details
  - **Calibration Points**: In order to add calibration points, create 3 separate 
