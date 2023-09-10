@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-group = "org.dgsob"
+group = "org.cecad.lmd"
 version = "0.1.3"
 
 repositories {

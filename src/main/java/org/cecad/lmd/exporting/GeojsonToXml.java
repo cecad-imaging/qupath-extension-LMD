@@ -1,4 +1,4 @@
-package org.dgsob.exporting;
+package org.cecad.lmd.exporting;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.w3c.dom.Document;
@@ -19,10 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-import static org.dgsob.exporting.ExportOptions.CapAssignments.*;
-import static org.dgsob.exporting.ExportOptions.ObjectTypes.*;
-import static org.dgsob.exporting.ExportOptions.FeatureGeoTypes.*;
-import static org.dgsob.exporting.ExportOptions.CalibrationPointsNames.*;
+import static org.cecad.lmd.exporting.ExportOptions.CapAssignments.*;
+import static org.cecad.lmd.exporting.ExportOptions.ObjectTypes.*;
+import static org.cecad.lmd.exporting.ExportOptions.FeatureGeoTypes.*;
+import static org.cecad.lmd.exporting.ExportOptions.CalibrationPointsNames.*;
 
 public class GeojsonToXml {
     private int shapeCount = 0;

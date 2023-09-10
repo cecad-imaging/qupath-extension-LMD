@@ -1,9 +1,9 @@
-package org.dgsob.utilities;
+package org.cecad.lmd.utilities;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
-import org.dgsob.common.ObjectUtils;
+import org.cecad.lmd.common.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;

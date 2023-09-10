@@ -1,6 +1,6 @@
-package org.dgsob.exporting;
+package org.cecad.lmd.exporting;
 
-import org.dgsob.common.ClassUtils;
+import org.cecad.lmd.common.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.gui.dialogs.Dialogs;
@@ -21,9 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
-import static org.dgsob.exporting.ExportOptions.CollectorTypes.*;
-import static org.dgsob.exporting.ExportOptions.CapAssignments.*;
-import static org.dgsob.exporting.ExportOptions.CalibrationPointsNames.*;
+import static org.cecad.lmd.exporting.ExportOptions.CollectorTypes.*;
+import static org.cecad.lmd.exporting.ExportOptions.CapAssignments.*;
+import static org.cecad.lmd.exporting.ExportOptions.CalibrationPointsNames.*;
 
 public class ExportCommand {
 

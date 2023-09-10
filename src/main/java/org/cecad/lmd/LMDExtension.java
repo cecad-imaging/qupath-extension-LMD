@@ -1,10 +1,10 @@
-package org.dgsob;
+package org.cecad.lmd;
 
 import org.controlsfx.control.action.Action;
-import org.dgsob.exporting.ExportCommand;
-import org.dgsob.utilities.ConvertObjectsCommand;
-import org.dgsob.utilities.ExpandDetectionsCommand;
-import org.dgsob.utilities.MirrorImageCommand;
+import org.cecad.lmd.exporting.ExportCommand;
+import org.cecad.lmd.utilities.ConvertObjectsCommand;
+import org.cecad.lmd.utilities.ExpandDetectionsCommand;
+import org.cecad.lmd.utilities.MirrorImageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.common.Version;

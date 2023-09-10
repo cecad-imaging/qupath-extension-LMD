@@ -1,7 +1,7 @@
-package org.dgsob.utilities;
+package org.cecad.lmd.utilities;
 
-import org.dgsob.common.ClassUtils;
-import org.dgsob.common.ObjectUtils;
+import org.cecad.lmd.common.ObjectUtils;
+import org.cecad.lmd.common.ClassUtils;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;

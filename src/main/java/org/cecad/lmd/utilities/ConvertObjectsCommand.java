@@ -1,4 +1,4 @@
-package org.dgsob.utilities;
+package org.cecad.lmd.utilities;
 
 import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.images.ImageData;

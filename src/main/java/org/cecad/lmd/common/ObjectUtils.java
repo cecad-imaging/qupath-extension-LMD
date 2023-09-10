@@ -1,4 +1,4 @@
-package org.dgsob.common;
+package org.cecad.lmd.common;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;

@@ -1,4 +1,4 @@
-package org.dgsob.common;
+package org.cecad.lmd.common;
 
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.classes.PathClass;
