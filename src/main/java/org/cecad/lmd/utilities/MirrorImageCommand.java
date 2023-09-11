@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
+import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.TransformedServerBuilder;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
@@ -54,9 +55,19 @@ public class MirrorImageCommand {
         builder.transform(transform);
         ImageServer<BufferedImage> newServer = builder.build();
 
-//        logger.trace("newServer metadata: " + newServer.getMetadata());
-//        logger.trace("original server metadata: " + server.getMetadata());
-//        newServer.setMetadata(server.getMetadata());
+        // Set a custom name, keep the rest of metadata the same
+        String mirroredImageName = server.getMetadata().getName();
+        if (mirrorX){
+            mirroredImageName = mirroredImageName + " (H)";
+        }
+        else if (mirrorY){
+            mirroredImageName = mirroredImageName + " (V)";
+        }
+        else{
+            logger.warn("Creating a copy of an image without flipping it shouldn't be possible with this tool.");
+        }
+        ImageServerMetadata.Builder metadata = new ImageServerMetadata.Builder(newServer.getMetadata()).name(mirroredImageName);
+        newServer.setMetadata(metadata.build());
 
         // Use the newly built server to create new imageData
         ImageData<BufferedImage> newImageData = new ImageData<>(newServer);
