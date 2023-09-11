@@ -9,14 +9,14 @@ in any way, here we burned 3 'X' marks with an LMD microscope, one of
 which is shown below. The purpose of it is to have some kind of landmark which
 is easy to find later in both QuPath and LMD software. 
 
-![Marking down the calibration](./assets/example1/BurnedMark.PNG)
+![Marking down the calibration](./assets/example1/Reference_mark_example.PNG)
 
 Then we acquired a scan of the slide with a
 Hamamatsu S360 slidescanner
 (we can see the 3 marks we 
 created before):
 
-![Acquiring an image](./assets/example1/EntireSlideScan.png)
+![Acquiring an image](./assets/example1/Entire_Slide_Scan.png)
 
 **Second step**: Segmentation and export preparation in QuPath.
 
@@ -34,13 +34,13 @@ can be helpful for navigating under LMD software later.
 See "Mirroring" under "[Usage Details]()".*
 
 ![Calibration point zoomed](./assets/example1/single_cal.png)
-![Calibration points](./assets/example1/three_cal.png)
+![Calibration points](./assets/example1/Reference_marks_example.png)
 
 
 
 Next, for the sake of example,
 we simply run cell detection to mark some ROIs:
-![Cells detection](./assets/example1/detected_cells.png)
+![Cells detection](./assets/example1/Detected_cells.png)
 
 In order to cut them, we need to enlarge these particular objects. Later, you will have 
 to adjust laser's aperture and power in a way it is suffcient enough to cut
@@ -61,13 +61,13 @@ with ROIs extending over many cells. Second option will keep fewer objects but
 will not include any other potentailly unwanted areas. Creating a copy of your
 image and testing different settings is advisible.*
 
-![Expand options](./assets/example1/Expand_optionen.png)
+![Expand options](./assets/example1/Expanding_options.png)
 
 
 *You can convert in between simple detections and annotations like this e.g. to 
 use tools dedicated for annotations from QuPath's "Objects/Annotations..." menu.*
 
-![Expanded cells zoomed](./assets/example1/after_expanding.png)
+![Expanded cells zoomed](./assets/example1/Cells_after_expanding.png)
 
 **Third step**: Export.
 
@@ -102,7 +102,7 @@ If this is your first time doing this, you can select 'no' and go to the calibra
 During calibration, we have to choose as accurately as possible, the same points we marked
 in QuPath. Here is an example of the same point from above, this time in the LMD software:
 
-![Calibration](./assets/example1/calibrationpoint3.PNG)
+![Calibration](./assets/example1/Calibration_point_3.PNG)
 
 In the next dialog the software asks if you want to use 
 "the actual magnification".
