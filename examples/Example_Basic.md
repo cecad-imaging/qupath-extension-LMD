@@ -33,7 +33,7 @@ case-sensitive, just make sure you don't have a typo.
 can be helpful for navigating under LMD software later.
 See "Mirroring" under "[Usage Details]()".*
 
-![Calibration point zoomed](./assets/example1/single_cal.png)
+![Calibration point zoomed](./assets/example1/Annotating_calibration_example.png)
 ![Calibration points](./assets/example1/Reference_marks_example.png)
 
 
@@ -85,15 +85,15 @@ in assests folder).
 
 Head to "File/Import Shapes..."
 
-![Importing menu](./assets/example1/importing_option.PNG)
+![Importing menu](./assets/example1/Importing_option.PNG)
 
 First it asks if the calibration used last time is the one you want to use now.
 
-![Importing window](./assets/example1/importing_window1.PNG)
+![Importing window](./assets/example1/Importing_window_1.PNG)
 
 Then if you have a file with reference points.
 
-![Importing window2](./assets/example1/importing_window2.PNG)
+![Importing window2](./assets/example1/Importing_window_2.PNG)
 
 If this is your first time doing this, you can select 'no' and go to the calibration view.
 
@@ -109,7 +109,7 @@ In the next dialog the software asks if you want to use
 Set the magnification you want to use to cut the cells out and select "yes".
 
 After loading the shapes, their counturs should be visible:
-![Magnification](./assets/example1/succesful_loading.PNG)
+![Magnification](./assets/example1/Succesful_shapes_loading.PNG)
 Depending on the accuracy of your calibration points, 
 these shapes will be more or less
 shifted, you can move them all at once to adjust. To select all shapes, press
