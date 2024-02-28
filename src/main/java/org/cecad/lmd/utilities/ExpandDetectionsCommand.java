@@ -9,8 +9,8 @@ import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.common.GeneralTools;
-import qupath.lib.gui.dialogs.Dialogs;
-import qupath.lib.gui.dialogs.ParameterPanelFX;
+import qupath.fx.dialogs.Dialogs;
+import qupath.lib.gui.tools.GuiTools;
 import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.PixelCalibration;
@@ -93,7 +93,8 @@ public class ExpandDetectionsCommand implements Runnable {
                         "Either remove intersecting or choose a class of which object should be preserved when two objects intersect\n" +
                                 "You will be prompted to set priorities after confirming your choice");
 
-        boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
+//        boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
+        boolean confirmed = GuiTools.showParameterDialog("Expand selected", params);
 
         if(!confirmed) {
             return;
@@ -107,7 +108,8 @@ public class ExpandDetectionsCommand implements Runnable {
         if (differentClassesChoice.equals("Set priority for each class")){
             Set<PathClass> availableClasses = ClassUtils.getAllClasses(hierarchy.getAllObjects(false));
             ParameterList priorityRankingParams = createPriorityRankingParameterList(availableClasses);
-            boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
+//            boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
+            boolean confirmedPriorityRanking = GuiTools.showParameterDialog("Set priorities for classes", priorityRankingParams);
 
             if (!confirmedPriorityRanking){
                 return;
@@ -167,7 +169,7 @@ public class ExpandDetectionsCommand implements Runnable {
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
             double seconds = (double) duration / 1_000_000_000.0;
-            Dialogs.showInfoNotification("Operation Succesful", selectedDetectionsNumber + " objects processed in " + seconds + " seconds.\n"
+            Dialogs.showInfoNotification("Operation Successful", selectedDetectionsNumber + " objects processed in " + seconds + " seconds.\n"
                     + objectsToAddToHierarchy.size() + " output objects.");
         } catch (Throwable t){
             hierarchy.addObjects(selectedDetections);
@@ -182,7 +184,7 @@ public class ExpandDetectionsCommand implements Runnable {
      *
      * @param newObjects Collection of objects to process. Only one is processed witch each call of the function.
      * @param objectsToAddToHierarchy Collection of objects to add to hierarchy.
-     * @param priorityRanking List of calsses names as strings which is the order of priority.
+     * @param priorityRanking List of classes names as strings which is the order of priority.
      * @return newObjects - one object
      */
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
@@ -240,7 +242,7 @@ public class ExpandDetectionsCommand implements Runnable {
                                 objectsToRemoveFromProcessed.add(otherObject); // deleting other, non-priority, intersecting object
                                 /*
                                 This is the only case when we don't break the loop, after it is finished,
-                                we are sure the object doesn't intersect diffrent class object,
+                                we are sure the object doesn't intersect different class object,
                                 still may intersect same class object though, so we add it back to processed.
                                 */
                                 if (!objectsToAddToProcessed.contains(object)) {
@@ -287,7 +289,7 @@ public class ExpandDetectionsCommand implements Runnable {
      * For each object of the provided objects collection takes its ROI, multiplies by the given radius, and collects all
      * non-annotation objects in such enlarged ROI, adding them to the copy of provided objects collection and deleting from hierarchy.
      *
-     * @param hierarchy A hierarchy to delete the objectsfrom.
+     * @param hierarchy A hierarchy to delete the objects from.
      * @param objects Original collection of objects of interest.
      * @param radius Int value to enlarge each object's ROI. 'Background' objects within this ROI are added to the collection.
      * @return Provided objects + collected 'background' objects as one collection.
@@ -327,7 +329,7 @@ public class ExpandDetectionsCommand implements Runnable {
         if (!classNames.isEmpty()) {
             priorityRankingParams.addEmptyParameter("""
                     Class 1 corresponds to the highest priority.
-                    Lower prority object will be deleted if intersecting object of a higher priority.
+                    Lower priority object will be deleted if intersecting object of a higher priority.
                                         
                     """);
             for (int i = 1; i <= classNames.size(); i++) {

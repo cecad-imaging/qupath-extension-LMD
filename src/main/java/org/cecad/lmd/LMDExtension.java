@@ -8,9 +8,9 @@ import org.cecad.lmd.utilities.MirrorImageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.common.Version;
-import qupath.lib.gui.ActionTools;
-import qupath.lib.gui.ActionTools.ActionMenu;
-import qupath.lib.gui.ActionTools.ActionDescription;
+import qupath.lib.gui.actions.ActionTools;
+import qupath.lib.gui.actions.annotations.ActionConfig;
+import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.extensions.QuPathExtension;
 import java.io.IOException;
@@ -38,25 +38,25 @@ public class LMDExtension implements QuPathExtension {
         return QuPathExtension.super.getQuPathVersion();
     }
 
+
     @ActionMenu("Extensions>LMD Support")
     public static class LMDActions {
-        @ActionMenu("Utilities>Convert Selected Objects>To Detections")
-        @ActionDescription("Converts any object which encloses an area to a detection object.")
+        @ActionMenu("Utilities>Convert Selected Objects>")
+        @ActionConfig(bundle = "strings", value = "Action.convert.toDetections")
         public final Action convertToDetections;
-        @ActionMenu("Utilities>Convert Selected Objects>To Annotations")
-        @ActionDescription("Converts any object which encloses an area to an annotation object.")
+        @ActionMenu("Utilities>Convert Selected Objects>")
+        @ActionConfig(bundle = "strings", value = "Action.convert.toAnnotations")
         public final Action convertToAnnotations;
-        @ActionMenu("Utilities>Create Image Copy>Mirror Horizontally")
-        @ActionDescription("Creates a new image with the objects from the original image, mirrored along horizontal axis.")
+        @ActionMenu("Utilities>Create Image Copy>")
+        @ActionConfig(bundle = "strings", value = "Action.mirrorX")
         public final Action mirrorImageX;
-        @ActionMenu("Utilities>Create Image Copy>Mirror Vertically")
-        @ActionDescription("Creates a new image with the objects from the original image, mirrored along vertical axis.")
+        @ActionMenu("Utilities>Create Image Copy>")
+        @ActionConfig(bundle = "strings", value = "Action.mirrorY")
         public final Action mirrorImageY;
-        @ActionMenu("Utilities>Expand Selected Detections")
-        @ActionDescription("Makes objects larger by the provided radius. Annotations not supported.")
+        @ActionMenu("Utilities>")
+        @ActionConfig(bundle = "strings", value = "Action.expand")
         public final Action expandObjects;
-        @ActionMenu("Export Detections to LMD")
-        @ActionDescription("Exports detections to an XML file. Annotations not supported.")
+        @ActionConfig(bundle = "strings", value = "Action.export")
         public final Action export;
 
         private LMDActions(QuPathGUI qupath) {
@@ -73,11 +73,19 @@ public class LMDExtension implements QuPathExtension {
 
             // Mirroring
             mirrorImageX = qupath.createImageDataAction(imageData -> {
-                MirrorImageCommand.mirrorImage(qupath, true, false);
+                try {
+                    MirrorImageCommand.mirrorImage(qupath, true, false);
+                } catch (IOException e) {
+                    logger.error("Mirroring failed: " + e.getMessage());
+                }
             });
 
             mirrorImageY = qupath.createImageDataAction(imageData -> {
-                MirrorImageCommand.mirrorImage(qupath, false, true);
+                try {
+                    MirrorImageCommand.mirrorImage(qupath, false, true);
+                } catch (IOException e) {
+                    logger.error("Mirroring failed: " + e.getMessage());
+                }
             });
 
             // Expanding

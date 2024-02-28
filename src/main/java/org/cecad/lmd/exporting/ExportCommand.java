@@ -3,8 +3,8 @@ package org.cecad.lmd.exporting;
 import org.cecad.lmd.common.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.lib.gui.dialogs.Dialogs;
-import qupath.lib.gui.dialogs.ParameterPanelFX;
+import qupath.fx.dialogs.Dialogs;
+import qupath.lib.gui.tools.GuiTools;
 import qupath.lib.images.ImageData;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.classes.PathClass;
@@ -54,7 +54,8 @@ public class ExportCommand {
 //                .addBooleanParameter("excludeAnnotations", "Exclude Annotations", true,
 //                        "If checked, all annotation objects (except calibration points) won't be exported.");
 
-        boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(exportParams).getPane());
+//        boolean confirmed = Dialogs.showConfirmDialog("Export to LMD", new ParameterPanelFX(exportParams).getPane());
+        boolean confirmed = GuiTools.showParameterDialog("Export to LMD", exportParams);
 
         if (!confirmed) {
             return;
@@ -65,7 +66,7 @@ public class ExportCommand {
         var comboChoice = exportParams.getChoiceParameterValue("exportOptions");
         if (comboChoice.equals("Selected detection objects")) {
             if (hierarchy.getSelectionModel().noSelection()) {
-                Dialogs.showErrorMessage("No selection detected",
+                Dialogs.showErrorNotification("No selection detected",
                         "You had chosen to export selected objects but no selection has been detected.");
                 return;
             }
@@ -83,7 +84,8 @@ public class ExportCommand {
         ParameterList collectorParams = null;
         if (processCollectors){
             collectorParams = createCollectorsParameterList(collectorType, chosenObjects);
-            boolean confirmedSecondWindow = Dialogs.showConfirmDialog("Collector Assignment", new ParameterPanelFX(collectorParams).getPane());
+//            boolean confirmedSecondWindow = Dialogs.showConfirmDialog("Collector Assignment", new ParameterPanelFX(collectorParams).getPane());
+            boolean confirmedSecondWindow = GuiTools.showParameterDialog("Collector Assignment", collectorParams);
             if (!confirmedSecondWindow){
                 return;
             }
@@ -105,7 +107,7 @@ public class ExportCommand {
         boolean succesfulConversion = xmlConverter.createLeicaXML(collectorParams);
 
         if (!succesfulConversion) {
-            Dialogs.showErrorMessage("Incorrect Calibration Points",
+            Dialogs.showErrorNotification("Incorrect Calibration Points",
                     "Please add 3 'Point' annotations, named " + CP1 + ", " + CP2 + " and " + CP3 + ".");
             return;
         }
@@ -127,7 +129,7 @@ public class ExportCommand {
                     "Export completed but the number of exported detections is 0.");
         }
         else {
-            Dialogs.showErrorMessage("Warning", "Couldn't access your project's directory. " +
+            Dialogs.showWarningNotification("Warning", "Couldn't access your project's directory. " +
                     "Check your home folder for the output files.");
         }
     }
