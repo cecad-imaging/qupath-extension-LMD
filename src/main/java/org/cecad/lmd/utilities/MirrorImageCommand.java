@@ -1,6 +1,7 @@
 package org.cecad.lmd.utilities;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Collection;
 
 import org.cecad.lmd.common.ObjectUtils;
@@ -18,7 +19,7 @@ public class MirrorImageCommand {
 
     private static final Logger logger = LoggerFactory.getLogger(MirrorImageCommand.class);
 
-    public static void mirrorImage(QuPathGUI qupath, boolean mirrorX, boolean mirrorY){
+    public static void mirrorImage(QuPathGUI qupath, boolean mirrorX, boolean mirrorY) throws IOException {
 
         // Collect all data from original image
         ImageData<BufferedImage> imageData = qupath.getImageData();

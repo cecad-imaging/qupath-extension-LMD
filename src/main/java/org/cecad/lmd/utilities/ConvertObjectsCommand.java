@@ -1,6 +1,6 @@
 package org.cecad.lmd.utilities;
 
-import qupath.lib.gui.dialogs.Dialogs;
+import qupath.fx.dialogs.Dialogs;
 import qupath.lib.images.ImageData;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
@@ -23,7 +23,7 @@ public class ConvertObjectsCommand {
     public static void convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
         PathObjectHierarchy hierarchy = imageData.getHierarchy();
         if (hierarchy.getSelectionModel().noSelection()){
-            Dialogs.showErrorMessage("Selection Required", "Please select objects to convert.");
+            Dialogs.showWarningNotification("Selection Required", "Please select objects to convert.");
             return;
         }
         Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();

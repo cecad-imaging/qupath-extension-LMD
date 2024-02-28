@@ -5,7 +5,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import qupath.lib.geom.Point2;
-import qupath.lib.gui.dialogs.Dialogs;
+import qupath.fx.dialogs.Dialogs;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
 import qupath.lib.objects.classes.PathClass;
@@ -26,7 +26,7 @@ public class ObjectUtils {
             else if (shapeNew.getImagePlane().equals(object.getROI().getImagePlane()))
                 shapeNew = RoiTools.combineROIs(shapeNew, object.getROI(), RoiTools.CombineOp.ADD);
             else {
-                Dialogs.showErrorMessage("Error", "It seems as if the processed objects were from different image planes. " +
+                Dialogs.showErrorNotification("Error", "It seems as if the processed objects were from different image planes. " +
                         "Please reload the image and try again.");
             }
         }
