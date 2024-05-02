@@ -48,7 +48,7 @@ public class ExportCommand {
                         Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.")
                 .addChoiceParameter("collectorChoice", "Collector type:", NO_COLLECTOR,
-                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _12_FOLD_STRIP, PETRI),
+                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _12_FOLD_STRIP, PETRI, _96_WELL_PLATE),
                         "Choose a type of your collector.\n" +
                                   "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
 //                .addBooleanParameter("excludeAnnotations", "Exclude Annotations", true,
@@ -214,13 +214,19 @@ public class ExportCommand {
                         .addChoiceParameter("K", "K", defaultValue, collectorOptions)
                         .addChoiceParameter("L", "L", defaultValue, collectorOptions);
             }
-//            else if (collectorType.equals(_96_WELL_PLATE)) {
-//            }
             else if (collectorType.equals(PETRI)) {
                 collectorParams
                         .addChoiceParameter("A", "A", defaultValue, collectorOptions)
                         .addChoiceParameter("B", "B", defaultValue, collectorOptions);
             }
+            else if (collectorType.equals(_96_WELL_PLATE)) {
+                // Add parameters for each class
+//                for (String className : classNames) {
+//                    collectorParams.addIntParameter(className + "_wells", "Number of wells for " + className + ":", 1, 1, 96);
+//                    collectorParams.addIntParameter(className + "_detections", "Number of detections for " + className + ":", 1, 1, Integer.MAX_VALUE);
+//                }
+            }
+
             return collectorParams;
         }
     }

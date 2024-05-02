@@ -1,9 +1,10 @@
+group = "org.cecad.lmd"
+version = "1.0.0"
+
 plugins {
     id("java")
+    id("org.openjfx.javafxplugin") version "0.1.0"
 }
-
-group = "org.cecad.lmd"
-version = "0.2.0"
 
 repositories {
     mavenCentral()
@@ -15,6 +16,11 @@ repositories {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+
+javafx {
+    version = "22.0.1"
+    modules("javafx.controls", "javafx.fxml")
 }
 
 dependencies {
