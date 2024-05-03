@@ -5,6 +5,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.cecad.lmd.commands.MainCommand;
 
@@ -16,9 +17,9 @@ public class MainPane extends GridPane {
         super();
         this.command = command;
 
-        setPadding(new Insets(10)); // Set padding around the entire pane
-        setHgap(2); // Set horizontal spacing between elements
-        setVgap(10); // Set vertical spacing between elements
+        setPadding(new Insets(10));
+        setHgap(2);
+        setVgap(10);
 
         // Labels
         Label detectionsLabel = new Label("Detections to export:");
@@ -41,11 +42,18 @@ public class MainPane extends GridPane {
 
         Button moreOptionsButton = new Button("More Options");
         moreOptionsButton.setPrefWidth(290);
-        // TODO: add action
+        moreOptionsButton.setOnAction(command.openMoreOptionsPane());
 
         Button exportButton = new Button("Export");
-        exportButton.setPrefWidth(290);
+        exportButton.setPrefWidth(130);
         // TODO: add action
+
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setPrefWidth(130);
+
+        HBox controlsButtonsBox = new HBox();
+        controlsButtonsBox.setSpacing(30);
+        controlsButtonsBox.getChildren().addAll(cancelButton, exportButton);
 
         // GridPane constraints
         GridPane.setConstraints(detectionsLabel, 0, 0);
@@ -61,16 +69,16 @@ public class MainPane extends GridPane {
         GridPane.setColumnSpan(moreOptionsButton, 2);
         GridPane.setConstraints(moreOptionsButton, 0, 3);
 
-        GridPane.setColumnSpan(exportButton, 2);
-        GridPane.setConstraints(exportButton, 0, 4);
+        GridPane.setColumnSpan(controlsButtonsBox, 2);
+        GridPane.setConstraints(controlsButtonsBox, 0, 5);
 
         // Make buttons grow horizontally
         GridPane.setHgrow(setCollectorButton, Priority.ALWAYS);
-        GridPane.setHgrow(exportButton, Priority.ALWAYS);
+        GridPane.setHgrow(controlsButtonsBox, Priority.ALWAYS);
 
         // Add elements to the grid
         getChildren().addAll(detectionsLabel, detectionsComboBox, collectorOptionLabel, collectorChosenLabel,
-                setCollectorButton, moreOptionsButton, exportButton);
+                setCollectorButton, moreOptionsButton, controlsButtonsBox);
     }
 }
 
