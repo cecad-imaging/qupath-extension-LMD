@@ -34,9 +34,9 @@ public class StandardCollectorsPane extends VBox {
         HBox controlsButtonsBox = new HBox(); // Container for Cancel and Done buttons
         controlsButtonsBox.setSpacing(10);
         Button cancelButton = new Button("Cancel");
-        cancelButton.setPrefWidth(130);
+        cancelButton.setPrefWidth(120);
         Button doneButton = new Button("Done");
-        doneButton.setPrefWidth(130);
+        doneButton.setPrefWidth(120);
         controlsButtonsBox.getChildren().addAll(cancelButton, doneButton);
 
         getChildren().addAll(wellGrid, controlsButtonsBox);
@@ -58,7 +58,7 @@ public class StandardCollectorsPane extends VBox {
 
         // Header row
         Label wellLabel = new Label("Well");
-        wellLabel.setPrefWidth(70);
+        wellLabel.setPrefWidth(50);
         Label classLabel = new Label("Class");
         classLabel.setPrefWidth(70);
         Label percentageLabel = new Label("Percentage");
