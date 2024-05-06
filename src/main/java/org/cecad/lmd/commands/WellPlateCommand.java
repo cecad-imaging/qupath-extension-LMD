@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;
 
-public class WellPlateCommand implements Runnable{
+public class WellPlateCommand implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(SetCollectorCommand.class);
     private final String TITLE = "96-Well Plate";
     private Stage stage;
