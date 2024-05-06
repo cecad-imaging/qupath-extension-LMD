@@ -4,10 +4,12 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.cecad.lmd.commands.StandardCollectorsCommand;
 
@@ -24,12 +26,20 @@ public class StandardCollectorsPane extends VBox {
         this.wellLabels = generateWellLabels(numWells);
 
         setPadding(new Insets(10));
-        setSpacing(5);
+        setSpacing(10);
 
         // GridPane for wells
         GridPane wellGrid = createWellGrid();
 
-        getChildren().addAll(wellGrid);
+        HBox controlsButtonsBox = new HBox(); // Container for Cancel and Done buttons
+        controlsButtonsBox.setSpacing(10);
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setPrefWidth(130);
+        Button doneButton = new Button("Done");
+        doneButton.setPrefWidth(130);
+        controlsButtonsBox.getChildren().addAll(cancelButton, doneButton);
+
+        getChildren().addAll(wellGrid, controlsButtonsBox);
     }
 
     private String[] generateWellLabels(int numWells) {
@@ -48,7 +58,7 @@ public class StandardCollectorsPane extends VBox {
 
         // Header row
         Label wellLabel = new Label("Well");
-        wellLabel.setPrefWidth(50);
+        wellLabel.setPrefWidth(70);
         Label classLabel = new Label("Class");
         classLabel.setPrefWidth(70);
         Label percentageLabel = new Label("Percentage");

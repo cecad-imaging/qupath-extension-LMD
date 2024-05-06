@@ -22,21 +22,32 @@ public class WellPlatePane extends VBox {
         // SubPane (initially empty)
         WellPlateSubPane wellSubPane = new WellPlateSubPane();
 
+        Label wellLabel = new Label("Wells Number");
+        wellLabel.setPrefWidth(85);
+        Label classLabel = new Label("Class");
+        classLabel.setPrefWidth(100);
+        Label percentageLabel = new Label("Percentage");
+        percentageLabel.setPrefWidth(70);
+        HBox headerLabelsBox = new HBox();
+        headerLabelsBox.setSpacing(10);
+        headerLabelsBox.getChildren().addAll(wellLabel, classLabel, percentageLabel);
+
         // Buttons
         Button addWellButton = new Button("+");
+        addWellButton.setPrefSize(40, 20);
         HBox addWellBox = new HBox();
-        addWellBox.setSpacing(92);
+        addWellBox.setSpacing(120);
         addWellBox.getChildren().addAll(new Label(""), addWellButton);
         HBox controlsButtonsBox = new HBox(); // Container for Cancel and Done buttons
         controlsButtonsBox.setSpacing(10);
         Button cancelButton = new Button("Cancel");
-        cancelButton.setPrefWidth(100);
+        cancelButton.setPrefWidth(135);
         Button doneButton = new Button("Done");
-        doneButton.setPrefWidth(100);
+        doneButton.setPrefWidth(135);
         controlsButtonsBox.getChildren().addAll(cancelButton, doneButton);
 
         // Ensure proper order of elements
-        getChildren().addAll(wellSubPane, addWellBox, controlsButtonsBox);
+        getChildren().addAll(headerLabelsBox, wellSubPane, addWellBox, controlsButtonsBox);
 
         // Add button handler for "+" button (example)
         addWellButton.setOnAction(event -> {
