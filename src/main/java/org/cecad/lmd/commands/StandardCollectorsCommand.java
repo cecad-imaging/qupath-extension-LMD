@@ -3,6 +3,7 @@ package org.cecad.lmd.commands;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.cecad.lmd.ui.ControlsInterface;
 import org.cecad.lmd.ui.StandardCollectorsPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,16 +14,24 @@ public class StandardCollectorsCommand implements Runnable {
     private Stage stage;
     private final QuPathGUI qupath;
     private final int numWells;
+    private final ControlsInterface mainPane;
 
-    public StandardCollectorsCommand(QuPathGUI qupath, int numWells) {
+    public StandardCollectorsCommand(QuPathGUI qupath, int numWells, ControlsInterface mainPane) {
         this.qupath = qupath;
         this.numWells = numWells;
+        this.mainPane = mainPane;
     }
 
     @Override
     public void run() {
         showStage();
     }
+
+    public void closeStage(){
+        if (stage.isShowing())
+            stage.close();
+    }
+
     private void showStage(){
         boolean creatingStage = stage == null;
         if (creatingStage)
@@ -42,7 +51,7 @@ public class StandardCollectorsCommand implements Runnable {
             TITLE = "Petri Dishes";
 
         Stage stage = new Stage();
-        Pane pane = new StandardCollectorsPane(this, numWells);
+        Pane pane = new StandardCollectorsPane(this, numWells, mainPane);
         Scene scene = new Scene(pane);
         stage.setScene(scene);
         stage.setResizable(false);

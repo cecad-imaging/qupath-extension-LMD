@@ -61,8 +61,8 @@ public class MainCommand implements Runnable {
         stage.hide();
     }
 
-    public EventHandler<ActionEvent> openCollectorsPane() {
-        SetCollectorCommand setCollectorCommand = new SetCollectorCommand(qupath);
+    public EventHandler<ActionEvent> openCollectorsPane(MainPane mainPane) {
+        SetCollectorCommand setCollectorCommand = new SetCollectorCommand(qupath, mainPane);
         return new Action(event -> setCollectorCommand.run());
     }
 

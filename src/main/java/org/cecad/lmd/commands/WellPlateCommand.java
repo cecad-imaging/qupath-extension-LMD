@@ -3,6 +3,7 @@ package org.cecad.lmd.commands;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.cecad.lmd.ui.ControlsInterface;
 import org.cecad.lmd.ui.WellPlatePane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,14 +14,21 @@ public class WellPlateCommand implements Runnable {
     private final String TITLE = "96-Well Plate";
     private Stage stage;
     private final QuPathGUI qupath;
+    private final ControlsInterface mainPane;
 
-    public WellPlateCommand(QuPathGUI qupath) {
+    public WellPlateCommand(QuPathGUI qupath, ControlsInterface mainPane) {
         this.qupath = qupath;
+        this.mainPane = mainPane;
     }
 
     @Override
     public void run() {
         showStage();
+    }
+
+    public void closeStage(){
+        if (stage.isShowing())
+            stage.close();
     }
 
     private void showStage(){
@@ -34,7 +42,7 @@ public class WellPlateCommand implements Runnable {
 
     private Stage createStage(){
         Stage stage = new Stage();
-        Pane pane = new WellPlatePane(this);
+        Pane pane = new WellPlatePane(this, mainPane);
         Scene scene = new Scene(pane);
         stage.setScene(scene);
         stage.setResizable(false);
@@ -42,6 +50,7 @@ public class WellPlateCommand implements Runnable {
         stage.initOwner(qupath.getStage());
         stage.setOnCloseRequest(event -> {
             hideStage();
+            stage.close();
             event.consume();
         });
         return stage;

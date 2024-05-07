@@ -11,19 +11,19 @@ public class WellPlateSubPane extends HBox {
         setPadding(new Insets(0)); // Set some padding
         setSpacing(10); // Set spacing between elements
 
-        Spinner<Integer> wellNumSpinner = new Spinner<>(1, 96, 1);
-        wellNumSpinner.setPrefWidth(70);
+        Spinner<Integer> wellNumSpinner = new Spinner<>(0, 96, 1);
+        wellNumSpinner.setPrefWidth(85);
 
         ComboBox<String> classComboBox = new ComboBox<>();
         classComboBox.getItems().addAll("STROMA", "OTHER");
         classComboBox.setPrefWidth(100);
 
         Spinner<Integer> percentageSpinner = new Spinner<>(0, 100, 1);
-        percentageSpinner.setPrefWidth(70);
+        percentageSpinner.setPrefWidth(85);
 
         Label spacerLabel = new Label("");
         spacerLabel.setPrefWidth(5);
 
-        getChildren().addAll(wellNumSpinner, spacerLabel, classComboBox, percentageSpinner);
+        getChildren().addAll(wellNumSpinner, classComboBox, percentageSpinner);
     }
 }

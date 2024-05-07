@@ -9,9 +9,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.cecad.lmd.commands.MainCommand;
 
-public class MainPane extends GridPane {
+public class MainPane extends GridPane implements ControlsInterface {
 
     private final MainCommand command;
+    private Label collectorChosenLabel;
 
     public MainPane(MainCommand command) {
         super();
@@ -32,13 +33,13 @@ public class MainPane extends GridPane {
 
         Label collectorOptionLabel = new Label("Collector is set to:");
         collectorOptionLabel.setPrefWidth(144);
-        Label collectorChosenLabel = new Label("96-well plate");
+        collectorChosenLabel = new Label("None");
         collectorOptionLabel.setPrefWidth(144);
 
         // Buttons
         Button setCollectorButton = new Button("Set Collector");
         setCollectorButton.setPrefWidth(290);
-        setCollectorButton.setOnAction(command.openCollectorsPane());
+        setCollectorButton.setOnAction(command.openCollectorsPane(this));
 
         Button moreOptionsButton = new Button("More Options");
         moreOptionsButton.setPrefWidth(290);
@@ -79,6 +80,11 @@ public class MainPane extends GridPane {
         // Add elements to the grid
         getChildren().addAll(detectionsLabel, detectionsComboBox, collectorOptionLabel, collectorChosenLabel,
                 setCollectorButton, moreOptionsButton, controlsButtonsBox);
+    }
+
+    @Override
+    public void updateCollectorLabel(String collectorName) {
+        collectorChosenLabel.setText(collectorName);
     }
 }
 
