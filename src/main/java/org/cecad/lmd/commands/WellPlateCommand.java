@@ -31,6 +31,14 @@ public class WellPlateCommand implements Runnable {
             stage.close();
     }
 
+    public void hideStage() {
+        stage.hide();
+    }
+
+    public void revokeStage(){
+        stage.show();
+    }
+
     private void showStage(){
         boolean creatingStage = stage == null;
         if (creatingStage)
@@ -50,13 +58,8 @@ public class WellPlateCommand implements Runnable {
         stage.initOwner(qupath.getStage());
         stage.setOnCloseRequest(event -> {
             hideStage();
-            stage.close();
             event.consume();
         });
         return stage;
-    }
-
-    private void hideStage() {
-        stage.hide();
     }
 }

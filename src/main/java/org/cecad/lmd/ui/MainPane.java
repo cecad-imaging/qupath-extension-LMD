@@ -8,11 +8,18 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.cecad.lmd.commands.MainCommand;
+import qupath.lib.images.ImageData;
+import org.cecad.lmd.common.Constants;
+
+import java.awt.image.BufferedImage;
 
 public class MainPane extends GridPane implements ControlsInterface {
 
     private final MainCommand command;
     private Label collectorChosenLabel;
+    ComboBox<String> detectionsComboBox;
+    private final String SELECTED = Constants.Detections.SELECTED;
+    private final String ALL = Constants.Detections.ALL;
 
     public MainPane(MainCommand command) {
         super();
@@ -26,10 +33,18 @@ public class MainPane extends GridPane implements ControlsInterface {
         Label detectionsLabel = new Label("Detections to export:");
         detectionsLabel.setPrefWidth(144);
 
+        String defaultDetections = "All";
+
+        ImageData<BufferedImage> imageData = command.getQuPath().getImageData();
+
+        if (imageData != null)
+            defaultDetections = imageData.getHierarchy().getSelectionModel().noSelection() ? "All" : "Selected";
+
         // Dropdown Menu (assuming String options)
-        ComboBox<String> detectionsComboBox = new ComboBox<>();
-        detectionsComboBox.getItems().addAll("Selected", "All");
+        detectionsComboBox = new ComboBox<>();
+        detectionsComboBox.getItems().addAll(SELECTED, ALL);
         detectionsComboBox.setPrefWidth(144);
+        detectionsComboBox.getSelectionModel().select(defaultDetections);
 
         Label collectorOptionLabel = new Label("Collector is set to:");
         collectorOptionLabel.setPrefWidth(144);
@@ -51,6 +66,7 @@ public class MainPane extends GridPane implements ControlsInterface {
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setPrefWidth(130);
+        cancelButton.setOnAction(actionEvent -> command.closeStage());
 
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(30);
@@ -85,6 +101,14 @@ public class MainPane extends GridPane implements ControlsInterface {
     @Override
     public void updateCollectorLabel(String collectorName) {
         collectorChosenLabel.setText(collectorName);
+    }
+
+    public String getDetectionsToExport(){
+        return detectionsComboBox.getSelectionModel().getSelectedItem();
+    }
+
+    public String getCollector(){
+        return collectorChosenLabel.toString();
     }
 }
 

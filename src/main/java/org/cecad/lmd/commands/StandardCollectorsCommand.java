@@ -30,6 +30,19 @@ public class StandardCollectorsCommand implements Runnable {
     public void closeStage(){
         if (stage.isShowing())
             stage.close();
+        stage = null;
+    }
+
+    public void hideStage() {
+        stage.hide();
+    }
+
+//    public void revokeStage(){
+//        showStage();
+//    }
+
+    public int getNumWells() {
+        return numWells;
     }
 
     private void showStage(){
@@ -62,9 +75,5 @@ public class StandardCollectorsCommand implements Runnable {
             event.consume();
         });
         return stage;
-    }
-
-    private void hideStage() {
-        stage.hide();
     }
 }

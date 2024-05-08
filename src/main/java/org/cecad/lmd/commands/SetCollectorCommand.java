@@ -6,7 +6,6 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.cecad.lmd.ui.ControlsInterface;
 import org.cecad.lmd.ui.SetCollectorPane;
-import org.controlsfx.control.action.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;
@@ -17,6 +16,8 @@ public class SetCollectorCommand implements Runnable {
     private Stage stage;
     private final QuPathGUI qupath;
     private final ControlsInterface mainPane;
+    WellPlateCommand wpCommand = null;
+    StandardCollectorsCommand fsCommand = null;
 
     public SetCollectorCommand(QuPathGUI qupath, ControlsInterface mainPane) {
         this.qupath = qupath;
@@ -31,6 +32,10 @@ public class SetCollectorCommand implements Runnable {
     public void closeStage(){
         if (stage.isShowing())
             stage.close();
+    }
+
+    public void hideStage() {
+        stage.hide();
     }
 
     private void showStage(){
@@ -58,16 +63,26 @@ public class SetCollectorCommand implements Runnable {
     }
 
     public void openWellPlatePane() {
-        WellPlateCommand wpCommand = new WellPlateCommand(qupath, mainPane);
-        wpCommand.run();
+        if (wpCommand == null) {
+            wpCommand = new WellPlateCommand(qupath, mainPane);
+            wpCommand.run();
+        }
+        else {
+            wpCommand.revokeStage();
+        }
     }
 
     public void openStandardCollectorsPane(int numWells) {
-        StandardCollectorsCommand fsCommand = new StandardCollectorsCommand(qupath, numWells, mainPane);
-        fsCommand.run();
-    }
-
-    private void hideStage() {
-        stage.hide();
+        // TODO:
+        // 1. Solve the case when we open e.g. 8-Strip click Done, then 12-Strip click Cancel:
+        // Old 8-Strip object should be still available when we click back on open 8-Strip
+        // NOTE: Potential solution in StandardCollectorsPane line 46
+        if (fsCommand == null || fsCommand.getNumWells() != numWells) {
+            fsCommand = new StandardCollectorsCommand(qupath, numWells, mainPane);
+            fsCommand.run();
+        }
+        else {
+            fsCommand.run();
+        }
     }
 }

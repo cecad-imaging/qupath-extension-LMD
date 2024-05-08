@@ -21,9 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
-import static org.cecad.lmd.exporting.ExportOptions.CollectorTypes.*;
-import static org.cecad.lmd.exporting.ExportOptions.CapAssignments.*;
-import static org.cecad.lmd.exporting.ExportOptions.CalibrationPointsNames.*;
+import static org.cecad.lmd.common.Constants.CollectorTypes.*;
+import static org.cecad.lmd.common.Constants.CapAssignments.*;
+import static org.cecad.lmd.common.Constants.CalibrationPointsNames.*;
 
 public class ExportCommand {
 
@@ -47,8 +47,8 @@ public class ExportCommand {
                 .addChoiceParameter("exportOptions", "Export:", defaultObjects,
                         Arrays.asList(allObjects, selectedObjects),
                         "Choose objects to export.")
-                .addChoiceParameter("collectorChoice", "Collector type:", NO_COLLECTOR,
-                        Arrays.asList(NO_COLLECTOR, PCR_TUBES, _8_FOLD_STRIP, _12_FOLD_STRIP, PETRI, _96_WELL_PLATE),
+                .addChoiceParameter("collectorChoice", "Collector type:", NONE,
+                        Arrays.asList(NONE, PCR_TUBES, _8_FOLD_STRIP, _12_FOLD_STRIP, PETRI_DISHES, _96_WELL_PLATE),
                         "Choose a type of your collector.\n" +
                                   "You will be asked to assign your objects' classes to a specified collector's caps in the next window.");
 //                .addBooleanParameter("excludeAnnotations", "Exclude Annotations", true,
@@ -80,7 +80,7 @@ public class ExportCommand {
 
 
         var collectorType = exportParams.getChoiceParameterValue("collectorChoice");
-        boolean processCollectors = !collectorType.equals(NO_COLLECTOR);
+        boolean processCollectors = !collectorType.equals(NONE);
         ParameterList collectorParams = null;
         if (processCollectors){
             collectorParams = createCollectorsParameterList(collectorType, chosenObjects);
@@ -214,7 +214,7 @@ public class ExportCommand {
                         .addChoiceParameter("K", "K", defaultValue, collectorOptions)
                         .addChoiceParameter("L", "L", defaultValue, collectorOptions);
             }
-            else if (collectorType.equals(PETRI)) {
+            else if (collectorType.equals(PETRI_DISHES)) {
                 collectorParams
                         .addChoiceParameter("A", "A", defaultValue, collectorOptions)
                         .addChoiceParameter("B", "B", defaultValue, collectorOptions);

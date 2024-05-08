@@ -1,6 +1,6 @@
-package org.cecad.lmd.exporting;
+package org.cecad.lmd.common;
 
-public class ExportOptions {
+public class Constants {
     /*
     Collectors have caps. We assign objects of which class should be collected to which cap.
     Besides the classes we allow for an assignment of these optons.
@@ -11,13 +11,13 @@ public class ExportOptions {
         public static final String REMAINING_OBJECTS = "Remaining Objects";
     }
     public static class CollectorTypes {
-        public static final String NO_COLLECTOR = "None";
+        public static final String NONE = "None";
         public static final String PCR_TUBES = "PCR Tubes";
-        public static final String _8_FOLD_STRIP = "8-fold-Strip";
-        public static final String _12_FOLD_STRIP = "12-fold-Strip";
+        public static final String _8_FOLD_STRIP = "8-Fold Strip";
+        public static final String _12_FOLD_STRIP = "12-Fold Strip";
 
-        public static final String _96_WELL_PLATE = "96-Wellplate";
-        public static final String PETRI = "Petri";
+        public static final String _96_WELL_PLATE = "96-Well Plate";
+        public static final String PETRI_DISHES = "Petri Dishes";
 
     }
     /*
@@ -37,6 +37,11 @@ public class ExportOptions {
         public static final String MULTIPOINT = "MultiPoint";
         public static final String POINT = "Point";
 
+    }
+
+    public static class Detections {
+        public static final String ALL = "All";
+        public static final String SELECTED = "Selected";
     }
 
     /* Example of Pretty JSON file structure relevant for classes: ObjectTypes, FeatureGeoTypes:

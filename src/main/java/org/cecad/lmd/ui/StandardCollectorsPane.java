@@ -4,7 +4,6 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -38,19 +37,17 @@ public class StandardCollectorsPane extends VBox {
         controlsButtonsBox.setSpacing(10);
         Button cancelButton = new Button("Cancel");
         cancelButton.setPrefSize(120, 25);
-        cancelButton.setOnAction(actionEvent -> command.closeStage());
 
 
-        Button doneButton = getDoneButton(numWells, controls, command);
+        Button doneButton = getDoneButton();
 
         controlsButtonsBox.getChildren().addAll(cancelButton, doneButton);
 
+        // TODO:
+        // Before getChildren().addAll(wellGrid, controlsButtonsBox); look for a file
+        // if numWells and the label from controls correspond and add well grid from there
+        // if the file exists
         getChildren().addAll(wellGrid, controlsButtonsBox);
-    }
-
-    private static Button getDoneButton(int numWells, ControlsInterface controls, StandardCollectorsCommand command) {
-        Button doneButton = new Button("Done");
-        doneButton.setPrefSize(120, 25);
 
         doneButton.setOnAction(event -> {
             String collectorName = "";
@@ -61,8 +58,26 @@ public class StandardCollectorsPane extends VBox {
             else if (numWells == 2)
                 collectorName = "Petri Dishes";
             controls.updateCollectorLabel(collectorName);
+            // TODO:
+            // 1. Save wellGrid to a file
+            command.hideStage();
+        });
+
+        cancelButton.setOnAction(actionEvent -> {
+            // TODO:
+            // 1. Don't save anything to a file
+            // 2. Look for a file with the title corresponding to numWells
+            // 3. If it doesn't exist simply close the stage
+            // 4. If it does, delete current wellGrid and add one with data from the file
+            // 5. Don't update the controls label ever I guess.
+            // 6. Show the user notification
             command.closeStage();
         });
+    }
+
+    private static Button getDoneButton() {
+        Button doneButton = new Button("Done");
+        doneButton.setPrefSize(120, 25);
         return doneButton;
     }
 

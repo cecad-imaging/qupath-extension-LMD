@@ -19,10 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-import static org.cecad.lmd.exporting.ExportOptions.CapAssignments.*;
-import static org.cecad.lmd.exporting.ExportOptions.ObjectTypes.*;
-import static org.cecad.lmd.exporting.ExportOptions.FeatureGeoTypes.*;
-import static org.cecad.lmd.exporting.ExportOptions.CalibrationPointsNames.*;
+import static org.cecad.lmd.common.Constants.CapAssignments.*;
+import static org.cecad.lmd.common.Constants.ObjectTypes.*;
+import static org.cecad.lmd.common.Constants.FeatureGeoTypes.*;
+import static org.cecad.lmd.common.Constants.CalibrationPointsNames.*;
 
 public class GeojsonToXml {
     private int shapeCount = 0;
