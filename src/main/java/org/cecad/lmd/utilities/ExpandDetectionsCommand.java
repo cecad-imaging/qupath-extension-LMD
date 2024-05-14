@@ -75,7 +75,7 @@ public class ExpandDetectionsCommand implements Runnable {
         if(selectedDetectionsNumber == 1)
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " object to expand.");
         else if(selectedDetectionsNumber > 5000)
-            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + selectedDetectionsNumber + ". Consider processing less objects at once.");
+            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + selectedDetectionsNumber + ". Depending on your resources this may take a long time and may or may not crash :) Consider processing less objects at once.");
         else
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " objects to expand.");
 

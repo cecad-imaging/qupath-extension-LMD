@@ -3,15 +3,20 @@ package org.cecad.lmd.common;
 import java.nio.file.Path;
 
 public class Constants {
-    /*
-    Collectors have caps. We assign objects of which class should be collected to which cap.
-    Besides the classes we allow for an assignment of these optons.
-    */
+
+    public static class EnlargeOptions {
+        public static final String MERGE = "Merge Objects";
+        public static final String DISCARD_1 = "Discard 1 of the Objects";
+        public static final String EXCLUDE_BOTH = "Discard Both";
+        public static final String SET_PRIORITY = "Set Priority for Each Class";
+    }
+
     public static class CapAssignments {
         public static final String NO_ASSIGNMENT = "None";
         public static final String ALL_OBJECTS = "All";
         public static final String REMAINING_OBJECTS = "Remaining";
     }
+
     public static class CollectorTypes {
         public static final String NONE = "None";
         public static final String PCR_TUBES = "PCR Tubes";
@@ -31,18 +36,12 @@ public class Constants {
 
     }
 
-    /*
-    In QuPath and GeoJSON it is called 'Object' (properties.objectType for each feature in GeoJSON file).
-    In Leica's LMD software and XML it is called 'Shape'.
-    */
     public static class ObjectTypes {
         public static final String CELL = "cell";
         public static final String DETECTION = "detection";
         public static final String ANNOTATION = "annotation";
     }
-    /*
-    These are the types geometries of features (geometry.type for each feature in GeoJSON file).
-    */
+
     public static class FeatureGeoTypes {
         public static final String POLYGON = "Polygon";
         public static final String MULTIPOINT = "MultiPoint";
