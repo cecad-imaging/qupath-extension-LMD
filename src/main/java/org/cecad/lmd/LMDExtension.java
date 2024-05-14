@@ -38,8 +38,10 @@ public class LMDExtension implements QuPathExtension {
 
         public final Action actionLMDSupportCommand;
         private LMDSupportCommands(QuPathGUI qupath) {
-            MainCommand lmdsCommand = new MainCommand(qupath);
-            actionLMDSupportCommand = new Action("Leica LMD Support for Qupath", event -> lmdsCommand.run());
+            actionLMDSupportCommand = new Action("Leica LMD Support for QuPath", event -> {
+                MainCommand lmdsCommand = new MainCommand(qupath);
+                lmdsCommand.run();
+            });
         }
     }
 

@@ -3,11 +3,18 @@ package org.cecad.lmd.commands;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.cecad.lmd.common.ClassUtils;
 import org.cecad.lmd.ui.ControlsInterface;
 import org.cecad.lmd.ui.StandardCollectorsPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;
+import qupath.lib.objects.classes.PathClass;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class StandardCollectorsCommand implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(SetCollectorCommand.class);
@@ -43,6 +50,18 @@ public class StandardCollectorsCommand implements Runnable {
 
     public int getNumWells() {
         return numWells;
+    }
+
+    public Set<PathClass> getAllClasses(){
+        return mainPane.getAllClasses();
+    }
+
+    public List<String> getAllClassesNames(){
+        return new ArrayList<>(mainPane.getAllClasses().stream().map(PathClass::getName).toList());
+    }
+
+    public Map<String, Integer> getAllClassesCounts(){
+        return ClassUtils.countObjectsOfAllClasses(mainPane.getDetectionsToExport());
     }
 
     private void showStage(){

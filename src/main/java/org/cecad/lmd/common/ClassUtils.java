@@ -3,9 +3,7 @@ package org.cecad.lmd.common;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.classes.PathClass;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class ClassUtils {
 
@@ -36,5 +34,17 @@ public class ClassUtils {
         }
 
         return true;
+    }
+
+    public static Map<String, Integer> countObjectsOfAllClasses(Collection<PathObject> objects) {
+        Map<String, Integer> classesCount = new HashMap<>();
+        for (PathObject object : objects) {
+            PathClass objectClass = object.getPathClass();
+            if (objectClass != null) {
+                String className = objectClass.getName();
+                classesCount.put(className, classesCount.getOrDefault(className, 0) + 1);
+            }
+        }
+        return classesCount;
     }
 }

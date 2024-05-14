@@ -17,7 +17,7 @@ public class SetCollectorCommand implements Runnable {
     private final QuPathGUI qupath;
     private final ControlsInterface mainPane;
     WellPlateCommand wpCommand = null;
-    StandardCollectorsCommand fsCommand = null;
+    StandardCollectorsCommand scCommand = null;
 
     public SetCollectorCommand(QuPathGUI qupath, ControlsInterface mainPane) {
         this.qupath = qupath;
@@ -76,13 +76,13 @@ public class SetCollectorCommand implements Runnable {
         // TODO:
         // 1. Solve the case when we open e.g. 8-Strip click Done, then 12-Strip click Cancel:
         // Old 8-Strip object should be still available when we click back on open 8-Strip
-        // NOTE: Potential solution in StandardCollectorsPane line 46
-        if (fsCommand == null || fsCommand.getNumWells() != numWells) {
-            fsCommand = new StandardCollectorsCommand(qupath, numWells, mainPane);
-            fsCommand.run();
+        // NOTE: Potential solution in StandardCollectorsPane line 59
+        if (scCommand == null || scCommand.getNumWells() != numWells) {
+            scCommand = new StandardCollectorsCommand(qupath, numWells, mainPane);
+            scCommand.run();
         }
         else {
-            fsCommand.run();
+            scCommand.run();
         }
     }
 }

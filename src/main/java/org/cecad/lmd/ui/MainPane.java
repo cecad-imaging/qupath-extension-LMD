@@ -8,13 +8,23 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import org.cecad.lmd.commands.MainCommand;
+import org.slf4j.LoggerFactory;
 import qupath.lib.images.ImageData;
 import org.cecad.lmd.common.Constants;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import qupath.lib.objects.PathObject;
+import qupath.lib.objects.classes.PathClass;
 
 public class MainPane extends GridPane implements ControlsInterface {
 
+    private static final Logger log = LoggerFactory.getLogger(MainPane.class);
     private final MainCommand command;
     private Label collectorChosenLabel;
     ComboBox<String> detectionsComboBox;
@@ -62,11 +72,23 @@ public class MainPane extends GridPane implements ControlsInterface {
 
         Button exportButton = new Button("Export");
         exportButton.setPrefWidth(130);
-        // TODO: add action
+        exportButton.setOnAction(actionEvent -> {
+            try {
+                command.runExport();
+            } catch (IOException e) {
+                Logger logger = command.getLogger();
+                logger.error(e.getMessage());
+            }
+            command.closeStage();
+            command.clearWellData();
+        });
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setPrefWidth(130);
-        cancelButton.setOnAction(actionEvent -> command.closeStage());
+        cancelButton.setOnAction(actionEvent -> {
+            command.closeStage();
+            command.clearWellData();
+        });
 
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(30);
@@ -103,12 +125,22 @@ public class MainPane extends GridPane implements ControlsInterface {
         collectorChosenLabel.setText(collectorName);
     }
 
-    public String getDetectionsToExport(){
+    @Override
+    public Set<PathClass> getAllClasses() {
+        return command.getAllClasses();
+    }
+
+    @Override
+    public Collection<PathObject> getDetectionsToExport() {
+        return command.getDetectionsToExport();
+    }
+
+    public String getSelectedOrAll(){
         return detectionsComboBox.getSelectionModel().getSelectedItem();
     }
 
     public String getCollector(){
-        return collectorChosenLabel.toString();
+        return collectorChosenLabel.getText();
     }
 }
 
