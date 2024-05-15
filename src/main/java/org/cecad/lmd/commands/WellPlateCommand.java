@@ -3,11 +3,17 @@ package org.cecad.lmd.commands;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.cecad.lmd.common.ClassUtils;
 import org.cecad.lmd.ui.ControlsInterface;
 import org.cecad.lmd.ui.WellPlatePane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;
+import qupath.lib.objects.classes.PathClass;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class WellPlateCommand implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(SetCollectorCommand.class);
@@ -61,5 +67,17 @@ public class WellPlateCommand implements Runnable {
             event.consume();
         });
         return stage;
+    }
+
+    public List<String> getAllClassesNames(){
+        return new ArrayList<>(mainPane.getAllClasses().stream().map(PathClass::getName).toList());
+    }
+
+    public Map<String, Integer> getAllClassesCounts(){
+        return ClassUtils.countObjectsOfAllClasses(mainPane.getDetectionsToExport());
+    }
+
+    public Logger getLogger(){
+        return logger;
     }
 }

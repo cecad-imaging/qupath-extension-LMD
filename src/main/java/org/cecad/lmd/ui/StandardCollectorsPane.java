@@ -14,9 +14,6 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.cecad.lmd.commands.StandardCollectorsCommand;
 import org.cecad.lmd.common.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import qupath.lib.objects.classes.PathClass;
 
 import java.io.File;
 import java.io.FileReader;
@@ -26,10 +23,10 @@ import java.util.*;
 
 import static org.cecad.lmd.common.Constants.CollectorTypes.*;
 import static org.cecad.lmd.common.Constants.Paths.*;
+import static org.cecad.lmd.common.Constants.WellDataFileFields.*;
 
 public class StandardCollectorsPane extends VBox {
 
-    private final static Logger logger = LoggerFactory.getLogger(StandardCollectorsPane.class);
     private final StandardCollectorsCommand command;
     private final IntegerProperty numWells;
     private final String[] wellLabels;
@@ -48,7 +45,6 @@ public class StandardCollectorsPane extends VBox {
         Map<String, Integer> classesCounts = command.getAllClassesCounts();
 
         GridPane wellGrid = createWellGrid();
-        updateSpinnersMaxValues(wellGrid, classesCounts);
 
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(10);
@@ -61,7 +57,7 @@ public class StandardCollectorsPane extends VBox {
 
         controlsButtonsBox.getChildren().addAll(cancelButton, doneButton);
 
-        // TODO:
+        // DONE:
         // Before getChildren().addAll(wellGrid, controlsButtonsBox); look for a file
         // if numWells and the label from controls correspond and add well grid from there
         // if the file exists
@@ -72,19 +68,21 @@ public class StandardCollectorsPane extends VBox {
             getChildren().addAll(readWellGridDataFromFile(wellGrid, wellDataFile), controlsButtonsBox);
         }
 
+        updateSpinnersMaxValues(wellGrid, classesCounts);
+
         doneButton.setOnAction(event -> {
             // Save wellGrid to a file:
             List<Map<String, Object>> wellDataList = getWellData(wellGrid);
             if (TEMP_SUBDIRECTORY == null)
-                logger.error("'LMD Data/.temp' subdirectory doesn't exist!");
-            IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, IOUtils.genWellDataFileNameFromWellsNum(numWells), logger);
+                command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist!");
+            IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, IOUtils.genWellDataFileNameFromWellsNum(numWells), command.getLogger());
 
             controls.updateCollectorLabel(getCollectorName(numWells));
             command.hideStage();
         });
 
         cancelButton.setOnAction(actionEvent -> {
-            // TODO:
+            // DONE:
             // 1. Don't save anything to a file | done lol
             // 2. Look for a file with the title corresponding to wellDataFileName | Done on line 63
             // 3. If it doesn't exist simply close the stage
@@ -115,7 +113,7 @@ public class StandardCollectorsPane extends VBox {
                 System.out.println("Unsupported file format: " + wellData.getName());
             }
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            command.getLogger().error(e.getMessage());
         }
 
         return wellGrid;
@@ -133,27 +131,27 @@ public class StandardCollectorsPane extends VBox {
                 break;  // Stop if data list has more entries than grid rows
             }
 
-            String wellLabel = (String) dataMap.get("wellLabel");
-            String wellClass = (String) dataMap.get("wellClass");
-            int areaOrCount = (int) (double) dataMap.get("areaOrCount");
+            String wellLabel = (String) dataMap.get(WELL_LABEL);
+            String objectType = (String) dataMap.get(OBJECT_CLASS_TYPE);
+            int objectQty = (int) (double) dataMap.get(OBJECT_QTY);
 
             Label wellLabelElement = (Label) wellGrid.getChildren().get(rowIndex * 3);
             ComboBox<String> classComboBox = (ComboBox<String>) wellGrid.getChildren().get(rowIndex * 3 + 1);
             Spinner<Integer> spinner = (Spinner<Integer>) wellGrid.getChildren().get(rowIndex * 3 + 2);
 
             wellLabelElement.setText(wellLabel);
-            classComboBox.setValue(wellClass);
-            spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 100, areaOrCount));
+            classComboBox.setValue(objectType);
+            spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 0, objectQty));
 
             rowIndex++;
         }
     }
 
-    private static File findWellDataFile(String tempSubdirectory, String wellDataFileName) {
+    private File findWellDataFile(String tempSubdirectory, String wellDataFileName) {
         File tempDir = new File(tempSubdirectory);
 
         if (!tempDir.exists() || !tempDir.isDirectory()) {
-            logger.error("'LMD Data/.temp' subdirectory doesn't exist!");
+            command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist!");
             return null;
         }
 
@@ -218,7 +216,7 @@ public class StandardCollectorsPane extends VBox {
                 comboBox.getItems().add(Constants.CapAssignments.ALL_OBJECTS);
             comboBox.getItems().add(Constants.CapAssignments.NO_ASSIGNMENT);
             comboBox.setPrefWidth(100);
-            Spinner<Integer> spinner = new Spinner<>(0, 100, 0);
+            Spinner<Integer> spinner = new Spinner<>(0, 0, 0);
             spinner.setPrefWidth(90);
             Label maxCount = new Label("/ 0");
             maxCount.setPrefWidth(45);
@@ -237,9 +235,9 @@ public class StandardCollectorsPane extends VBox {
             Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount + 1);
 
             Map<String, Object> wellData = new HashMap<>();
-            wellData.put("wellLabel", wellLabel.getText());
-            wellData.put("wellClass", classComboBox.getValue());
-            wellData.put("areaOrCount", spinner.getValue());
+            wellData.put(WELL_LABEL, wellLabel.getText());
+            wellData.put(OBJECT_CLASS_TYPE, classComboBox.getValue());
+            wellData.put(OBJECT_QTY, spinner.getValue());
             wellDataList.add(wellData);
         }
         return wellDataList;
@@ -274,7 +272,7 @@ public class StandardCollectorsPane extends VBox {
                     int labelIndex = rowIndex * (wellGrid.getColumnCount()) + 2;
 
                     Spinner<Integer> spinner = (Spinner<Integer>) wellGrid.getChildren().get(spinnerIndex);
-                    spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, count, 0));
+                    spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, count, count));
 
                     Label label = (Label) wellGrid.getChildren().get(labelIndex);
                     label.setText("/ " + count);

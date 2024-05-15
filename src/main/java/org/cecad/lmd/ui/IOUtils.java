@@ -101,6 +101,8 @@ public class IOUtils {
             return PCR_TUBES_DATA;
         else if (Objects.equals(collectorName, PETRI_DISHES))
             return PETRI_DISHES_DATA;
+        else if (Objects.equals(collectorName, _96_WELL_PLATE))
+            return _96_WELL_PLATE_DATA;
         logger.warn("Provided collector doesn't much any of the available collectors!");
         return "";
     }

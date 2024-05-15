@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.tools.GuiTools;
+import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
@@ -27,6 +28,7 @@ import qupath.lib.roi.interfaces.ROI;
 
 import static org.cecad.lmd.common.Constants.EnlargeOptions.*;
 
+import java.awt.image.BufferedImage;
 import java.util.*;
 
 public class MoreOptionsCommand implements Runnable {
@@ -34,8 +36,9 @@ public class MoreOptionsCommand implements Runnable {
     private final String TITLE = "More Options";
     private Stage stage;
     private final QuPathGUI qupath;
-    private PathObjectHierarchy hierarchy;
-    Collection<PathObject> expandedDetections;
+    private final PathObjectHierarchy hierarchy;
+    Collection<PathObject> oldObjects = null;
+    Collection<PathObject> expandedDetections = null;
 
     public MoreOptionsCommand(QuPathGUI qupath) {
         this.qupath = qupath;
@@ -84,6 +87,8 @@ public class MoreOptionsCommand implements Runnable {
         if (!wereSelectedObjectsDetections(selectedDetections))
             return;
 
+        oldObjects = selectedDetections;
+
         int selectedDetectionsNumber = selectedDetections.size();
         showEnlargingNotification(selectedDetectionsNumber);
 
@@ -131,6 +136,8 @@ public class MoreOptionsCommand implements Runnable {
             newObjects.add(detection2);
         }
 
+        Collection<PathObject> enlargedWithoutBackground = newObjects;
+
         hierarchy.removeObjects(selectedDetections, false);
         hierarchy.getSelectionModel().clearSelection();
 
@@ -139,6 +146,10 @@ public class MoreOptionsCommand implements Runnable {
 
             // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
             newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
+
+                // Just update the oldObjects for Undo action
+            Collection<PathObject> overlappingBackgroundObjects = getOverlappingBackground(newObjects, enlargedWithoutBackground);
+            oldObjects.addAll(overlappingBackgroundObjects);
 
             // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
             // if both are true -> sort newObjects
@@ -153,7 +164,7 @@ public class MoreOptionsCommand implements Runnable {
             }
 
             hierarchy.addObjects(objectsToAddToHierarchy);
-            this.expandedDetections = objectsToAddToHierarchy;
+            expandedDetections = objectsToAddToHierarchy;
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
             double seconds = (double) duration / 1_000_000_000.0;
@@ -164,6 +175,21 @@ public class MoreOptionsCommand implements Runnable {
             logger.error("Error processing overlapping objects: " + t.getMessage());
             Dialogs.showErrorNotification("Operation Failed", "Expanding objects failed. Please, try again.");
         }
+    }
+
+    public void undoEnlargement(){
+        if (expandedDetections == null || oldObjects == null)
+            return;
+        hierarchy.removeObjects(expandedDetections, false);
+        hierarchy.addObjects(oldObjects);
+        expandedDetections = null;
+        oldObjects = null;
+    }
+
+    private Collection<PathObject> getOverlappingBackground(Collection<PathObject> allObjects, Collection<PathObject> enlargedObjects) {
+        Collection<PathObject> backgroundObjects = new HashSet<>(allObjects);
+        backgroundObjects.removeAll(enlargedObjects);
+        return backgroundObjects;
     }
 
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
@@ -302,7 +328,7 @@ public class MoreOptionsCommand implements Runnable {
         if(selectedDetectionsNumber == 1)
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " object to expand.");
         else if(selectedDetectionsNumber > 5000)
-            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + selectedDetectionsNumber + ". Depending on your resources this may take a long time and may or may not crash :) Consider processing less objects at once.");
+            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + selectedDetectionsNumber + ". Depending on your resources this may take a long time and may or may not crash. Consider processing less objects at once.");
         else
             Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " objects to expand.");
 
@@ -331,6 +357,49 @@ public class MoreOptionsCommand implements Runnable {
                     """);
         }
         return priorityRankingParams;
+    }
+
+    public void convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
+        PathObjectHierarchy hierarchy = imageData.getHierarchy();
+        if (hierarchy.getSelectionModel().noSelection()){
+            Dialogs.showWarningNotification("Selection Required", "Please select objects to convert.");
+            return;
+        }
+        Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
+        Collection<PathObject> onlyAreasObjects = new ArrayList<>(objects);
+        Collection<PathObject> convertedObjects = new ArrayList<>();
+        for (PathObject object : objects) {
+            if (!object.getROI().isArea()) {
+                onlyAreasObjects.remove(object);
+                continue;
+            }
+            PathClass pathClass = object.getPathClass();
+            String objectName = object.getName();
+            PathObject convertedObject;
+
+            if (toDetections) {
+                if (pathClass != null)
+                    convertedObject = PathObjects.createDetectionObject(object.getROI(), pathClass);
+                else
+                    convertedObject = PathObjects.createDetectionObject(object.getROI());
+            }
+            else {
+                if (pathClass != null)
+                    convertedObject = PathObjects.createAnnotationObject(object.getROI(), pathClass);
+                else
+                    convertedObject = PathObjects.createAnnotationObject(object.getROI());
+            }
+            if (objectName != null)
+                convertedObject.setName(objectName);
+            convertedObjects.add(convertedObject);
+        }
+        hierarchy.getSelectionModel().clearSelection();
+        hierarchy.removeObjects(onlyAreasObjects, true);
+        hierarchy.addObjects(convertedObjects);
+    }
+
+    public QuPathGUI getQupath(){
+        return qupath;
     }
 
 }

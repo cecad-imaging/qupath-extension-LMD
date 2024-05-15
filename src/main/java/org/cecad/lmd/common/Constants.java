@@ -5,10 +5,10 @@ import java.nio.file.Path;
 public class Constants {
 
     public static class EnlargeOptions {
-        public static final String MERGE = "Merge Objects";
-        public static final String DISCARD_1 = "Discard 1 of the Objects";
-        public static final String EXCLUDE_BOTH = "Discard Both";
-        public static final String SET_PRIORITY = "Set Priority for Each Class";
+        public static final String MERGE = "Merge both objects into one";
+        public static final String DISCARD_1 = "Discard one, keep the other (random)";
+        public static final String EXCLUDE_BOTH = "Discard both objects";
+        public static final String SET_PRIORITY = "Set priority for each object class";
     }
 
     public static class CapAssignments {
@@ -33,6 +33,14 @@ public class Constants {
         public static final String _12_FOLD_STRIP_DATA = "well_data_12_fold_strip.json";
         public static final String _96_WELL_PLATE_DATA = "well_data_96_well_plate.json";
         public static final String PETRI_DISHES_DATA = "well_data_petri_dishes.json";
+
+    }
+
+    public static class WellDataFileFields {
+        public static final String WELL_LABEL = "wellLabel";
+        public static final String WELL_COUNT = "wellCount";
+        public static final String OBJECT_QTY = "objectQty";
+        public static final String OBJECT_CLASS_TYPE = "objectType";
 
     }
 

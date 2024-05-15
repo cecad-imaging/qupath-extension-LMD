@@ -21,8 +21,10 @@ public class MoreOptionsPane extends GridPane {
         setHgap(20);
         setVgap(10);
 
-        Label radiusLabel = new Label("Enlarge Selected Detections by a Radius:");
-        radiusLabel.setPrefWidth(240);
+        Label enlargeSectionLabel = new Label("Expand selected detections:");
+
+        Label radiusLabel = new Label("Expansion radius:");
+        radiusLabel.setPrefWidth(120);
         Spinner<Integer> radiusSpinner = new Spinner<>(0, 100, 1);
         radiusSpinner.setPrefWidth(70);
 
@@ -30,28 +32,30 @@ public class MoreOptionsPane extends GridPane {
         radiusBox.setSpacing(1);
         radiusBox.getChildren().addAll(radiusLabel, radiusSpinner);
 
-        Label convertLabel = new Label("Convert objects:");
+        Label convertLabel = new Label("Convert selected objects:");
 
-        Button enlargeButton = new Button("Enlarge");
-        enlargeButton.setPrefWidth(120);
+        Button enlargeButton = new Button("Expand");
+        enlargeButton.setPrefWidth(130);
 
         Button undoButton = new Button("Undo");
-        undoButton.setPrefWidth(120);
+        undoButton.setPrefWidth(130);
 
         HBox enlargeButtonsBox = new HBox();
-        enlargeButtonsBox.setSpacing(30);
+        enlargeButtonsBox.setSpacing(10);
         enlargeButtonsBox.getChildren().addAll(undoButton, enlargeButton);
 
-        Button detToAnnButton = new Button("Detections to Annotations");
+        Button detToAnnButton = new Button("Detections to annotations");
         detToAnnButton.setPrefWidth(270);
-        Button annToDetButton = new Button("Annotations to Detections");
+        Button annToDetButton = new Button("Annotations to detections");
         annToDetButton.setPrefWidth(270);
 
-        Label sameClassLabel = new Label("If 2 objects of the same class intersect:");
-        Label differentClassLabel = new Label("If 2 objects of different classes intersect:");
+        Label sameClassLabel = new Label("If two objects of the same class intersect:");
+        Label differentClassLabel = new Label("If two objects of different classes intersect:");
 
         ComboBox<String> sameClassComboBox = new ComboBox<>(FXCollections.observableArrayList(MERGE, DISCARD_1));
         ComboBox<String> differentClassComboBox = new ComboBox<>(FXCollections.observableArrayList(EXCLUDE_BOTH, SET_PRIORITY));
+        sameClassComboBox.setPrefWidth(270);
+        differentClassComboBox.setPrefWidth(270);
 
         enlargeButton.setOnAction(actionEvent -> {
             String sameClassChoice = sameClassComboBox.getSelectionModel().getSelectedItem();
@@ -61,26 +65,29 @@ public class MoreOptionsPane extends GridPane {
 
         });
 
-        undoButton.setOnAction(actionEvent -> {
+        undoButton.setOnAction(actionEvent -> command.undoEnlargement());
 
-        });
+        detToAnnButton.setOnAction(actionEvent -> command.convertObjects(command.getQupath().getImageData(),false));
+        annToDetButton.setOnAction(actionEvent -> command.convertObjects(command.getQupath().getImageData(),true));
 
 
-        GridPane.setConstraints(radiusBox, 0, 0);
 
-        GridPane.setConstraints(sameClassLabel, 0, 1);
-        GridPane.setConstraints(sameClassComboBox, 0, 2);
+        GridPane.setConstraints(enlargeSectionLabel, 0, 0);
+        GridPane.setConstraints(radiusBox, 0, 1);
 
-        GridPane.setConstraints(differentClassLabel, 0, 3);
-        GridPane.setConstraints(differentClassComboBox, 0, 4);
+        GridPane.setConstraints(sameClassLabel, 0, 2);
+        GridPane.setConstraints(sameClassComboBox, 0, 3);
 
-        GridPane.setConstraints(enlargeButtonsBox, 0, 5);
+        GridPane.setConstraints(differentClassLabel, 0, 4);
+        GridPane.setConstraints(differentClassComboBox, 0, 5);
 
-        GridPane.setConstraints(convertLabel, 0, 6);
-        GridPane.setConstraints(detToAnnButton, 0, 7);
-        GridPane.setConstraints(annToDetButton, 0, 8);
+        GridPane.setConstraints(enlargeButtonsBox, 0, 6);
 
-        getChildren().addAll(radiusBox, sameClassLabel, sameClassComboBox, differentClassLabel, differentClassComboBox,
+        GridPane.setConstraints(convertLabel, 0, 7);
+        GridPane.setConstraints(detToAnnButton, 0, 8);
+        GridPane.setConstraints(annToDetButton, 0, 9);
+
+        getChildren().addAll(enlargeSectionLabel, radiusBox, sameClassLabel, sameClassComboBox, differentClassLabel, differentClassComboBox,
                 enlargeButtonsBox,
                 convertLabel, detToAnnButton, annToDetButton);
 

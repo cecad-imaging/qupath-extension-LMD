@@ -95,4 +95,8 @@ public class StandardCollectorsCommand implements Runnable {
         });
         return stage;
     }
+
+    public Logger getLogger(){
+        return logger;
+    }
 }

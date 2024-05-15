@@ -64,6 +64,7 @@ public class MainCommand implements Runnable {
             Dialogs.showErrorNotification("Image not detected", "Please open an image.");
             return;
         }
+        clearWellData();
         showStage();
         defineDetectionsToExport();
     }
@@ -100,10 +101,6 @@ public class MainCommand implements Runnable {
             clearWellData();
         });
         return stage;
-    }
-
-    private void hideStage() {
-        stage.hide();
     }
 
     public void defineDetectionsToExport(){
@@ -171,7 +168,7 @@ public class MainCommand implements Runnable {
             wellData = getWellDataFromFile(wellDataFilePath);
 
         // Run BuildXmlCommand
-        BuildXmlCommand xmlBuilder = new BuildXmlCommand(pathGeoJSON, pathXML);
+        BuildXmlCommand xmlBuilder = new BuildXmlCommand(pathGeoJSON, pathXML, mainPane.getCollector());
         boolean successfulConversion = xmlBuilder.createLeicaXML(wellData);
 
         if (!successfulConversion) {
