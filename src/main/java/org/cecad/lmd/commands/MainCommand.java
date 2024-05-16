@@ -27,7 +27,10 @@ import java.util.*;
 
 import static org.cecad.lmd.common.Constants.CalibrationPointsNames.*;
 import static org.cecad.lmd.common.Constants.CollectorTypes.NONE;
+import static org.cecad.lmd.common.Constants.CollectorTypes._96_WELL_PLATE;
 import static org.cecad.lmd.common.Constants.Paths.*;
+import static org.cecad.lmd.common.Constants.WellDataFileFields.OBJECT_CLASS_TYPE;
+import static org.cecad.lmd.common.Constants.WellDataFileFields.OBJECT_QTY;
 import static org.cecad.lmd.ui.IOUtils.createSubdirectory;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 
@@ -144,20 +147,14 @@ public class MainCommand implements Runnable {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String currentTime = dateFormat.format(new Date());
         final String DEFAULT_GeoJSON_NAME = currentTime + ".geojson";
-        final String DEFAULT_XML_NAME = qupath.getImageData().getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", "_" + currentTime + ".xml");
+        final String DEFAULT_NAME = qupath.getImageData().getServer().getMetadata().getName().replaceFirst("\\.[^.]+$", "_" + currentTime);
+        final String DEFAULT_XML_NAME = DEFAULT_NAME + ".xml";
 
         final String pathGeoJSON = getTempSubdirectory().resolve(DEFAULT_GeoJSON_NAME).toString();
         final String pathXML = getDataSubdirectory().resolve(DEFAULT_XML_NAME).toString();
 
         String collectorType = mainPane.getCollector();
         boolean processCollectors = !collectorType.equals(NONE);
-
-        // TODO We have to:
-        // 1. On doneButton pressed in any Collector Pane send all of the info form there somewhere
-        // 2. E.g. create an object of a new class that will store these options or save them to temporary file
-        // | Done until here
-        // 3. Then we need to use them and send to GeoJsonToXml object to precess
-        // (bcs it's actually a processor, not a simple converter - should change the name prolly)
 
         exportObjectsToGeoJson(detectionsToExport, pathGeoJSON, "FEATURE_COLLECTION");
 
@@ -171,6 +168,11 @@ public class MainCommand implements Runnable {
         BuildXmlCommand xmlBuilder = new BuildXmlCommand(pathGeoJSON, pathXML, mainPane.getCollector());
         boolean successfulConversion = xmlBuilder.createLeicaXML(wellData);
 
+        if (Objects.equals(mainPane.getCollector(), _96_WELL_PLATE) && wellData != null) {
+            final String _96_WELL_FILE_NAME = DEFAULT_NAME + IOUtils.genWellDataFileNameFromCollectorName(mainPane.getCollector(), logger);
+            create96WellPlateSpecificFile(wellData, DATA_SUBDIRECTORY.resolve(_96_WELL_FILE_NAME).toString());
+        }
+
         if (!successfulConversion) {
             Dialogs.showErrorNotification("Incorrect Calibration Points",
                     "Please add 3 'Point' annotations, named " + CP1 + ", " + CP2 + " and " + CP3 + ".");
@@ -182,7 +184,7 @@ public class MainCommand implements Runnable {
         int exportedShapesCount = xmlBuilder.getShapeCount();
         if (exportedShapesCount == 1){
             Dialogs.showInfoNotification("Export successful",
-                    "1 shape succesfully exported. Check 'LMD data' in your project's directory for the output XML file.");
+                    "1 shape successfully exported. Check 'LMD data' in your project's directory for the output XML file.");
         }
         else if (exportedShapesCount != 0) {
             Dialogs.showInfoNotification("Export successful",
@@ -228,5 +230,22 @@ public class MainCommand implements Runnable {
             logger.error("Error reading collector params from file{}", e.getMessage());
         }
         return null;
+    }
+
+    private void create96WellPlateSpecificFile(Map<String, Object>[] wellData, String filePath) throws IOException {
+        List<Map<String, Object>> wellDataList = new ArrayList<>();
+        for (Map<String, Object> assignment : wellData) {
+            String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
+            List<String> wellLabels = (List<String>) assignment.get("wellLabels");
+
+            Map<String, Object> wellDataEntry = new HashMap<>();
+            wellDataEntry.put(objectClass, wellLabels);
+
+            wellDataList.add(wellDataEntry);
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(new File(filePath), wellDataList);
+
     }
 }

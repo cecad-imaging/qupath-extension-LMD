@@ -71,6 +71,7 @@ public class WellPlateSubPane extends HBox {
         return wellData;
     }
 
+    // TODO: FIX: The labels are unique only within the current subpane and they should be unique across all subpanes.
     public Set<String> generateRandomLabels(int labelsQty) {
         Set<String> uniqueLabels = new HashSet<>();
         while (uniqueLabels.size() < labelsQty) {
