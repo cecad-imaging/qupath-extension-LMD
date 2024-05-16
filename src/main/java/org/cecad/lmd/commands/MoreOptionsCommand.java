@@ -1,119 +1,108 @@
-package org.cecad.lmd.utilities;
+package org.cecad.lmd.commands;
 
-import org.cecad.lmd.common.ObjectUtils;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 import org.cecad.lmd.common.ClassUtils;
-import org.locationtech.jts.geom.*;
+import org.cecad.lmd.common.ObjectUtils;
+import org.cecad.lmd.ui.MoreOptionsPane;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.lib.common.GeneralTools;
 import qupath.fx.dialogs.Dialogs;
+import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.tools.GuiTools;
 import qupath.lib.images.ImageData;
-import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
 import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 import qupath.lib.plugins.parameters.ParameterList;
-import qupath.lib.roi.interfaces.ROI;
 import qupath.lib.regions.ImagePlane;
 import qupath.lib.roi.GeometryTools;
+import qupath.lib.roi.interfaces.ROI;
+
+import static org.cecad.lmd.common.Constants.EnlargeOptions.*;
 
 import java.awt.image.BufferedImage;
 import java.util.*;
-public class ExpandDetectionsCommand implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(ExpandDetectionsCommand.class);
-    ImageData<BufferedImage> imageData;
-    ImageServer<BufferedImage> server;
-    PathObjectHierarchy hierarchy;
-    Collection<PathObject> selectedDetections;
-    Collection<PathObject> expandedDetections;
-    private int selectedDetectionsNumber;
-    private boolean noSelection = false;
-    public ExpandDetectionsCommand(ImageData<BufferedImage> imageData){
-        this.imageData = imageData;
-        this.server = imageData.getServer();
-        this.hierarchy = imageData.getHierarchy();
 
-        if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorNotification("Selection Required", "Please select detection objects to expand.");
-            noSelection = true;
-            return;
-        }
+public class MoreOptionsCommand implements Runnable {
+    private final static Logger logger = LoggerFactory.getLogger(SetCollectorCommand.class);
+    private final String TITLE = "More Options";
+    private Stage stage;
+    private final QuPathGUI qupath;
+    private final PathObjectHierarchy hierarchy;
+    Collection<PathObject> oldObjects = null;
+    Collection<PathObject> expandedDetections = null;
 
-        this.selectedDetections = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
-
-        if (selectedDetections.isEmpty()) {
-            Dialogs.showErrorNotification("Annotations not supported", "Please select a detection object.");
-            noSelection = true;
-            return;
-        }
-
-        this.selectedDetectionsNumber = selectedDetections.size();
+    public MoreOptionsCommand(QuPathGUI qupath) {
+        this.qupath = qupath;
+        this.hierarchy = qupath.getImageData().getHierarchy();
     }
 
     @Override
     public void run() {
-        if (noSelection)
-            return;
-        runObjectsExpansion();
+        showStage();
     }
 
-    /**
-     * In first stage collects selected detection objects in pathObjects, creates new bigger ones based on the selected objects ROIs and provided by the user radius,
-     * appends them to newObjects and removes the smaller ones from hierarchy.
-     * In second stage it processes overlapping objects.
-     */
-    private void runObjectsExpansion(){
-
-        Collection<PathObject> newObjects = new ArrayList<>();
-
-        if(selectedDetectionsNumber == 1)
-            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " object to expand.");
-        else if(selectedDetectionsNumber > 5000)
-            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + selectedDetectionsNumber + ". Consider processing less objects at once.");
-        else
-            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " objects to expand.");
-
-        // TODO: Separate GUI dialogs creation from expansion logic.
-        ParameterList params = new ParameterList()
-                .addDoubleParameter("radiusMicrons", "Expansion radius:", 10, GeneralTools.micrometerSymbol(),
-                        "Distance to expand ROI")
-                .addChoiceParameter("sameClassChoice",
-                        "If objects of the same class intersect:",
-                        "Merge objects", Arrays.asList("Merge objects", "Exclude one, keep the other"),
-                        "Either merge the intersecting objects or randomly delete one of them")
-                .addChoiceParameter("differentClassesChoice",
-                        "If objects of different classes intersect:",
-                        "Exclude Both", Arrays.asList("Exclude Both", "Set priority for each class"),
-                        "Either remove intersecting or choose a class of which object should be preserved when two objects intersect\n" +
-                                "You will be prompted to set priorities after confirming your choice");
-
-//        boolean confirmed = Dialogs.showConfirmDialog("Expand selected", new ParameterPanelFX(params).getPane());
-        boolean confirmed = GuiTools.showParameterDialog("Expand selected", params);
-
-        if(!confirmed) {
+    private void showStage(){
+        boolean creatingStage = stage == null;
+        if (creatingStage)
+            stage = createStage();
+        if (stage.isShowing())
             return;
-        }
+        stage.show();
+    }
 
-        boolean mergeSameClass = params.getChoiceParameterValue("sameClassChoice").equals("Merge objects");
-        Object differentClassesChoice = params.getChoiceParameterValue("differentClassesChoice");
+    private Stage createStage(){
+        Stage stage = new Stage();
+        Pane pane = new MoreOptionsPane(this);
+        Scene scene = new Scene(pane);
+        stage.setScene(scene);
+        stage.setResizable(false);
+        stage.setTitle(TITLE);
+        stage.initOwner(qupath.getStage());
+        stage.setOnCloseRequest(event -> {
+            hideStage();
+            event.consume();
+        });
+        return stage;
+    }
+
+    private void hideStage() {
+        stage.hide();
+    }
+
+    public void makeSelectedDetectionsBigger(int radius, String sameClass, String diffClass){
+        if (!isSelection(hierarchy))
+            return;
+
+        Collection<PathObject> selectedDetections = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
+
+        if (!wereSelectedObjectsDetections(selectedDetections))
+            return;
+
+        oldObjects = selectedDetections;
+
+        int selectedDetectionsNumber = selectedDetections.size();
+        showEnlargingNotification(selectedDetectionsNumber);
+
+        boolean mergeSameClass = Objects.equals(sameClass, MERGE);
+
         List<String> priorityRanking = new ArrayList<>();
 
-        // Creating second window if the user wants to set priorities for classes
-        if (differentClassesChoice.equals("Set priority for each class")){
+        if (Objects.equals(diffClass, SET_PRIORITY)){
             Set<PathClass> availableClasses = ClassUtils.getAllClasses(hierarchy.getAllObjects(false));
             ParameterList priorityRankingParams = createPriorityRankingParameterList(availableClasses);
-//            boolean confirmedPriorityRanking = Dialogs.showConfirmDialog("Set priorities for classes", new ParameterPanelFX(priorityRankingParams).getPane());
-            boolean confirmedPriorityRanking = GuiTools.showParameterDialog("Set priorities for classes", priorityRankingParams);
+            boolean confirmedPriorityRanking = GuiTools.showParameterDialog("Set Priorities", priorityRankingParams);
 
-            if (!confirmedPriorityRanking){
+            if (!confirmedPriorityRanking)
                 return;
-            }
 
             for (int i = 1; i <= availableClasses.size(); i++){
                 String priorityClass = priorityRankingParams.getChoiceParameterValue("priorityClass_" + i).toString();
@@ -121,18 +110,20 @@ public class ExpandDetectionsCommand implements Runnable {
                     priorityRanking.add(priorityClass);
                 }
             }
+
         }
 
         long startTime = System.nanoTime();
 
-        // Enlarging the objects by creating new ones and deleting old ones
         double radiusPixels;
-        PixelCalibration calibration = server.getPixelCalibration();
+        PixelCalibration calibration = qupath.getImageData().getServer().getPixelCalibration();
         if (calibration.hasPixelSizeMicrons())
-            radiusPixels = params.getDoubleParameterValue("radiusMicrons") / calibration.getAveragedPixelSizeMicrons();
+            radiusPixels = radius / calibration.getAveragedPixelSizeMicrons();
         else
-            radiusPixels = params.getDoubleParameterValue("radiusMicrons");
-        // Iterate over old objects and create a new one for each
+            radiusPixels = radius;
+
+        Collection<PathObject> newObjects = new ArrayList<>();
+
         for (PathObject pathObject : selectedDetections) {
 
             ROI roi = pathObject.getROI();
@@ -142,19 +133,27 @@ public class ExpandDetectionsCommand implements Runnable {
             PathObject detection2 = PathObjects.createDetectionObject(roi2, pathObject.getPathClass());
             detection2.setName(pathObject.getName());
             detection2.setColor(pathObject.getColor());
-            newObjects.add(detection2); // append newly created objects for processing instead of adding them to hierarchy
+            newObjects.add(detection2);
         }
-        hierarchy.removeObjects(selectedDetections, false); // remove old objects
-        hierarchy.getSelectionModel().clearSelection(); // the selection is no longer necessary
+
+        Collection<PathObject> enlargedWithoutBackground = newObjects;
+
+        hierarchy.removeObjects(selectedDetections, false);
+        hierarchy.getSelectionModel().clearSelection();
+
         try {
             // Steps for processing overlapping objects:
 
             // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
             newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
 
+                // Just update the oldObjects for Undo action
+            Collection<PathObject> overlappingBackgroundObjects = getOverlappingBackground(newObjects, enlargedWithoutBackground);
+            oldObjects.addAll(overlappingBackgroundObjects);
+
             // 2. Check if differentClassesChoice is not 'Exclude Both' and if !all objects have same class,
             // if both are true -> sort newObjects
-            if (!ClassUtils.areAllObjectsOfSameClass(newObjects) && !differentClassesChoice.equals("Exclude Both")) {
+            if (!ClassUtils.areAllObjectsOfSameClass(newObjects) && !Objects.equals(diffClass, EXCLUDE_BOTH)) {
                 newObjects = ObjectUtils.sortObjectsByPriority(newObjects, priorityRanking);
             }
 
@@ -165,7 +164,7 @@ public class ExpandDetectionsCommand implements Runnable {
             }
 
             hierarchy.addObjects(objectsToAddToHierarchy);
-            this.expandedDetections = objectsToAddToHierarchy;
+            expandedDetections = objectsToAddToHierarchy;
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
             double seconds = (double) duration / 1_000_000_000.0;
@@ -178,15 +177,21 @@ public class ExpandDetectionsCommand implements Runnable {
         }
     }
 
-    /**
-     * Should be called recursively. It appends an object to objectsToAddToHierarchy
-     * if it doesn't intersect any other object.
-     *
-     * @param newObjects Collection of objects to process. Only one is processed witch each call of the function.
-     * @param objectsToAddToHierarchy Collection of objects to add to hierarchy.
-     * @param priorityRanking List of classes names as strings which is the order of priority.
-     * @return newObjects - one object
-     */
+    public void undoEnlargement(){
+        if (expandedDetections == null || oldObjects == null)
+            return;
+        hierarchy.removeObjects(expandedDetections, false);
+        hierarchy.addObjects(oldObjects);
+        expandedDetections = null;
+        oldObjects = null;
+    }
+
+    private Collection<PathObject> getOverlappingBackground(Collection<PathObject> allObjects, Collection<PathObject> enlargedObjects) {
+        Collection<PathObject> backgroundObjects = new HashSet<>(allObjects);
+        backgroundObjects.removeAll(enlargedObjects);
+        return backgroundObjects;
+    }
+
     private static Collection<PathObject> processOverlappingObjects(Collection<PathObject> newObjects,
                                                                     Collection<PathObject> objectsToAddToHierarchy,
                                                                     boolean mergeSameClass,
@@ -285,15 +290,6 @@ public class ExpandDetectionsCommand implements Runnable {
         return remainingObjects;
     }
 
-    /**
-     * For each object of the provided objects collection takes its ROI, multiplies by the given radius, and collects all
-     * non-annotation objects in such enlarged ROI, adding them to the copy of provided objects collection and deleting from hierarchy.
-     *
-     * @param hierarchy A hierarchy to delete the objects from.
-     * @param objects Original collection of objects of interest.
-     * @param radius Int value to enlarge each object's ROI. 'Background' objects within this ROI are added to the collection.
-     * @return Provided objects + collected 'background' objects as one collection.
-     */
     private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
         Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
         for (PathObject object : objects){
@@ -314,12 +310,30 @@ public class ExpandDetectionsCommand implements Runnable {
         return enhancedObjects;
     }
 
-    /**
-     * Creates a list of parameters from provided classes.
-     *
-     * @param availableClasses Set of classes, their names will be options for a user to choose from while assigning priorities to the classes.
-     * @return ParameterList of classes names or a ParameterList with an empty parameter message if availableClasses were empty.
-     */
+    private boolean isSelection(PathObjectHierarchy hierarchy){
+        if (hierarchy.getSelectionModel().noSelection()) {
+            Dialogs.showErrorNotification("Selection Required", "Please select detection objects to perform this action.");
+            return false;
+        }
+        return true;
+    }
+    private boolean wereSelectedObjectsDetections(Collection<PathObject> selected){
+        if (selected.isEmpty()) {
+            Dialogs.showErrorNotification("Annotations not supported", "Please select a detection object.");
+            return false;
+        }
+        return true;
+    }
+    private void showEnlargingNotification(int selectedDetectionsNumber){
+        if(selectedDetectionsNumber == 1)
+            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " object to expand.");
+        else if(selectedDetectionsNumber > 5000)
+            Dialogs.showWarningNotification("LMD Warning", "The number of selected objects is large: " + selectedDetectionsNumber + ". Depending on your resources this may take a long time and may or may not crash. Consider processing less objects at once.");
+        else
+            Dialogs.showInfoNotification("LMD Notification", "You have chosen " + selectedDetectionsNumber + " objects to expand.");
+
+    }
+
     private static ParameterList createPriorityRankingParameterList(Set<PathClass> availableClasses){
         List<String> classNames = new ArrayList<>(availableClasses.stream()
                 .map(PathClass::getName)
@@ -345,7 +359,47 @@ public class ExpandDetectionsCommand implements Runnable {
         return priorityRankingParams;
     }
 
-    public int getSelectedDetectionsNumber(){
-        return selectedDetectionsNumber;
+    public void convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
+        PathObjectHierarchy hierarchy = imageData.getHierarchy();
+        if (hierarchy.getSelectionModel().noSelection()){
+            Dialogs.showWarningNotification("Selection Required", "Please select objects to convert.");
+            return;
+        }
+        Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
+        Collection<PathObject> onlyAreasObjects = new ArrayList<>(objects);
+        Collection<PathObject> convertedObjects = new ArrayList<>();
+        for (PathObject object : objects) {
+            if (!object.getROI().isArea()) {
+                onlyAreasObjects.remove(object);
+                continue;
+            }
+            PathClass pathClass = object.getPathClass();
+            String objectName = object.getName();
+            PathObject convertedObject;
+
+            if (toDetections) {
+                if (pathClass != null)
+                    convertedObject = PathObjects.createDetectionObject(object.getROI(), pathClass);
+                else
+                    convertedObject = PathObjects.createDetectionObject(object.getROI());
+            }
+            else {
+                if (pathClass != null)
+                    convertedObject = PathObjects.createAnnotationObject(object.getROI(), pathClass);
+                else
+                    convertedObject = PathObjects.createAnnotationObject(object.getROI());
+            }
+            if (objectName != null)
+                convertedObject.setName(objectName);
+            convertedObjects.add(convertedObject);
+        }
+        hierarchy.getSelectionModel().clearSelection();
+        hierarchy.removeObjects(onlyAreasObjects, true);
+        hierarchy.addObjects(convertedObjects);
     }
+
+    public QuPathGUI getQupath(){
+        return qupath;
+    }
+
 }

@@ -1,5 +1,6 @@
 package org.cecad.lmd.common;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
@@ -13,9 +14,9 @@ import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 import qupath.lib.roi.RoiTools;
 import qupath.lib.roi.interfaces.ROI;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+
+import static org.cecad.lmd.common.Constants.ObjectTypes.ANNOTATION;
 
 public class ObjectUtils {
     public static PathObject mergeObjects(final Collection<PathObject> objects, final PathClass objectClass) {
@@ -77,16 +78,6 @@ public class ObjectUtils {
         return sortedObjects;
     }
 
-    /**
-     * Mirrors an object.
-     *
-     * @param object Object to mirror.
-     * @param scaleX Horizontal scale value.
-     * @param scaleY Vertical scale value.
-     * @param translateX Horizontal translation.
-     * @param translateY Vertical translation.
-     * @return The mirrored object.
-     */
     public static PathObject mirrorObject(PathObject object, int scaleX, int scaleY, int translateX, int translateY){
         ROI roi = object.getROI();
         roi = roi.scale(scaleX, scaleY);
@@ -116,13 +107,6 @@ public class ObjectUtils {
         return newObject;
     }
 
-    /**
-     * Adds an object to the hierarchy or inserts an object as a child of the provided parent object.
-     *
-     * @param hierarchy Current hierarchy to add object to.
-     * @param object Object to add.
-     * @param parent Already existing in hierarchy parent object.
-     */
     public static void addObjectAccountingForParent(PathObjectHierarchy hierarchy, PathObject object, PathObject parent) {
         if (parent != null)
             parent.addChildObject(object);
@@ -130,12 +114,6 @@ public class ObjectUtils {
             hierarchy.addObject(object);
     }
 
-    /**
-     * Iterates over provided PathObject collection and looks for objects which are not annotations. Returns them.
-     *
-     * @param objects Collection of PathObjects.
-     * @return The collection of non-annotation objects.
-     */
     public static Collection<PathObject> filterOutAnnotations(Collection<PathObject> objects){
         Collection<PathObject> detectionObjects = new ArrayList<>();
         for (PathObject object : objects){
@@ -144,6 +122,18 @@ public class ObjectUtils {
             }
         }
         return detectionObjects;
+    }
+
+    public static Map<String, Integer> countObjectsByUniqueClass(JsonNode features){
+        Map<String, Integer> featureCounts = new HashMap<>();
+        for (JsonNode feature : features) {
+            String objectType = feature.path("properties").path("objectType").asText();
+            JsonNode classificationNode = feature.path("properties").path("classification");
+            String featureClassName = classificationNode.path("name").asText();
+            if (!ANNOTATION.equals(objectType))
+                featureCounts.put(featureClassName, featureCounts.getOrDefault(featureClassName, 0) + 1);
+        }
+        return featureCounts;
     }
 
 //    static Collection<PathObject> getCalbrationPoints(Collection<PathObject> objects, String... names) {

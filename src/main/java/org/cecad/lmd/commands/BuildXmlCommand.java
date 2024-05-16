@@ -1,10 +1,12 @@
-package org.cecad.lmd.exporting;
+package org.cecad.lmd.commands;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.cecad.lmd.common.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
-import qupath.lib.plugins.parameters.ParameterList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -17,36 +19,28 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
+import java.util.*;
 
-import static org.cecad.lmd.exporting.ExportOptions.CapAssignments.*;
-import static org.cecad.lmd.exporting.ExportOptions.ObjectTypes.*;
-import static org.cecad.lmd.exporting.ExportOptions.FeatureGeoTypes.*;
-import static org.cecad.lmd.exporting.ExportOptions.CalibrationPointsNames.*;
+import static org.cecad.lmd.common.Constants.ObjectTypes.*;
+import static org.cecad.lmd.common.Constants.FeatureGeoTypes.*;
+import static org.cecad.lmd.common.Constants.CalibrationPointsNames.*;
+import static org.cecad.lmd.common.Constants.WellDataFileFields.*;
+import static org.cecad.lmd.common.Constants.CollectorTypes.*;
 
-public class GeojsonToXml {
+public class BuildXmlCommand {
+    private static final Logger logger = LoggerFactory.getLogger(BuildXmlCommand.class);
     private int shapeCount = 0;
     private final String inputPath;
     private final String outputPath;
+    private final String collectorName;
 
-    /**
-     *
-     * @param inputPath Path to the input GeoJSON file.
-     * @param outputPath Path where the output XML file will be saved.
-     */
-    public GeojsonToXml(String inputPath, String outputPath){
+    public BuildXmlCommand(String inputPath, String outputPath, String collectorName){
         this.inputPath = inputPath;
         this.outputPath = outputPath;
+        this.collectorName = collectorName;
     }
 
-    /**
-     * Reads a GeoJSON file from a specified location and converts to the XML format required by Leica's LMD software.
-     * The saved image data is: calibration points, shapes' count and coordinates and optionally collector's cap ID for each shape taken from collectorParams.
-     * It filters out annotations from GeoJSON and doesn't count them as shapes in the XML, so the two files actually contain different objects.
-     *
-     * @param collectorParams Classes which user assigned to collectors symbols (A, B, C, etc.), if null - collectors won't be assigned to a shape in the output XML file
-     */
-    boolean createLeicaXML(ParameterList collectorParams) {
+    boolean createLeicaXML(Map<String, Object>[] collectorParams) {
         try {
             // Read GeoJSON file
             File geojsonFile = new File(inputPath);
@@ -96,12 +90,17 @@ public class GeojsonToXml {
             }
 
             // Count shapes in GeoJSON and add ShapeCount element to XML
+            // DONE: We can get all of the counts of all classes here. Also, make this a function.
             for (JsonNode feature : features) {
                 String objectType = feature.path("properties").path("objectType").asText();
                 if (!ANNOTATION.equals(objectType)) {
                     shapeCount++;
                 }
             }
+
+//            Map<String, Integer> classesCounts = countObjects(features); //this also updates shapeCount - more elegant solution later
+
+
             Element shapeCountElement = createTextElement(xmlDoc, "ShapeCount", String.valueOf(shapeCount));
             imageDataElement.appendChild(shapeCountElement);
 
@@ -120,9 +119,24 @@ public class GeojsonToXml {
                     Element pointCountElement = createTextElement(xmlDoc, "PointCount", String.valueOf(pointCount));
                     shapeElement.appendChild(pointCountElement);
 
-                    if (collectorParams != null) {
-                        JsonNode featureClassificationNode = feature.path("properties").path("classification");
-                        addCapID(xmlDoc, shapeElement, featureClassificationNode, collectorParams);
+                    if (collectorParams != null && !Objects.equals(collectorName, NONE)) {
+                        JsonNode classificationNode = feature.path("properties").path("classification");
+                        if (!classificationNode.isMissingNode()) {
+                            String featureClassName = classificationNode.path("name").asText();
+                            if (Objects.equals(collectorName, _96_WELL_PLATE)) {
+                                addCapIDForClasses_96Well(xmlDoc, shapeElement, featureClassName, collectorParams);
+                            }
+                            else
+                                addCapIDForClasses(xmlDoc, shapeElement, featureClassName, collectorParams);
+                        }
+                        else{
+                            logger.warn("Classification is missing.");
+                            addCapIDBasic(xmlDoc, shapeElement, collectorParams);
+                            // TODO: addCapIDBasic_96Well
+                        }
+                    }
+                    else{
+                        logger.error("Collector Params is null!");
                     }
 
                     int pointIndex = 1;
@@ -163,63 +177,93 @@ public class GeojsonToXml {
         element.appendChild(textNode);
         return element;
     }
-    @SuppressWarnings("UnusedReturnValue")
-    private boolean addCapID(Document doc, Element parentShape, JsonNode classificationNode, ParameterList paramsSetByUser){
 
-        Set<String> paramKeys = paramsSetByUser.getParameters().keySet();
-        String[] paramKeysPriorities = new String[paramKeys.size()];
+    private void addCapIDForClasses(Document doc, Element parentShape,
+                                    String featureClassName,
+                                    Map<String, Object>[] wellToClassAssignments){
 
-        if (!classificationNode.isMissingNode()) {
-            String featureClassName = classificationNode.path("name").asText();
-            for (String paramKey : paramKeys){
-                Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
-                if (paramValue.equals(NO_ASSIGNMENT)){
-                    continue;
-                }
-                if (paramValue.equals(ALL_OBJECTS)){
-                    paramKeysPriorities[0] = paramKey;
-                }
-                if (featureClassName.equals(paramValue)){
-                    paramKeysPriorities[1] = paramKey;
-                }
-                if (paramValue.equals(REMAINING_OBJECTS)){
-                    paramKeysPriorities[2] = paramKey;
-                }
+        for (Map<String, Object> assignment : wellToClassAssignments) {
+            String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
+            String wellLabel = (String) assignment.get(WELL_LABEL);
+            int objectQty = (int) assignment.get(OBJECT_QTY);
 
-            }
-            for (String paramKey : paramKeysPriorities) {
-                if (paramKey != null) {
-                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
-                    return true;
-                }
+            if (objectClass == null)
+                return;
+
+            if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT) || objectQty == 0)
+                continue;
+
+            if (objectClass.equals(featureClassName)) {
+                parentShape.appendChild(createTextElement(doc, "CapID", wellLabel));
+                assignment.put(OBJECT_QTY, objectQty - 1);
+                break;
             }
         }
-        else {
-            for (String paramKey : paramKeys){
-                Object paramValue = paramsSetByUser.getChoiceParameterValue(paramKey);
-                if (paramValue.equals(NO_ASSIGNMENT)){
-                    continue;
-                }
-                if (paramValue.equals("Stroma") || paramValue.equals("Tumor") || paramValue.equals("Positive") || paramValue.equals("Negative")){
-                    continue;
-                }
-                if (paramValue.equals(ALL_OBJECTS)){
-                    paramKeysPriorities[0] = paramKey;
-
-                }
-                if (paramValue.equals(REMAINING_OBJECTS)){
-                    paramKeysPriorities[1] = paramKey;
-                }
-            }
-            for (String paramKey : paramKeysPriorities) {
-                if (paramKey != null) {
-                    parentShape.appendChild(createTextElement(doc, "CapID", paramKey));
-                    return true;
-                }
-            }
-        }
-        return false;
     }
+
+    private void addCapIDForClasses_96Well(Document doc, Element parentShape,
+                                           String featureClassName,
+                                           Map<String, Object>[] wellsCountToClassAssignments) {
+        // TODO: Check if the number of objects > the number of wells to assign them to | UPON SAVING WELL DATA
+        for (Map<String, Object> assignment : wellsCountToClassAssignments) {
+            String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
+            List<String> wellLabels = (List<String>) assignment.get("wellLabels");
+            int objectQty = (int) assignment.get(OBJECT_QTY);
+            int objectsPerWell = (int) assignment.get("objectsPerWell");
+            int redundantObjects = (int) assignment.get("redundantObjects");
+            int wellCount = (int)  assignment.get(WELL_COUNT);
+
+            if (objectClass == null)
+                return;
+
+            if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT) || !objectClass.equals(featureClassName)
+                    || objectQty == 0 || wellCount == 0)
+                continue;
+
+            if (objectsPerWell == 0) {
+                assignment.put(WELL_COUNT, wellCount - 1);
+                wellCount = wellCount - 1;
+                int objectsPerWellAtTheBeginning = (int) assignment.get("objectsPerWellAtTheBeginning");
+                assignment.put("objectsPerWell", objectsPerWellAtTheBeginning);
+                objectsPerWell = objectsPerWellAtTheBeginning;
+            }
+
+            String wellLabel = wellLabels.get(wellCount - 1);
+
+            // put wellLabel in the xml
+            parentShape.appendChild(createTextElement(doc, "CapID", wellLabel));
+            assignment.put(OBJECT_QTY, objectQty - 1);
+            assignment.put("objectsPerWell", objectsPerWell - 1);
+            break;
+        }
+    }
+
+
+    private void addCapIDBasic(Document doc, Element parentShape,
+                               Map<String, Object>[] wellToClassAssignments){
+
+        for (Map<String, Object> assignment : wellToClassAssignments) {
+            String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
+            String wellLabel = (String) assignment.get(WELL_LABEL);
+            int objectQty = (int) assignment.get(OBJECT_QTY);
+
+            if (objectClass == null)
+                return;
+
+            if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT))
+                continue;
+
+            if (objectQty == 0)
+                continue;
+
+            if (objectClass.equals(Constants.CapAssignments.ALL_OBJECTS)) {
+                parentShape.appendChild(createTextElement(doc, "CapID", wellLabel));
+                assignment.put(OBJECT_QTY, objectQty - 1);
+                break;
+            }
+        }
+    }
+
     public int getShapeCount(){
         return shapeCount;
     }
