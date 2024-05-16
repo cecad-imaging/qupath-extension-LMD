@@ -69,13 +69,28 @@ public class WellPlatePane extends VBox {
         HBox addWellBox = new HBox();
         addWellBox.setSpacing(125);
         addWellBox.getChildren().addAll(new Label(""), addWellButton);
+
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(10);
+
         Button cancelButton = new Button("Cancel");
         cancelButton.setPrefSize(140, 25);
         cancelButton.setOnAction(actionEvent -> command.closeStage());
-        Button doneButton = getDoneButton(controls, command);
+
+        Button doneButton = new Button("Save");
         doneButton.setPrefSize(140, 25);
+        doneButton.setOnAction(event -> {
+            if (isWellDataValid()){
+                List<Map<String, Object>> wellDataList = getWellDataFromSubPanes();
+                if (TEMP_SUBDIRECTORY == null)
+                    command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist! Please restart the extension.");
+                IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, _96_WELL_PLATE_DATA, command.getLogger());
+
+                controls.updateCollectorLabel("96-Well Plate");
+                command.closeStage();
+            }
+        });
+
         controlsButtonsBox.getChildren().addAll(cancelButton, doneButton);
 
         getChildren().addAll(headerLabelsBox, wellSubPane, addWellBox, controlsButtonsBox);
@@ -83,23 +98,6 @@ public class WellPlatePane extends VBox {
         addWellButton.setOnAction(event -> {
             addWellSection(getChildren().indexOf(addWellBox));
         });
-    }
-
-    private Button getDoneButton(ControlsInterface controls, WellPlateCommand command) {
-        Button doneButton = new Button("Save");
-        doneButton.setPrefWidth(120);
-
-        doneButton.setOnAction(event -> {
-            // Save wellGrid to a file:
-            List<Map<String, Object>> wellDataList = getWellDataFromSubPanes();
-            if (TEMP_SUBDIRECTORY == null)
-                command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist!");
-            IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, _96_WELL_PLATE_DATA, command.getLogger());
-
-            controls.updateCollectorLabel("96-Well Plate");
-            command.closeStage();
-        });
-        return doneButton;
     }
 
     private void addWellSection(int index) {
@@ -114,12 +112,22 @@ public class WellPlatePane extends VBox {
         stage.sizeToScene();
     }
 
+    private boolean isWellDataValid(){
+        for (int i = 0; i < getChildren().size(); i++) {
+            if (getChildren().get(i) instanceof WellPlateSubPane subPane) {
+                if (!subPane.isSubPaneDataValid())
+                    return false;
+            }
+        }
+        return true;
+    }
+
     private List<Map<String, Object>> getWellDataFromSubPanes() {
         List<Map<String, Object>> wellDataList = new ArrayList<>();
+        Set<String> usedLabels = new HashSet<>();
         for (int i = 0; i < getChildren().size(); i++) {
-            if (getChildren().get(i) instanceof WellPlateSubPane) {
-                WellPlateSubPane subPane = (WellPlateSubPane) getChildren().get(i);
-                Map<String, Object> wellData = subPane.getSubPaneWellData();
+            if (getChildren().get(i) instanceof WellPlateSubPane subPane) {
+                Map<String, Object> wellData = subPane.getSubPaneWellData(usedLabels);
                 wellDataList.add(wellData);
             }
         }
