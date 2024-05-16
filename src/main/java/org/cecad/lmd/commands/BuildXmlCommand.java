@@ -19,10 +19,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static org.cecad.lmd.common.Constants.ObjectTypes.*;
 import static org.cecad.lmd.common.Constants.FeatureGeoTypes.*;
@@ -107,8 +104,6 @@ public class BuildXmlCommand {
             Element shapeCountElement = createTextElement(xmlDoc, "ShapeCount", String.valueOf(shapeCount));
             imageDataElement.appendChild(shapeCountElement);
 
-            String[] labelInUse = new String[1];
-
             // Handle each shape: PointCount, CapID, coordinates
             int shapeIndex = 1;
             for (JsonNode feature : features) {
@@ -129,7 +124,7 @@ public class BuildXmlCommand {
                         if (!classificationNode.isMissingNode()) {
                             String featureClassName = classificationNode.path("name").asText();
                             if (Objects.equals(collectorName, _96_WELL_PLATE)) {
-                                addCapIDForClasses_96Well(xmlDoc, shapeElement, featureClassName, collectorParams, labelInUse);
+                                addCapIDForClasses_96Well(xmlDoc, shapeElement, featureClassName, collectorParams);
                             }
                             else
                                 addCapIDForClasses(xmlDoc, shapeElement, featureClassName, collectorParams);
@@ -208,20 +203,15 @@ public class BuildXmlCommand {
 
     private void addCapIDForClasses_96Well(Document doc, Element parentShape,
                                            String featureClassName,
-                                           Map<String, Object>[] wellsCountToClassAssignments,
-                                           String[] labelInUse) {
-        // TODO: 0. Check if the number of objects > the number of wells to assign them to | UPON SAVING WELL DATA
-
-        logger.info("Assignemnt runs");
-        Set<String> usedLabels = new HashSet<>(); // so that we won't generate the same label twice
-
+                                           Map<String, Object>[] wellsCountToClassAssignments) {
+        // TODO: Check if the number of objects > the number of wells to assign them to | UPON SAVING WELL DATA
         for (Map<String, Object> assignment : wellsCountToClassAssignments) {
             String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
-            int wellCount = (int) assignment.get(WELL_COUNT);
+            List<String> wellLabels = (List<String>) assignment.get("wellLabels");
             int objectQty = (int) assignment.get(OBJECT_QTY);
             int objectsPerWell = (int) assignment.get("objectsPerWell");
             int redundantObjects = (int) assignment.get("redundantObjects");
-
+            int wellCount = (int)  assignment.get(WELL_COUNT);
 
             if (objectClass == null)
                 return;
@@ -230,18 +220,15 @@ public class BuildXmlCommand {
                     || objectQty == 0 || wellCount == 0)
                 continue;
 
-            if (objectsPerWell == 0)
-                labelInUse[0] = null;
-
-            String wellLabel;
-            if (labelInUse[0] == null) {
-                wellLabel = generateStandardWellPlateLabel(usedLabels);
+            if (objectsPerWell == 0) {
                 assignment.put(WELL_COUNT, wellCount - 1);
-                labelInUse[0] = wellLabel;
-                usedLabels.add(wellLabel);
+                wellCount = wellCount - 1;
+                int objectsPerWellAtTheBeginning = (int) assignment.get("objectsPerWellAtTheBeginning");
+                assignment.put("objectsPerWell", objectsPerWellAtTheBeginning);
+                objectsPerWell = objectsPerWellAtTheBeginning;
             }
-            else
-                wellLabel = labelInUse[0];
+
+            String wellLabel = wellLabels.get(wellCount - 1);
 
             // put wellLabel in the xml
             parentShape.appendChild(createTextElement(doc, "CapID", wellLabel));
@@ -249,16 +236,6 @@ public class BuildXmlCommand {
             assignment.put("objectsPerWell", objectsPerWell - 1);
             break;
         }
-    }
-
-    private String generateStandardWellPlateLabel(Set<String> usedLabels) {
-        String wellLabel;
-        do {
-            int row = (int) Math.floor(Math.random() * 8) + 1; // Random row (1-8)
-            int col = (int) Math.floor(Math.random() * 12) + 1; // Random column (1-12)
-            wellLabel = Character.toString((char) (row + 64)) + col; // Convert row number to uppercase letter (A-H)
-        } while (usedLabels.contains(wellLabel));
-        return wellLabel;
     }
 
 

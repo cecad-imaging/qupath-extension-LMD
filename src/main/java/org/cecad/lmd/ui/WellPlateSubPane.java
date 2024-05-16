@@ -9,9 +9,7 @@ import javafx.scene.layout.HBox;
 import static org.cecad.lmd.common.Constants.CapAssignments.*;
 import static org.cecad.lmd.common.Constants.WellDataFileFields.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class WellPlateSubPane extends HBox {
     public WellPlateSubPane(List<String> allClasses, Map<String, Integer> classesCounts){
@@ -60,12 +58,30 @@ public class WellPlateSubPane extends HBox {
 
         int redundantObjects = objectQty - wellCount*objectsPerWell;
 
+        Set<String> wellLabels = generateRandomLabels(wellCount);
+
+        wellData.put("wellLabels", wellLabels);
         wellData.put(WELL_COUNT, wellCount);
         wellData.put(OBJECT_CLASS_TYPE, objectType);
         wellData.put(OBJECT_QTY, objectQty);
         wellData.put("objectsPerWell", objectsPerWell);
         wellData.put("redundantObjects", redundantObjects);
+        wellData.put("objectsPerWellAtTheBeginning", objectsPerWell);
 
         return wellData;
+    }
+
+    public Set<String> generateRandomLabels(int labelsQty) {
+        Set<String> uniqueLabels = new HashSet<>();
+        while (uniqueLabels.size() < labelsQty) {
+            String wellLabel;
+            do {
+                int row = (int) Math.floor(Math.random() * 8) + 1; // Random row (1-8)
+                int col = (int) Math.floor(Math.random() * 12) + 1; // Random column (1-12)
+                wellLabel = Character.toString((char) (row + 64)) + col; // Convert row number to uppercase letter (A-H)
+            } while (uniqueLabels.contains(wellLabel));
+            uniqueLabels.add(wellLabel);
+        }
+        return uniqueLabels;
     }
 }
