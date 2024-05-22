@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.cecad.lmd.common.Constants.CalibrationPointsNames.*;
 import static org.cecad.lmd.common.Constants.CollectorTypes.NONE;
@@ -119,9 +120,13 @@ public class MainCommand implements Runnable {
             detectionsToExport = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
             // Include Calibration even if not selected (by adding all annotations, they will be filtered out in GeojsonToXml anyway).
             detectionsToExport.addAll(hierarchy.getAnnotationObjects());
+            // TODO: test if optimizeDetectionsOrder works
+            optimizeDetectionsOrder(detectionsToExport);
         }
         else {
             detectionsToExport = hierarchy.getAllObjects(false);
+            // TODO: test if optimizeDetectionsOrder works
+            optimizeDetectionsOrder(detectionsToExport);
         }
     }
 
@@ -248,4 +253,51 @@ public class MainCommand implements Runnable {
         objectMapper.writeValue(new File(filePath), wellDataList);
 
     }
+
+    // Function that optimizes shapes order and thus minimizes laser's travel, only detections correspond to shapes,
+    // annotations are either junk or calibration points filtered and used later on, respectively.
+    // TODO: This approach doesn't seem to work. Investigate it.
+    private void optimizeDetectionsOrder(Collection<PathObject> objects){
+        if (objects == null || objects.isEmpty()) {
+            return;
+        }
+
+        // Filter for detection objects only
+        List<PathObject> detections = objects.stream().filter(PathObject::isDetection).toList();
+
+        if (detections.isEmpty()) {
+            return;
+        }
+
+        List<PathObject> orderedDetections = new ArrayList<>(detections);
+        List<PathObject> unvisitedDetections = new ArrayList<>(detections);
+
+        // Start with an arbitrary detection object
+        PathObject currentObject = unvisitedDetections.remove(0);
+        orderedDetections.set(0, currentObject);
+
+        // Greedy nearest-neighbor approach
+        for (int i = 1; i < detections.size(); i++) {
+            PathObject nearestObject = findNearestObject(currentObject, unvisitedDetections);
+            orderedDetections.set(i, nearestObject);
+            unvisitedDetections.remove(nearestObject);
+            currentObject = nearestObject;
+        }
+
+        // Update the original collection - replace only the detections
+        objects.removeIf(PathObject::isDetection); // Remove detections and hopefully annotations move to the beginning
+        objects.addAll(orderedDetections); // Add optimized detections
+    }
+
+    private PathObject findNearestObject(PathObject currentObject, List<PathObject> unvisitedObjects) {
+        return Collections.min(unvisitedObjects, Comparator.comparingDouble(obj ->
+                distance(currentObject.getROI().getCentroidX(), currentObject.getROI().getCentroidY(),
+                        obj.getROI().getCentroidX(), obj.getROI().getCentroidY())
+        ));
+    }
+
+    private double distance(double x1, double y1, double x2, double y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    }
+
 }
