@@ -188,7 +188,7 @@ public class BuildXmlCommand {
             int objectQty = (int) assignment.get(OBJECT_QTY);
 
             if (objectClass == null)
-                return;
+                continue;
 
             if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT) || objectQty == 0)
                 continue;
