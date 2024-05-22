@@ -188,7 +188,7 @@ public class BuildXmlCommand {
             int objectQty = (int) assignment.get(OBJECT_QTY);
 
             if (objectClass == null)
-                return;
+                continue;
 
             if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT) || objectQty == 0)
                 continue;
@@ -214,7 +214,7 @@ public class BuildXmlCommand {
             int wellCount = (int)  assignment.get(WELL_COUNT);
 
             if (objectClass == null)
-                return;
+                continue;
 
             if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT) || !objectClass.equals(featureClassName)
                     || objectQty == 0 || wellCount == 0)
@@ -248,7 +248,7 @@ public class BuildXmlCommand {
             int objectQty = (int) assignment.get(OBJECT_QTY);
 
             if (objectClass == null)
-                return;
+                continue;
 
             if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT))
                 continue;
