@@ -60,6 +60,10 @@ public class StandardCollectorsCommand implements Runnable {
         return new ArrayList<>(mainPane.getAllClasses().stream().map(PathClass::getName).toList());
     }
 
+    public int getAllDetectionsCount(){
+        return mainPane.getDetectionsToExport().size();
+    }
+
     public Map<String, Integer> getAllClassesCounts(){
         return ClassUtils.countObjectsOfAllClasses(mainPane.getDetectionsToExport());
     }

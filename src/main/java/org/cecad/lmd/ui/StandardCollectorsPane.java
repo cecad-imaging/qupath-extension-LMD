@@ -39,17 +39,23 @@ public class StandardCollectorsPane extends VBox {
         this.numWells = new SimpleIntegerProperty(numWells);
         this.wellLabels = generateWellLabels(numWells);
 
+//        List<String> detectionClasses = command.getAllClassesNames();
+
+        boolean isClassification = !command.getAllClassesNames().isEmpty();
+
         setPadding(new Insets(10));
         setSpacing(10);
 
         Map<String, Integer> classesCounts = command.getAllClassesCounts();
 
-        GridPane wellGrid = createWellGrid();
+        GridPane wellGrid = createWellGrid(command.getAllClassesNames());
 
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(10);
         Button cancelButton = new Button("Cancel");
         int BUTTON_WIDTH = 152;
+        if (!isClassification)
+            BUTTON_WIDTH = 82;
         int BUTTON_HEIGHT = 25;
         cancelButton.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
         Button doneButton = new Button("Save");
@@ -68,11 +74,12 @@ public class StandardCollectorsPane extends VBox {
             getChildren().addAll(readWellGridDataFromFile(wellGrid, wellDataFile), controlsButtonsBox);
         }
 
-        updateSpinnersMaxValues(wellGrid, classesCounts);
+        if (isClassification)
+            updateSpinnersMaxValues(wellGrid, classesCounts);
 
         doneButton.setOnAction(event -> {
             // Save wellGrid to a file:
-            List<Map<String, Object>> wellDataList = getWellData(wellGrid);
+            List<Map<String, Object>> wellDataList = getWellData(wellGrid, isClassification);
             if (TEMP_SUBDIRECTORY == null)
                 command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist!");
             IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, IOUtils.genWellDataFileNameFromWellsNum(numWells), command.getLogger());
@@ -171,7 +178,9 @@ public class StandardCollectorsPane extends VBox {
         return labels;
     }
 
-    private GridPane createWellGrid() {
+    private GridPane createWellGrid(List<String> allClasses) {
+        boolean isClassification = !allClasses.isEmpty();
+
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(5));
         gridPane.setHgap(10);
@@ -193,7 +202,10 @@ public class StandardCollectorsPane extends VBox {
             else if (Objects.equals(text, NUMBER_TEXT))
                 percentageLabel.setText(AREA_TEXT);
         });
-        gridPane.addRow(0, wellLabel, classLabel, percentageLabel);
+        if (isClassification)
+            gridPane.addRow(0, wellLabel, classLabel, percentageLabel);
+        else
+            gridPane.addRow(0, wellLabel, percentageLabel);
 
         Tooltip classTooltip = new Tooltip("Classes of detections obtained from segmentation step");
         classLabel.setTooltip(classTooltip);
@@ -205,39 +217,55 @@ public class StandardCollectorsPane extends VBox {
         percentageLabel.setTooltip(percentageTooltip);
         percentageTooltip.setShowDuration(new Duration(30000));
 
-        List<String> allClasses = command.getAllClassesNames();
         // Add rows for wells
         for (int i = 0; i < numWells.get(); i++) {
             Label well = new Label(wellLabels[i]);
-            ComboBox<String> comboBox = new ComboBox<>(FXCollections.observableArrayList(/* here we can maybe add all objects idk */));
-            if (!allClasses.isEmpty())
-                comboBox.getItems().addAll(allClasses);
-            else
-                comboBox.getItems().add(Constants.CapAssignments.ALL_OBJECTS);
-            comboBox.getItems().add(Constants.CapAssignments.NO_ASSIGNMENT);
-            comboBox.setPrefWidth(100);
+
             Spinner<Integer> spinner = new Spinner<>(0, 0, 0);
             spinner.setPrefWidth(90);
             Label maxCount = new Label("/ 0");
             maxCount.setPrefWidth(45);
-            gridPane.addRow(i + 1, well, comboBox, spinner, maxCount);
+
+            if (isClassification) {
+                ComboBox<String> comboBox = new ComboBox<>(FXCollections.observableArrayList(/* here we can maybe add all objects idk */));
+                comboBox.getItems().addAll(allClasses);
+                comboBox.getItems().add(Constants.CapAssignments.NO_ASSIGNMENT);
+                comboBox.setPrefWidth(100);
+
+                gridPane.addRow(i + 1, well, comboBox, spinner, maxCount);
+            }
+            else {
+                int count = command.getAllDetectionsCount();
+                spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, count, 0));
+                maxCount.setText("/ " + count);
+                gridPane.addRow(i + 1, well, spinner, maxCount);
+            }
         }
 
         return gridPane;
     }
 
-    public List<Map<String, Object>> getWellData(GridPane gridPane) {
+    public List<Map<String, Object>> getWellData(GridPane gridPane, boolean isClassification) {
         List<Map<String, Object>> wellDataList = new ArrayList<>();
-        for (int i = 1; i <= numWells.get(); i++) {  // Start from row 1 (header skipped)
+        for (int i = 1; i <= numWells.get(); i++) {
             int columnsCount = gridPane.getColumnCount();
-            Label wellLabel = (Label) gridPane.getChildren().get(i * columnsCount - 1); // index is row*columns
-            ComboBox<String> classComboBox = (ComboBox<String>) gridPane.getChildren().get(i * columnsCount);
-            Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount + 1);
-
             Map<String, Object> wellData = new HashMap<>();
+
+            Label wellLabel = (Label) gridPane.getChildren().get(i * columnsCount - 1); // index is row*columns
             wellData.put(WELL_LABEL, wellLabel.getText());
-            wellData.put(OBJECT_CLASS_TYPE, classComboBox.getValue());
-            wellData.put(OBJECT_QTY, spinner.getValue());
+
+            if (isClassification){
+                ComboBox<String> classComboBox = (ComboBox<String>) gridPane.getChildren().get(i * columnsCount);
+                wellData.put(OBJECT_CLASS_TYPE, classComboBox.getValue());
+
+                Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount + 1);
+                wellData.put(OBJECT_QTY, spinner.getValue());
+            }
+            else{
+                Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount);
+                wellData.put(OBJECT_QTY, spinner.getValue());
+            }
+
             wellDataList.add(wellData);
         }
         return wellDataList;

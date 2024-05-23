@@ -173,7 +173,7 @@ public class MainCommand implements Runnable {
         BuildXmlCommand xmlBuilder = new BuildXmlCommand(pathGeoJSON, pathXML, mainPane.getCollector());
         boolean successfulConversion = xmlBuilder.createLeicaXML(wellData);
 
-        if (Objects.equals(mainPane.getCollector(), _96_WELL_PLATE) && wellData != null) {
+        if (Objects.equals(mainPane.getCollector(), _96_WELL_PLATE) && wellData != null && wellData[0].containsKey(OBJECT_CLASS_TYPE)) {
             final String _96_WELL_FILE_NAME = DEFAULT_NAME + IOUtils.genWellDataFileNameFromCollectorName(mainPane.getCollector(), logger);
             create96WellPlateSpecificFile(wellData, DATA_SUBDIRECTORY.resolve(_96_WELL_FILE_NAME).toString());
         }
@@ -240,6 +240,7 @@ public class MainCommand implements Runnable {
     private void create96WellPlateSpecificFile(Map<String, Object>[] wellData, String filePath) throws IOException {
         List<Map<String, Object>> wellDataList = new ArrayList<>();
         for (Map<String, Object> assignment : wellData) {
+
             String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
             List<String> wellLabels = (List<String>) assignment.get("wellLabels");
 
@@ -248,10 +249,8 @@ public class MainCommand implements Runnable {
 
             wellDataList.add(wellDataEntry);
         }
-
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.writeValue(new File(filePath), wellDataList);
-
     }
 
     // Function that optimizes shapes order and thus minimizes laser's travel, only detections correspond to shapes,

@@ -27,11 +27,13 @@ public class WellPlatePane extends VBox {
         this.allClasses = command.getAllClassesNames();
         this.classesCounts = command.getAllClassesCounts();
 
+        boolean isClassification = !allClasses.isEmpty();
+
         setPadding(new Insets(10)); // Set padding around the entire pane
         setSpacing(5); // Set spacing between elements
 
         // Initial SubPane
-        WellPlateSubPane wellSubPane = new WellPlateSubPane(allClasses, classesCounts);
+        WellPlateSubPane wellSubPane = new WellPlateSubPane(allClasses, classesCounts, command.getAllDetectionsCount());
         wellSubPane.setPrefHeight(30);
 
         Label wellLabel = new Label("Well");
@@ -61,27 +63,38 @@ public class WellPlatePane extends VBox {
         percentageTooltip.setShowDuration(new Duration(30000));
         HBox headerLabelsBox = new HBox();
         headerLabelsBox.setSpacing(10);
-        headerLabelsBox.getChildren().addAll(wellLabel, classLabel, percentageLabel);
+        if (isClassification)
+            headerLabelsBox.getChildren().addAll(wellLabel, classLabel, percentageLabel);
+        else
+            headerLabelsBox.getChildren().addAll(wellLabel, percentageLabel);
 
         // Buttons
         Button addWellButton = new Button("+");
         addWellButton.setPrefSize(40, 25);
         HBox addWellBox = new HBox();
-        addWellBox.setSpacing(125);
+        if (isClassification)
+            addWellBox.setSpacing(125);
+        else
+            addWellBox.setSpacing(80);
         addWellBox.getChildren().addAll(new Label(""), addWellButton);
 
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(10);
 
+        int BUTTON_WIDTH = 140;
+        if (!isClassification)
+            BUTTON_WIDTH = 90;
+        int BUTTON_HEIGHT = 25;
+
         Button cancelButton = new Button("Cancel");
-        cancelButton.setPrefSize(140, 25);
+        cancelButton.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
         cancelButton.setOnAction(actionEvent -> command.closeStage());
 
         Button doneButton = new Button("Save");
-        doneButton.setPrefSize(140, 25);
+        doneButton.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
         doneButton.setOnAction(event -> {
             if (isWellDataValid()){
-                List<Map<String, Object>> wellDataList = getWellDataFromSubPanes();
+                List<Map<String, Object>> wellDataList = getWellDataFromSubPanes(isClassification);
                 if (TEMP_SUBDIRECTORY == null)
                     command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist! Please restart the extension.");
                 IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, _96_WELL_PLATE_DATA, command.getLogger());
@@ -102,7 +115,7 @@ public class WellPlatePane extends VBox {
 
     private void addWellSection(int index) {
         // Create a new well section pane
-        WellPlateSubPane newSubPane = new WellPlateSubPane(allClasses, classesCounts);
+        WellPlateSubPane newSubPane = new WellPlateSubPane(allClasses, classesCounts, command.getAllDetectionsCount());
         newSubPane.setPrefHeight(30);
 
         // Insert the new subPane before the "+" button
@@ -122,12 +135,12 @@ public class WellPlatePane extends VBox {
         return true;
     }
 
-    private List<Map<String, Object>> getWellDataFromSubPanes() {
+    private List<Map<String, Object>> getWellDataFromSubPanes(boolean isClassification) {
         List<Map<String, Object>> wellDataList = new ArrayList<>();
         Set<String> usedLabels = new HashSet<>();
         for (int i = 0; i < getChildren().size(); i++) {
             if (getChildren().get(i) instanceof WellPlateSubPane subPane) {
-                Map<String, Object> wellData = subPane.getSubPaneWellData(usedLabels);
+                Map<String, Object> wellData = subPane.getSubPaneWellData(usedLabels, isClassification);
                 wellDataList.add(wellData);
             }
         }

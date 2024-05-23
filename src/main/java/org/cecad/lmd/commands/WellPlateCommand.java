@@ -77,6 +77,10 @@ public class WellPlateCommand implements Runnable {
         return ClassUtils.countObjectsOfAllClasses(mainPane.getDetectionsToExport());
     }
 
+    public int getAllDetectionsCount(){
+        return mainPane.getDetectionsToExport().size();
+    }
+
     public Logger getLogger(){
         return logger;
     }

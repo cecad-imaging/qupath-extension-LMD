@@ -121,18 +121,20 @@ public class BuildXmlCommand {
 
                     if (collectorParams != null && !Objects.equals(collectorName, NONE)) {
                         JsonNode classificationNode = feature.path("properties").path("classification");
+
                         if (!classificationNode.isMissingNode()) {
                             String featureClassName = classificationNode.path("name").asText();
-                            if (Objects.equals(collectorName, _96_WELL_PLATE)) {
+                            if (Objects.equals(collectorName, _96_WELL_PLATE))
                                 addCapIDForClasses_96Well(xmlDoc, shapeElement, featureClassName, collectorParams);
-                            }
                             else
                                 addCapIDForClasses(xmlDoc, shapeElement, featureClassName, collectorParams);
                         }
                         else{
                             logger.warn("Classification is missing.");
-                            addCapIDBasic(xmlDoc, shapeElement, collectorParams);
-                            // TODO: addCapIDBasic_96Well
+                            if (Objects.equals(collectorName, _96_WELL_PLATE))
+                                addCapIDBasic_96Well(xmlDoc, shapeElement, collectorParams);
+                            else
+                                addCapIDBasic(xmlDoc, shapeElement, collectorParams);
                         }
                     }
                     else{
@@ -204,7 +206,6 @@ public class BuildXmlCommand {
     private void addCapIDForClasses_96Well(Document doc, Element parentShape,
                                            String featureClassName,
                                            Map<String, Object>[] wellsCountToClassAssignments) {
-        // TODO: Check if the number of objects > the number of wells to assign them to | UPON SAVING WELL DATA
         for (Map<String, Object> assignment : wellsCountToClassAssignments) {
             String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
             List<String> wellLabels = (List<String>) assignment.get("wellLabels");
@@ -243,24 +244,46 @@ public class BuildXmlCommand {
                                Map<String, Object>[] wellToClassAssignments){
 
         for (Map<String, Object> assignment : wellToClassAssignments) {
-            String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
             String wellLabel = (String) assignment.get(WELL_LABEL);
             int objectQty = (int) assignment.get(OBJECT_QTY);
-
-            if (objectClass == null)
-                continue;
-
-            if (objectClass.equals(Constants.CapAssignments.NO_ASSIGNMENT))
-                continue;
 
             if (objectQty == 0)
                 continue;
 
-            if (objectClass.equals(Constants.CapAssignments.ALL_OBJECTS)) {
-                parentShape.appendChild(createTextElement(doc, "CapID", wellLabel));
-                assignment.put(OBJECT_QTY, objectQty - 1);
-                break;
+            parentShape.appendChild(createTextElement(doc, "CapID", wellLabel));
+            assignment.put(OBJECT_QTY, objectQty - 1);
+            break;
+        }
+    }
+
+    private void addCapIDBasic_96Well(Document doc, Element parentShape,
+                               Map<String, Object>[] wellToClassAssignments){
+
+        for (Map<String, Object> assignment : wellToClassAssignments) {
+            List<String> wellLabels = (List<String>) assignment.get("wellLabels");
+            int objectQty = (int) assignment.get(OBJECT_QTY);
+            int objectsPerWell = (int) assignment.get("objectsPerWell");
+            int redundantObjects = (int) assignment.get("redundantObjects");
+            int wellCount = (int)  assignment.get(WELL_COUNT);
+
+            if (objectQty == 0 || wellCount == 0)
+                continue;
+
+            if (objectsPerWell == 0) {
+                assignment.put(WELL_COUNT, wellCount - 1);
+                wellCount = wellCount - 1;
+                int objectsPerWellAtTheBeginning = (int) assignment.get("objectsPerWellAtTheBeginning");
+                assignment.put("objectsPerWell", objectsPerWellAtTheBeginning);
+                objectsPerWell = objectsPerWellAtTheBeginning;
             }
+
+            String wellLabel = wellLabels.get(wellCount - 1);
+
+            // put wellLabel in the xml
+            parentShape.appendChild(createTextElement(doc, "CapID", wellLabel));
+            assignment.put(OBJECT_QTY, objectQty - 1);
+            assignment.put("objectsPerWell", objectsPerWell - 1);
+            break;
         }
     }
 

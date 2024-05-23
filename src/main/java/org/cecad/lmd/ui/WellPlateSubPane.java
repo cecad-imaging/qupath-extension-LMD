@@ -11,20 +11,12 @@ import static org.cecad.lmd.common.Constants.WellDataFileFields.*;
 import java.util.*;
 
 public class WellPlateSubPane extends HBox {
-    public WellPlateSubPane(List<String> allClasses, Map<String, Integer> classesCounts){
+    public WellPlateSubPane(List<String> allClasses, Map<String, Integer> classesCounts, int allCount){
         setPadding(new Insets(0));
         setSpacing(10);
 
         Spinner<Integer> wellNumSpinner = new Spinner<>(0, 96, 0);
         wellNumSpinner.setPrefWidth(85);
-
-        ComboBox<String> classComboBox = new ComboBox<>();
-        if (!allClasses.isEmpty())
-            classComboBox.getItems().addAll(allClasses);
-        else
-            classComboBox.getItems().add(ALL_OBJECTS);
-        classComboBox.getItems().add(NO_ASSIGNMENT);
-        classComboBox.setPrefWidth(100);
 
         Spinner<Integer> percentageSpinner = new Spinner<>(0, 0, 0);
         percentageSpinner.setPrefWidth(85);
@@ -32,23 +24,42 @@ public class WellPlateSubPane extends HBox {
         Label countLabel = new Label("/ 0");
         countLabel.setPrefWidth(45);
 
-        classComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && classesCounts.containsKey(newValue)) {
-                int count = classesCounts.get(newValue);
-                percentageSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, count, count));
-                countLabel.setText("/ " + count);
-            }
-        });
+        if (!allClasses.isEmpty()) {
+            ComboBox<String> classComboBox = new ComboBox<>();
+            classComboBox.getItems().addAll(allClasses);
+            classComboBox.getItems().add(NO_ASSIGNMENT);
+            classComboBox.setPrefWidth(100);
 
-        getChildren().addAll(wellNumSpinner, classComboBox, percentageSpinner, countLabel);
+            classComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null && classesCounts.containsKey(newValue)) {
+                    int count = classesCounts.get(newValue);
+                    percentageSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, count, count));
+                    countLabel.setText("/ " + count);
+                }
+            });
+
+            getChildren().addAll(wellNumSpinner, classComboBox, percentageSpinner, countLabel);
+        }
+        else {
+            percentageSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, allCount, 0));
+            countLabel.setText("/ " + allCount);
+            getChildren().addAll(wellNumSpinner, percentageSpinner, countLabel);
+        }
     }
 
-    public Map<String, Object> getSubPaneWellData(Set<String> usedLabels) {
+    public Map<String, Object> getSubPaneWellData(Set<String> usedLabels, boolean isClassification) {
         Map<String, Object> wellData = new HashMap<>();
 
         int wellCount = ((Spinner<Integer>) getChildren().get(0)).getValue();
-        String objectType = ((ComboBox<String>) getChildren().get(1)).getValue();
-        int objectQty = ((Spinner<Integer>) getChildren().get(2)).getValue();
+        String objectType = "";
+        int objectQty = 0;
+
+        if (isClassification){
+            objectType = ((ComboBox<String>) getChildren().get(1)).getValue();
+            objectQty = ((Spinner<Integer>) getChildren().get(2)).getValue();
+        }
+        else
+            objectQty = ((Spinner<Integer>) getChildren().get(1)).getValue();
 
         int objectsPerWell = 0;
         if (wellCount > 0) {
@@ -61,7 +72,8 @@ public class WellPlateSubPane extends HBox {
 
         wellData.put("wellLabels", wellLabels);
         wellData.put(WELL_COUNT, wellCount);
-        wellData.put(OBJECT_CLASS_TYPE, objectType);
+        if (isClassification)
+            wellData.put(OBJECT_CLASS_TYPE, objectType);
         wellData.put(OBJECT_QTY, objectQty);
         wellData.put("objectsPerWell", objectsPerWell);
         wellData.put("redundantObjects", redundantObjects);
