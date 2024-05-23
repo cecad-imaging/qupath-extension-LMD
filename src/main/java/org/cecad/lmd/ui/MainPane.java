@@ -50,11 +50,12 @@ public class MainPane extends GridPane implements ControlsInterface {
         if (imageData != null)
             defaultDetections = imageData.getHierarchy().getSelectionModel().noSelection() ? "All" : "Selected";
 
-        // Dropdown Menu (assuming String options)
+        // Dropdown Menu
         detectionsComboBox = new ComboBox<>();
         detectionsComboBox.getItems().addAll(SELECTED, ALL);
         detectionsComboBox.setPrefWidth(144);
         detectionsComboBox.getSelectionModel().select(defaultDetections);
+        detectionsComboBox.getSelectionModel().selectedItemProperty().addListener(event -> command.updateDetectionsToExport());
 
         Label collectorOptionLabel = new Label("Collector is set to:");
         collectorOptionLabel.setPrefWidth(144);
@@ -64,7 +65,10 @@ public class MainPane extends GridPane implements ControlsInterface {
         // Buttons
         Button setCollectorButton = new Button("Set Collector");
         setCollectorButton.setPrefWidth(290);
-        setCollectorButton.setOnAction(command.openCollectorsPane(this));
+        setCollectorButton.setOnAction(actionEvent -> {
+            command.updateDetectionsToExport();
+            command.openCollectorsPane(this);
+        });
 
         Button moreOptionsButton = new Button("More Options");
         moreOptionsButton.setPrefWidth(290);

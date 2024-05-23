@@ -24,14 +24,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.cecad.lmd.common.Constants.CalibrationPointsNames.*;
 import static org.cecad.lmd.common.Constants.CollectorTypes.NONE;
 import static org.cecad.lmd.common.Constants.CollectorTypes._96_WELL_PLATE;
 import static org.cecad.lmd.common.Constants.Paths.*;
 import static org.cecad.lmd.common.Constants.WellDataFileFields.OBJECT_CLASS_TYPE;
-import static org.cecad.lmd.common.Constants.WellDataFileFields.OBJECT_QTY;
 import static org.cecad.lmd.ui.IOUtils.createSubdirectory;
 import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 
@@ -44,7 +42,7 @@ public class MainCommand implements Runnable {
     private Stage stage;
     private final QuPathGUI qupath;
     MainPane mainPane;
-    Collection<PathObject> detectionsToExport;
+    private Collection<PathObject> detectionsToExport;
 
     public MainCommand(QuPathGUI qupath) {
         this.qupath = qupath;
@@ -70,7 +68,7 @@ public class MainCommand implements Runnable {
         }
         clearWellData();
         showStage();
-        defineDetectionsToExport();
+        updateDetectionsToExport();
     }
 
     public void closeStage(){
@@ -107,32 +105,28 @@ public class MainCommand implements Runnable {
         return stage;
     }
 
-    public void defineDetectionsToExport(){
+    public void updateDetectionsToExport(){
         String comboBoxChoice = mainPane.getSelectedOrAll();
         PathObjectHierarchy hierarchy = qupath.getImageData().getHierarchy();
 
         if (comboBoxChoice.equals(SELECTED)){
             if (hierarchy.getSelectionModel().noSelection()) {
-                Dialogs.showErrorNotification("No selection detected",
-                        "You had chosen to export selected objects but no selection has been detected.");
+                Dialogs.showWarningNotification("No selection detected",
+                        "No selection has been detected yet. Please select detections to process.");
                 return;
             }
             detectionsToExport = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
             // Include Calibration even if not selected (by adding all annotations, they will be filtered out in GeojsonToXml anyway).
             detectionsToExport.addAll(hierarchy.getAnnotationObjects());
-            // TODO: test if optimizeDetectionsOrder works
-            optimizeDetectionsOrder(detectionsToExport);
         }
         else {
             detectionsToExport = hierarchy.getAllObjects(false);
-            // TODO: test if optimizeDetectionsOrder works
-            optimizeDetectionsOrder(detectionsToExport);
         }
     }
 
-    public EventHandler<ActionEvent> openCollectorsPane(MainPane mainPane) {
+    public void openCollectorsPane(MainPane mainPane) {
         SetCollectorCommand setCollectorCommand = new SetCollectorCommand(qupath, mainPane);
-        return new Action(event -> setCollectorCommand.run());
+        setCollectorCommand.run();
     }
 
     public EventHandler<ActionEvent> openMoreOptionsPane() {
@@ -158,23 +152,25 @@ public class MainCommand implements Runnable {
         final String pathGeoJSON = getTempSubdirectory().resolve(DEFAULT_GeoJSON_NAME).toString();
         final String pathXML = getDataSubdirectory().resolve(DEFAULT_XML_NAME).toString();
 
-        String collectorType = mainPane.getCollector();
-        boolean processCollectors = !collectorType.equals(NONE);
-
+        // TODO: test if optimizeDetectionsOrder works
+        updateDetectionsToExport();
+        optimizeDetectionsOrder(detectionsToExport);
         exportObjectsToGeoJson(detectionsToExport, pathGeoJSON, "FEATURE_COLLECTION");
 
+        String collectorType = mainPane.getCollector();
+
         // Read file data
-        String wellDataFilePath = TEMP_SUBDIRECTORY.resolve(IOUtils.genWellDataFileNameFromCollectorName(mainPane.getCollector(), logger)).toString();
+        String wellDataFilePath = TEMP_SUBDIRECTORY.resolve(IOUtils.genWellDataFileNameFromCollectorName(collectorType, logger)).toString();
         Map<String, Object>[] wellData = null;
-        if (!Objects.equals(mainPane.getCollector(), NONE))
+        if (!Objects.equals(collectorType, NONE))
             wellData = getWellDataFromFile(wellDataFilePath);
 
         // Run BuildXmlCommand
-        BuildXmlCommand xmlBuilder = new BuildXmlCommand(pathGeoJSON, pathXML, mainPane.getCollector());
+        BuildXmlCommand xmlBuilder = new BuildXmlCommand(pathGeoJSON, pathXML, collectorType);
         boolean successfulConversion = xmlBuilder.createLeicaXML(wellData);
 
-        if (Objects.equals(mainPane.getCollector(), _96_WELL_PLATE) && wellData != null && wellData[0].containsKey(OBJECT_CLASS_TYPE)) {
-            final String _96_WELL_FILE_NAME = DEFAULT_NAME + IOUtils.genWellDataFileNameFromCollectorName(mainPane.getCollector(), logger);
+        if (Objects.equals(collectorType, _96_WELL_PLATE) && wellData != null && wellData[0].containsKey(OBJECT_CLASS_TYPE)) {
+            final String _96_WELL_FILE_NAME = DEFAULT_NAME + IOUtils.genWellDataFileNameFromCollectorName(collectorType, logger);
             create96WellPlateSpecificFile(wellData, DATA_SUBDIRECTORY.resolve(_96_WELL_FILE_NAME).toString());
         }
 
