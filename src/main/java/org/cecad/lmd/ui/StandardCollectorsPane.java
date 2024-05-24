@@ -1,7 +1,5 @@
 package org.cecad.lmd.ui;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
@@ -14,11 +12,8 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.cecad.lmd.commands.StandardCollectorsCommand;
 import org.cecad.lmd.common.Constants;
+import qupath.fx.dialogs.Dialogs;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
 import java.util.*;
 
 import static org.cecad.lmd.common.Constants.CollectorTypes.*;
@@ -39,17 +34,21 @@ public class StandardCollectorsPane extends VBox {
         this.numWells = new SimpleIntegerProperty(numWells);
         this.wellLabels = generateWellLabels(numWells);
 
+        boolean isClassification = !command.getAllClassesNames().isEmpty();
+
         setPadding(new Insets(10));
         setSpacing(10);
 
         Map<String, Integer> classesCounts = command.getAllClassesCounts();
 
-        GridPane wellGrid = createWellGrid();
+        GridPane wellGrid = createWellGrid(command.getAllClassesNames());
 
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(10);
         Button cancelButton = new Button("Cancel");
-        int BUTTON_WIDTH = 152;
+        int BUTTON_WIDTH = 150;
+        if (!isClassification)
+            BUTTON_WIDTH = 93;
         int BUTTON_HEIGHT = 25;
         cancelButton.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
         Button doneButton = new Button("Save");
@@ -57,110 +56,25 @@ public class StandardCollectorsPane extends VBox {
 
         controlsButtonsBox.getChildren().addAll(cancelButton, doneButton);
 
-        // DONE:
-        // Before getChildren().addAll(wellGrid, controlsButtonsBox); look for a file
-        // if numWells and the label from controls correspond and add well grid from there
-        // if the file exists
-        File wellDataFile = findWellDataFile(TEMP_SUBDIRECTORY.toString(), IOUtils.genWellDataFileNameFromWellsNum(numWells));
-        if (wellDataFile == null)
-            getChildren().addAll(wellGrid, controlsButtonsBox);
-        else {
-            getChildren().addAll(readWellGridDataFromFile(wellGrid, wellDataFile), controlsButtonsBox);
-        }
+        if (isClassification)
+            updateSpinnersMaxValues(wellGrid, classesCounts);
 
-        updateSpinnersMaxValues(wellGrid, classesCounts);
+        getChildren().addAll(wellGrid, controlsButtonsBox);
 
         doneButton.setOnAction(event -> {
-            // Save wellGrid to a file:
-            List<Map<String, Object>> wellDataList = getWellData(wellGrid);
-            if (TEMP_SUBDIRECTORY == null)
-                command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist!");
-            IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, IOUtils.genWellDataFileNameFromWellsNum(numWells), command.getLogger());
+            if (isWellDataValid(wellGrid, isClassification)) {
+                // Save wellGrid to a file:
+                List<Map<String, Object>> wellDataList = getWellData(wellGrid, isClassification);
+                if (TEMP_SUBDIRECTORY == null)
+                    command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist!");
+                IOUtils.saveWellsToFile(TEMP_SUBDIRECTORY, wellDataList, IOUtils.genWellDataFileNameFromWellsNum(numWells), command.getLogger());
 
-            controls.updateCollectorLabel(getCollectorName(numWells));
-            command.hideStage();
-        });
-
-        cancelButton.setOnAction(actionEvent -> {
-            // DONE:
-            // 1. Don't save anything to a file | done lol
-            // 2. Look for a file with the title corresponding to wellDataFileName | Done on line 63
-            // 3. If it doesn't exist simply close the stage
-            // 4. If it does, delete current wellGrid and add one with data from the file
-            if (wellDataFile == null)
+                controls.updateCollectorLabel(getCollectorName(numWells));
                 command.closeStage();
-            else{
-                command.hideStage();
-                getChildren().removeAll(wellGrid, controlsButtonsBox);
-                getChildren().addAll(readWellGridDataFromFile(wellGrid, wellDataFile), controlsButtonsBox);
             }
-
-            // 5. Don't update the controls label ever I guess | yeah I guess
-            // 6. Show the user notification | nah
         });
-    }
 
-    private GridPane readWellGridDataFromFile(GridPane wellGrid, File wellData) {
-
-        try (Reader reader = new FileReader(wellData)) {
-            if (wellData.getName().endsWith(".json")) {
-                // Read JSON data
-                Gson gson = new Gson();  // Add Gson dependency
-                List<Map<String, Object>> dataList = gson.fromJson(reader, new TypeToken<List<Map<String, Object>>>(){}.getType());
-                populateGridFromList(wellGrid, dataList);
-            } else {
-                // Handle unsupported file format
-                System.out.println("Unsupported file format: " + wellData.getName());
-            }
-        } catch (IOException e) {
-            command.getLogger().error(e.getMessage());
-        }
-
-        return wellGrid;
-    }
-
-    private void populateGridFromList(GridPane wellGrid, List<Map<String, Object>> dataList) {
-        int expectedRows = wellGrid.getChildren().size() - 1; // Assuming header row is not created dynamically
-        if (dataList.size() != expectedRows) {
-            System.out.println("Warning: Data list size (" + dataList.size() + ") doesn't match grid rows (" + expectedRows + ").");
-        }
-
-        int rowIndex = 1;  // Assuming row 0 is the header
-        for (Map<String, Object> dataMap : dataList) {
-            if (rowIndex > expectedRows) {
-                break;  // Stop if data list has more entries than grid rows
-            }
-
-            String wellLabel = (String) dataMap.get(WELL_LABEL);
-            String objectType = (String) dataMap.get(OBJECT_CLASS_TYPE);
-            int objectQty = (int) (double) dataMap.get(OBJECT_QTY);
-
-            Label wellLabelElement = (Label) wellGrid.getChildren().get(rowIndex * 3);
-            ComboBox<String> classComboBox = (ComboBox<String>) wellGrid.getChildren().get(rowIndex * 3 + 1);
-            Spinner<Integer> spinner = (Spinner<Integer>) wellGrid.getChildren().get(rowIndex * 3 + 2);
-
-            wellLabelElement.setText(wellLabel);
-            classComboBox.setValue(objectType);
-            spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 0, objectQty));
-
-            rowIndex++;
-        }
-    }
-
-    private File findWellDataFile(String tempSubdirectory, String wellDataFileName) {
-        File tempDir = new File(tempSubdirectory);
-
-        if (!tempDir.exists() || !tempDir.isDirectory()) {
-            command.getLogger().error("'LMD Data/.temp' subdirectory doesn't exist!");
-            return null;
-        }
-
-        for (File file : Objects.requireNonNull(tempDir.listFiles())) {
-            if (file.isFile() && file.getName().equals(wellDataFileName)) {
-                return file;
-            }
-        }
-        return null;
+        cancelButton.setOnAction(actionEvent -> command.closeStage());
     }
 
     private String[] generateWellLabels(int numWells) {
@@ -171,7 +85,9 @@ public class StandardCollectorsPane extends VBox {
         return labels;
     }
 
-    private GridPane createWellGrid() {
+    private GridPane createWellGrid(List<String> allClasses) {
+        boolean isClassification = !allClasses.isEmpty();
+
         GridPane gridPane = new GridPane();
         gridPane.setPadding(new Insets(5));
         gridPane.setHgap(10);
@@ -193,7 +109,10 @@ public class StandardCollectorsPane extends VBox {
             else if (Objects.equals(text, NUMBER_TEXT))
                 percentageLabel.setText(AREA_TEXT);
         });
-        gridPane.addRow(0, wellLabel, classLabel, percentageLabel);
+        if (isClassification)
+            gridPane.addRow(0, wellLabel, classLabel, percentageLabel);
+        else
+            gridPane.addRow(0, wellLabel, percentageLabel);
 
         Tooltip classTooltip = new Tooltip("Classes of detections obtained from segmentation step");
         classLabel.setTooltip(classTooltip);
@@ -205,39 +124,55 @@ public class StandardCollectorsPane extends VBox {
         percentageLabel.setTooltip(percentageTooltip);
         percentageTooltip.setShowDuration(new Duration(30000));
 
-        List<String> allClasses = command.getAllClassesNames();
         // Add rows for wells
         for (int i = 0; i < numWells.get(); i++) {
             Label well = new Label(wellLabels[i]);
-            ComboBox<String> comboBox = new ComboBox<>(FXCollections.observableArrayList(/* here we can maybe add all objects idk */));
-            if (!allClasses.isEmpty())
-                comboBox.getItems().addAll(allClasses);
-            else
-                comboBox.getItems().add(Constants.CapAssignments.ALL_OBJECTS);
-            comboBox.getItems().add(Constants.CapAssignments.NO_ASSIGNMENT);
-            comboBox.setPrefWidth(100);
+
             Spinner<Integer> spinner = new Spinner<>(0, 0, 0);
             spinner.setPrefWidth(90);
             Label maxCount = new Label("/ 0");
             maxCount.setPrefWidth(45);
-            gridPane.addRow(i + 1, well, comboBox, spinner, maxCount);
+
+            if (isClassification) {
+                ComboBox<String> comboBox = new ComboBox<>(FXCollections.observableArrayList(/* here we can maybe add all objects idk */));
+                comboBox.getItems().addAll(allClasses);
+                comboBox.getItems().add(Constants.CapAssignments.NO_ASSIGNMENT);
+                comboBox.setPrefWidth(100);
+
+                gridPane.addRow(i + 1, well, comboBox, spinner, maxCount);
+            }
+            else {
+                int count = command.getAllDetectionsCount();
+                spinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, count, 0));
+                maxCount.setText("/ " + count);
+                gridPane.addRow(i + 1, well, spinner, maxCount);
+            }
         }
 
         return gridPane;
     }
 
-    public List<Map<String, Object>> getWellData(GridPane gridPane) {
+    public List<Map<String, Object>> getWellData(GridPane gridPane, boolean isClassification) {
         List<Map<String, Object>> wellDataList = new ArrayList<>();
-        for (int i = 1; i <= numWells.get(); i++) {  // Start from row 1 (header skipped)
+        for (int i = 1; i <= numWells.get(); i++) {
             int columnsCount = gridPane.getColumnCount();
-            Label wellLabel = (Label) gridPane.getChildren().get(i * columnsCount - 1); // index is row*columns
-            ComboBox<String> classComboBox = (ComboBox<String>) gridPane.getChildren().get(i * columnsCount);
-            Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount + 1);
-
             Map<String, Object> wellData = new HashMap<>();
+
+            Label wellLabel = (Label) gridPane.getChildren().get(i * columnsCount - 1); // index is row*columns
             wellData.put(WELL_LABEL, wellLabel.getText());
-            wellData.put(OBJECT_CLASS_TYPE, classComboBox.getValue());
-            wellData.put(OBJECT_QTY, spinner.getValue());
+
+            if (isClassification){
+                ComboBox<String> classComboBox = (ComboBox<String>) gridPane.getChildren().get(i * columnsCount);
+                wellData.put(OBJECT_CLASS_TYPE, classComboBox.getValue());
+
+                Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount + 1);
+                wellData.put(OBJECT_QTY, spinner.getValue());
+            }
+            else{
+                Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount);
+                wellData.put(OBJECT_QTY, spinner.getValue());
+            }
+
             wellDataList.add(wellData);
         }
         return wellDataList;
@@ -279,6 +214,51 @@ public class StandardCollectorsPane extends VBox {
                 }
             });
         }
+    }
+
+    private boolean isWellDataValid(GridPane gridPane, boolean isClassification){
+        Map<String, Integer> referenceClassesCounts = command.getAllClassesCounts();
+        Map<String, Integer> actualClassesCounts = new HashMap<>();
+        int referenceAllDetectionsCounts = command.getAllDetectionsCount();
+        int actualAllDetectionsCounts = 0;
+
+        for (int i = 1; i <= numWells.get(); i++) {
+            int columnsCount = gridPane.getColumnCount();
+            if (isClassification){
+                ComboBox<String> classComboBox = (ComboBox<String>) gridPane.getChildren().get(i * columnsCount);
+                Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount + 1);
+
+                String selectedClass = classComboBox.getValue();
+                if (selectedClass == null)
+                    continue;
+                int objectCount = spinner.getValue();
+                // Add or update the count for the selected class in the actualClassesCounts map
+                actualClassesCounts.merge(selectedClass, objectCount, Integer::sum);
+
+                command.getLogger().debug("REF: {}", referenceClassesCounts.get(selectedClass));
+                command.getLogger().debug("ACTUAL: {}", actualClassesCounts.get(selectedClass));
+            }
+            else{
+                Spinner<Integer> spinner = (Spinner<Integer>) gridPane.getChildren().get(i * columnsCount);
+                int objectCount = spinner.getValue();
+                actualAllDetectionsCounts += objectCount;
+            }
+        }
+
+        if (isClassification){
+            boolean areCountsEqual = referenceClassesCounts.equals(actualClassesCounts);
+            if (!areCountsEqual) {
+                Dialogs.showErrorMessage("Invalid Data", "The number of detections of each class can't exceed the total number of processed detections of this class.");
+                return false;
+            }
+        }
+        else{
+            if (referenceAllDetectionsCounts != actualAllDetectionsCounts) {
+                Dialogs.showErrorMessage("Invalid Data", "The assigned number of detections can't exceed the total number of processed detections.");
+                return false;
+            }
+        }
+        return true;
     }
 }
 

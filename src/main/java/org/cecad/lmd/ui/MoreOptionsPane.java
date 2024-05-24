@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.util.StringConverter;
 import org.cecad.lmd.commands.MoreOptionsCommand;
 import static org.cecad.lmd.common.Constants.EnlargeOptions.*;
 
@@ -24,12 +25,11 @@ public class MoreOptionsPane extends GridPane {
         Label enlargeSectionLabel = new Label("Expand selected detections:");
 
         Label radiusLabel = new Label("Expansion radius:");
-        radiusLabel.setPrefWidth(120);
         Spinner<Integer> radiusSpinner = new Spinner<>(0, 100, 1);
         radiusSpinner.setPrefWidth(70);
 
         HBox radiusBox = new HBox();
-        radiusBox.setSpacing(1);
+        radiusBox.setSpacing(10);
         radiusBox.getChildren().addAll(radiusLabel, radiusSpinner);
 
         Label convertLabel = new Label("Convert selected objects:");
@@ -67,8 +67,23 @@ public class MoreOptionsPane extends GridPane {
 
         undoButton.setOnAction(actionEvent -> command.undoEnlargement());
 
-        detToAnnButton.setOnAction(actionEvent -> command.convertObjects(command.getQupath().getImageData(),false));
-        annToDetButton.setOnAction(actionEvent -> command.convertObjects(command.getQupath().getImageData(),true));
+        detToAnnButton.setOnAction(actionEvent -> command.convertSelectedObjects(command.getQupath().getImageData().getHierarchy(),false));
+        annToDetButton.setOnAction(actionEvent -> command.convertSelectedObjects(command.getQupath().getImageData().getHierarchy(),true));
+
+        Label simplifyLabel = new Label("Simplify detections shapes:");
+
+        HBox altitudeBox = new HBox();
+        Label altitudeLabel = new Label("Altitude threshold (px):");
+        Spinner<Double> altitudeSpinner = new Spinner<>(1.0, 10.0, 1.0, 0.1);
+        altitudeSpinner.setPrefWidth(70);
+        setDecimalFormattingForSpinner(altitudeSpinner);
+        altitudeBox.setSpacing(10);
+        altitudeBox.getChildren().addAll(altitudeLabel, altitudeSpinner);
+        Label altitudeDescriptionLabel = new Label("Higher values result in simpler shapes");
+        Button simplifyButton = new Button("Simplify shapes");
+        simplifyButton.setOnAction(actionEvent -> command.simplifySelectedDetections(command.getQupath().getImageData().getHierarchy(), altitudeSpinner.getValue()));
+
+        simplifyButton.setPrefWidth(270);
 
 
 
@@ -87,9 +102,55 @@ public class MoreOptionsPane extends GridPane {
         GridPane.setConstraints(detToAnnButton, 0, 8);
         GridPane.setConstraints(annToDetButton, 0, 9);
 
+        GridPane.setConstraints(simplifyLabel, 0, 10);
+        GridPane.setConstraints(altitudeBox, 0, 11);
+        GridPane.setConstraints(altitudeDescriptionLabel, 0, 12);
+        GridPane.setConstraints(simplifyButton, 0, 13);
+
         getChildren().addAll(enlargeSectionLabel, radiusBox, sameClassLabel, sameClassComboBox, differentClassLabel, differentClassComboBox,
                 enlargeButtonsBox,
-                convertLabel, detToAnnButton, annToDetButton);
+                convertLabel, detToAnnButton, annToDetButton,
+                simplifyLabel, altitudeBox, altitudeDescriptionLabel, simplifyButton);
 
+    }
+
+    private void setDecimalFormattingForSpinner(Spinner<Double> spinner) {
+        SpinnerValueFactory.DoubleSpinnerValueFactory valueFactory = new SpinnerValueFactory.DoubleSpinnerValueFactory(1.0, 10.0, 1.0, 0.1);
+        spinner.setValueFactory(valueFactory);
+
+        StringConverter<Double> converter = new StringConverter<>() {
+            @Override
+            public String toString(Double value) {
+                if (value == null) return "";
+                return String.format("%.1f", value);  // No rounding needed here
+            }
+
+            @Override
+            public Double fromString(String string) {
+                try {
+                    return Double.parseDouble(string);
+                } catch (NumberFormatException e) {
+                    return spinner.getValueFactory().getValue(); // Use the current value from the factory on error
+                }
+            }
+        };
+        valueFactory.setConverter(converter); // Set the converter on the value factory
+
+        TextFormatter<Double> formatter = new TextFormatter<>(converter, valueFactory.getValue(), change -> {
+            String newText = change.getControlNewText();
+            if (newText.matches("([0-9]+\\.[0-9]*)?")) {
+                try {
+                    double newValue = Double.parseDouble(newText);
+                    if (newValue >= valueFactory.getMin() && newValue <= valueFactory.getMax()) {
+                        return change; // Valid value, allow the change
+                    }
+                } catch (NumberFormatException ignored) {
+                    // Ignore parsing errors
+                }
+            }
+            return null; // Invalid value, prevent the change
+        });
+
+        spinner.getEditor().setTextFormatter(formatter);
     }
 }

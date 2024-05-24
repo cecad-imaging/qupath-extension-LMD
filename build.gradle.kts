@@ -1,5 +1,5 @@
 group = "org.cecad.lmd"
-version = "0.5.0-2"
+version = "0.5.0-3"
 
 plugins {
     id("java")
@@ -30,6 +30,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.1")
     implementation("org.slf4j:slf4j-api:1.7.9")
     implementation("org.slf4j:slf4j-log4j12:2.0.7")
+    implementation("org.controlsfx:controlsfx:11.1.2")
 }
 
 tasks.test {

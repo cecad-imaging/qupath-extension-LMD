@@ -4,6 +4,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.cecad.lmd.common.ClassUtils;
+import org.cecad.lmd.common.ObjectUtils;
 import org.cecad.lmd.ui.ControlsInterface;
 import org.cecad.lmd.ui.StandardCollectorsPane;
 import org.slf4j.Logger;
@@ -37,16 +38,11 @@ public class StandardCollectorsCommand implements Runnable {
     public void closeStage(){
         if (stage.isShowing())
             stage.close();
-        stage = null;
     }
 
     public void hideStage() {
         stage.hide();
     }
-
-//    public void revokeStage(){
-//        showStage();
-//    }
 
     public int getNumWells() {
         return numWells;
@@ -58,6 +54,10 @@ public class StandardCollectorsCommand implements Runnable {
 
     public List<String> getAllClassesNames(){
         return new ArrayList<>(mainPane.getAllClasses().stream().map(PathClass::getName).toList());
+    }
+
+    public int getAllDetectionsCount(){
+        return ObjectUtils.filterOutAnnotations(mainPane.getDetectionsToExport()).size();
     }
 
     public Map<String, Integer> getAllClassesCounts(){

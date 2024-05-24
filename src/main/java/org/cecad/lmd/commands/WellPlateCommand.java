@@ -4,6 +4,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.cecad.lmd.common.ClassUtils;
+import org.cecad.lmd.common.ObjectUtils;
 import org.cecad.lmd.ui.ControlsInterface;
 import org.cecad.lmd.ui.WellPlatePane;
 import org.slf4j.Logger;
@@ -75,6 +76,10 @@ public class WellPlateCommand implements Runnable {
 
     public Map<String, Integer> getAllClassesCounts(){
         return ClassUtils.countObjectsOfAllClasses(mainPane.getDetectionsToExport());
+    }
+
+    public int getAllDetectionsCount(){
+        return ObjectUtils.filterOutAnnotations(mainPane.getDetectionsToExport()).size();
     }
 
     public Logger getLogger(){

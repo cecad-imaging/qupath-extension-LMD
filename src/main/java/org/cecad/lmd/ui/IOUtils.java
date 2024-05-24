@@ -1,6 +1,5 @@
 package org.cecad.lmd.ui;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 
@@ -11,12 +10,10 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.cecad.lmd.common.Constants.ObjectTypes.ANNOTATION;
 import static org.cecad.lmd.common.Constants.WellDataFileNames.*;
 import static org.cecad.lmd.common.Constants.CollectorTypes.*;
 

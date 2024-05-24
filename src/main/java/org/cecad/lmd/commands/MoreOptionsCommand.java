@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.tools.GuiTools;
-import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.PixelCalibration;
+import qupath.lib.objects.PathDetectionObject;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
 import qupath.lib.objects.classes.PathClass;
@@ -24,11 +24,12 @@ import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 import qupath.lib.plugins.parameters.ParameterList;
 import qupath.lib.regions.ImagePlane;
 import qupath.lib.roi.GeometryTools;
+import qupath.lib.roi.PolygonROI;
+import qupath.lib.roi.ShapeSimplifier;
 import qupath.lib.roi.interfaces.ROI;
 
 import static org.cecad.lmd.common.Constants.EnlargeOptions.*;
 
-import java.awt.image.BufferedImage;
 import java.util.*;
 
 public class MoreOptionsCommand implements Runnable {
@@ -359,8 +360,7 @@ public class MoreOptionsCommand implements Runnable {
         return priorityRankingParams;
     }
 
-    public void convertObjects(ImageData<BufferedImage> imageData, boolean toDetections){
-        PathObjectHierarchy hierarchy = imageData.getHierarchy();
+    public void convertSelectedObjects(PathObjectHierarchy hierarchy, boolean toDetections){
         if (hierarchy.getSelectionModel().noSelection()){
             Dialogs.showWarningNotification("Selection Required", "Please select objects to convert.");
             return;
@@ -396,6 +396,24 @@ public class MoreOptionsCommand implements Runnable {
         hierarchy.getSelectionModel().clearSelection();
         hierarchy.removeObjects(onlyAreasObjects, true);
         hierarchy.addObjects(convertedObjects);
+    }
+
+    public void simplifySelectedDetections(PathObjectHierarchy hierarchy, Double altitudeThreshold){
+        if (hierarchy.getSelectionModel().noSelection()){
+            Dialogs.showWarningNotification("Selection Required", "Please select detections to simplify.");
+            return;
+        }
+        Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
+        for (PathObject object : objects){
+            ROI pathROI = object.getROI();
+            if (pathROI instanceof PolygonROI polygonROI) {
+                pathROI = ShapeSimplifier.simplifyPolygon(polygonROI, altitudeThreshold);
+            } else {
+                pathROI = ShapeSimplifier.simplifyShape(pathROI, altitudeThreshold);
+            }
+            ((PathDetectionObject)object).setROI(pathROI);
+        }
+        hierarchy.fireObjectsChangedEvent(hierarchy, objects);
     }
 
     public QuPathGUI getQupath(){
