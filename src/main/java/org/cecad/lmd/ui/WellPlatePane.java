@@ -76,7 +76,7 @@ public class WellPlatePane extends VBox {
         if (isClassification)
             addWellBox.setSpacing(125);
         else
-            addWellBox.setSpacing(80);
+            addWellBox.setSpacing(92);
         addWellBox.getChildren().addAll(new Label(""), addWellButton);
 
         HBox controlsButtonsBox = new HBox();
@@ -84,7 +84,7 @@ public class WellPlatePane extends VBox {
 
         int BUTTON_WIDTH = 140;
         if (!isClassification)
-            BUTTON_WIDTH = 90;
+            BUTTON_WIDTH = 105;
         int BUTTON_HEIGHT = 25;
 
         Button cancelButton = new Button("Cancel");

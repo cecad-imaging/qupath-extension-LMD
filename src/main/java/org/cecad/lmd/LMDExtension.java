@@ -34,7 +34,7 @@ public class LMDExtension implements QuPathExtension {
     }
 
     @ActionMenu("Extensions")
-    public static class LMDSupportCommands{
+    public static class LMDSupportCommands {
 
         public final Action actionLMDSupportCommand;
         private LMDSupportCommands(QuPathGUI qupath) {
@@ -44,75 +44,4 @@ public class LMDExtension implements QuPathExtension {
             });
         }
     }
-
-//    @ActionMenu("Extensions>LMD Support")
-//    public static class LMDActions {
-//        @ActionMenu("Utilities>Convert Selected Objects>")
-//        @ActionConfig(bundle = "strings", value = "Action.convert.toDetections")
-//        public final Action convertToDetections;
-//        @ActionMenu("Utilities>Convert Selected Objects>")
-//        @ActionConfig(bundle = "strings", value = "Action.convert.toAnnotations")
-//        public final Action convertToAnnotations;
-//        @ActionMenu("Utilities>Create Image Copy>")
-//        @ActionConfig(bundle = "strings", value = "Action.mirrorX")
-//        public final Action mirrorImageX;
-//        @ActionMenu("Utilities>Create Image Copy>")
-//        @ActionConfig(bundle = "strings", value = "Action.mirrorY")
-//        public final Action mirrorImageY;
-//        @ActionMenu("Utilities>")
-//        @ActionConfig(bundle = "strings", value = "Action.expand")
-//        public final Action expandObjects;
-//        @ActionConfig(bundle = "strings", value = "Action.export")
-//        public final Action export;
-//
-////        private LMDActions(QuPathGUI qupath) {
-////
-////            // Converting
-////            // TODO: Add a way to undo converting
-////            convertToDetections = qupath.createImageDataAction(imageData -> {
-////                ConvertObjectsCommand.convertObjects(imageData, true);
-////            });
-////
-////            convertToAnnotations = qupath.createImageDataAction(imageData -> {
-////                ConvertObjectsCommand.convertObjects(imageData, false);
-////            });
-////
-////            // Mirroring
-////            mirrorImageX = qupath.createImageDataAction(imageData -> {
-////                try {
-////                    MirrorImageCommand.mirrorImage(qupath, true, false);
-////                } catch (IOException e) {
-////                    logger.error("Mirroring failed: " + e.getMessage());
-////                }
-////            });
-////
-////            mirrorImageY = qupath.createImageDataAction(imageData -> {
-////                try {
-////                    MirrorImageCommand.mirrorImage(qupath, false, true);
-////                } catch (IOException e) {
-////                    logger.error("Mirroring failed: " + e.getMessage());
-////                }
-////            });
-////
-////            // Expanding
-////            // TODO: Add a way to undo expanding
-////            expandObjects = qupath.createImageDataAction(imageData -> {
-////                ExpandDetectionsCommand expanding = new ExpandDetectionsCommand(imageData);
-////                // TODO: Display progress bar in case there is a lot of detections to process
-////                Thread expandingObjectThread = new Thread(expanding);
-////                expandingObjectThread.start();
-////            });
-////
-////            // Exporting
-////            export = qupath.createImageDataAction(imageData -> {
-////                try {
-////                    ExportCommand.runExport(qupath.getProject().getPath(), imageData);
-////                } catch (IOException e) {
-////                    logger.error("Export failed: " + e.getMessage());
-////                }
-////            });
-////
-////        }
-//    }
-
 }

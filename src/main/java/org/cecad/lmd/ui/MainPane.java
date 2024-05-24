@@ -15,7 +15,6 @@ import org.cecad.lmd.common.Constants;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;

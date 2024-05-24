@@ -1,7 +1,5 @@
 package org.cecad.lmd.ui;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
@@ -16,10 +14,6 @@ import org.cecad.lmd.commands.StandardCollectorsCommand;
 import org.cecad.lmd.common.Constants;
 import qupath.fx.dialogs.Dialogs;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
 import java.util.*;
 
 import static org.cecad.lmd.common.Constants.CollectorTypes.*;
@@ -52,9 +46,9 @@ public class StandardCollectorsPane extends VBox {
         HBox controlsButtonsBox = new HBox();
         controlsButtonsBox.setSpacing(10);
         Button cancelButton = new Button("Cancel");
-        int BUTTON_WIDTH = 152;
+        int BUTTON_WIDTH = 150;
         if (!isClassification)
-            BUTTON_WIDTH = 82;
+            BUTTON_WIDTH = 93;
         int BUTTON_HEIGHT = 25;
         cancelButton.setPrefSize(BUTTON_WIDTH, BUTTON_HEIGHT);
         Button doneButton = new Button("Save");
