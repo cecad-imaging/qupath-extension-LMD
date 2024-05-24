@@ -7,6 +7,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.cecad.lmd.commands.WellPlateCommand;
+import qupath.fx.dialogs.Dialogs;
 
 import java.util.*;
 
@@ -126,10 +127,42 @@ public class WellPlatePane extends VBox {
     }
 
     private boolean isWellDataValid(){
-        for (int i = 0; i < getChildren().size(); i++) {
-            if (getChildren().get(i) instanceof WellPlateSubPane subPane) {
-                if (!subPane.isSubPaneDataValid())
-                    return false;
+        boolean isClassification = !allClasses.isEmpty();
+
+        if (isClassification) {
+            Map<String, Integer> actualClassesCounts = new HashMap<>();
+
+            for (int i = 0; i < getChildren().size(); i++) {
+
+                if (getChildren().get(i) instanceof WellPlateSubPane subPane) {
+                    if (!subPane.isSubPaneDataValid(true))
+                        return false;
+
+                    Map<String, Integer> subPaneCounts = subPane.getObjectsForClassCount();
+                    for (Map.Entry<String, Integer> entry : subPaneCounts.entrySet()) {
+                        actualClassesCounts.merge(entry.getKey(), entry.getValue(), Integer::sum);
+                    }
+                }
+
+            }
+            boolean areCountsEqual = classesCounts.equals(actualClassesCounts);
+            if (!areCountsEqual) {
+                Dialogs.showErrorMessage("Invalid Data", "The number of detections of each class can't exceed the total number of processed detections of this class.");
+                return false;
+            }
+        }
+        else {
+            int referenceAllDetectionsCount = command.getAllDetectionsCount();
+            int actualAllDetectionsCount = 0;
+
+            for (int i = 0; i < getChildren().size(); i++) {
+                if (getChildren().get(i) instanceof WellPlateSubPane subPane) {
+                    actualAllDetectionsCount += subPane.getBasicCount();
+                }
+            }
+            if (referenceAllDetectionsCount != actualAllDetectionsCount){
+                Dialogs.showErrorMessage("Invalid Data", "The assigned number of detections can't exceed the total number of processed detections.");
+                return false;
             }
         }
         return true;
