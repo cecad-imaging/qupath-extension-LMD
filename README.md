@@ -10,17 +10,13 @@ window as described [here](https://qupath.readthedocs.io/en/0.4/docs/intro/exten
 
 ### Workflow overview
 1. Acquire an image of your slide.
-2. Segment cells in QuPath. 
-3. Expand segmentations if needed.
-4. Add calibration points to your image.
-5. Export the objects, optionally choose a collector 
-and assign object classifications to its caps.
-6. Import the XML into Leica's software.
-
-### Examples
-
-- [Basic example with LMD slide](./examples/Example_Basic.md)
-- [Example with fluorescent probe on LMD plate](./examples/Example_Hela_PKmO.md)
+2. Add calibration points to your image in QuPath.
+3. Segment cells or perform other processing in QuPath. 
+4. Expand segmentations (make them artificially bigger so that the laser won't cut through the cell itself).
+5. Choose a collector, assign objects to the collector's wells labels.
+6. Export segmented cells (as detection objects in QuPath).
+7. Import the XML into Leica's software.
+8. Perform further processing in the LMD.
 
 ### Usage Details
  - **Calibration Points**: In order to add calibration points, create 3 separate 
@@ -31,47 +27,64 @@ software viewer. The easiest way to do this is to put them around default locati
 to which the stage moves for each point during calibration process.
 These locations are: top left area for the first one, top right for the second 
 and bottom right for the third one. Note that these are corners of the slide as seen 
-in the microscope's viewer when the slide is flipped and ready for the regions to be cut out.
+in the microscope's viewer when the slide is flipped and ready for the regions to be cut out, 
+whether they match your view of the slide in QuPath depends on your scan.
 
 
 - **Detections Expanding**: You will most likely need to expand your segmentations 
 having the laser's aperture in mind. To do so, select objects to expand 
-(Ctrl+Alt+D for all detections) and head to 'Utilities/Expand Selected Detections'.
-Set the radius and the desired behaviour when two objects intersect. 
-If they have different class, you can either 
-exclude these objects or set an order of priority for 
-objects of diffferent classes. An object with higher priority will be preserved.
-Setting a priority is probably almost always a desired choice.
-Objects of the same class can be either merged or one of them can be deleted. 
-The assumpton on the second option is that if the objects are of same class, 
-it means they are equally important, and we don't discriminate further between them,
-removing a random one. Which option to choose dependes on your particular case.
-Note that the expanding won't 
-process annotations and the new, enlarged objects will be generic detections 
-regardless of their previous type. The processing may take some time in case 
-of many objects (>5000). The smaller the number of
-processed objects at once, the better. 
+(Ctrl+Alt+D for all detections) and head to 'More Options' in LMD Support window, then:
+
+    Set the radius and the desired behaviour when two objects intersect. 
+    
+    If the intersecting object belong to different classes, 
+    you can either 
+    exclude these objects or set an order of priority for 
+    objects of different classes. An object with higher priority will be preserved.
+    Setting a priority is probably almost always a desired choice.
+
+    Objects of the same class can be either merged or one of them can be removed. 
+    In case of the latter option - the object to be removed is chosen randomly. 
+    Generally merging 
+    may result in less accurate distinction between the classes, 
+    so the second option is the recommended one.
+    Note that the expanding won't 
+    process annotations and the new, enlarged objects will be generic detections 
+    regardless of their previous type. The processing may take some time in case 
+    of many objects (>5000). The smaller the number of
+    processed objects at once, the better. 
 
 
 - **Exporting**: Each object which is not an 'annotation' will be counted
 as shape to be cut out by the LMD and exported to the output XML, the calibration 
-points are always included in the export. You can assign objects of different 
-classifications to a specific collector's cap at this point. Choose a desired 
-collector and upon confirmation, you'll be prompted to assign the classes.
+points are always included in the export.
 
 
-- **Mirroring**: This aims to help in case the views of your slide in QuPath and LMD
-software do not match, for example due to flipping slide when 
-putting it onto microscope's slide holder to cut the ROIs out. 
-It creates a copy of the image and its content mirrored either horizontally or 
-vertically.
+
+- **Shapes simplification**: The shapes of the detections can be 
+simplified in order to optimize the laser cutting. 
 
 
-- **Converting**: Since only detections processing is supported, the utility for 
-converting in-between annotations and detections (which enclose an area) is provided. 
-This preserves only the features, which matter in the context of LMD, i.e. object's 
-ROI, its class and potential name, and won't account e.g. for parent/child relations 
-(similarly to expanding).
+- **96-Well Plate**: Objects assignment process for 96-Well Plate differs from 
+other collector options. Since the number of labels is way bigger, 
+instead of assigning objects to the particular well, it is possible to assign them
+to a number of wells, and the objects will be distributed across the specified 
+number of wells randomly. Additional file containing assignment details is 
+generated in the same location that the main XML output.
+Note that each well within the single assignment will 
+contain the same number of objects, thus the specified number 
+of the objects should be divisible by the number of wells.
+
+### Examples
+
+- [Basic example with LMD slide](./examples/Example_Basic.md)
+- [Example with fluorescent probe on LMD plate](./examples/Example_Hela_PKmO.md)
+
+NOTE:
+As for now the examples are outdated and present older version
+of the extension. In case of any doubts regarding the workflow though, they
+still can provide a valuable insight.
+
 
 
 
