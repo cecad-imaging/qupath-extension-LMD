@@ -36,7 +36,7 @@ import static qupath.lib.scripting.QP.exportObjectsToGeoJson;
 public class MainCommand implements Runnable {
 
     private final static Logger logger = LoggerFactory.getLogger(MainCommand.class);
-    private final String TITLE = "LMD Support";
+    private final String TITLE = "QuCut";
     private final String SELECTED = Constants.Detections.SELECTED;
     private final String ALL = Constants.Detections.ALL;
     private Stage stage;

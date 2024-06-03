@@ -25,7 +25,7 @@ public class QuCutExtension implements QuPathExtension {
 
     @Override
     public String getDescription() {
-        return "Leica LMD Support for QuPath";
+        return "Leica LMD support for QuPath";
     }
 
     @Override

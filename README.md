@@ -31,6 +31,11 @@ in the microscope's viewer when the slide is flipped and ready for the regions t
 whether they match your view of the slide in QuPath depends on your scan.
 
 
+- **Laser aperture visualization**: It is possible to visualize the laser cutting area
+  by setting the shapes boundaries thickness to be equal the laser's selected aperture
+  in the Leica's LMD software.
+
+
 - **Detections Expanding**: You will most likely need to expand your segmentations 
 having the laser's aperture in mind. To do so, select objects to expand 
 (Ctrl+Alt+D for all detections) and head to 'More Options' in LMD Support window, then:
@@ -52,18 +57,12 @@ having the laser's aperture in mind. To do so, select objects to expand
     process annotations and the new, enlarged objects will be generic detections 
     regardless of their previous type. The processing may take some time in case 
     of many objects (>5000). The smaller the number of
-    processed objects at once, the better. 
-
-
-- **Laser aperture visualization**: It is possible to visualize the laser cutting area 
-by setting the shapes boundaries thickness to be equal the laser's selected aperture 
-in the Leica's LMD software.
+    processed objects at once, the better.
 
 
 - **Exporting**: Each object which is not an 'annotation' will be counted
 as shape to be cut out by the LMD and exported to the output XML, the calibration 
 points are always included in the export.
-
 
 
 - **Shapes simplification**: The shapes of the detections can be 
@@ -90,7 +89,7 @@ As for now the examples are outdated and present older version
 of the extension. In case of any doubts regarding the workflow though, they
 still can provide a valuable insight.
 
-If you have further questions or want to report 
+For further questions or reporting 
 a problem, please [open an issue](https://github.com/cecad-imaging/qupath-extension-LMD/issues).
 
 
