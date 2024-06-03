@@ -20,12 +20,12 @@ public class QuCutExtension implements QuPathExtension {
 
     @Override
     public String getName() {
-        return "LMD Support for QuPath";
+        return "QuCut";
     }
 
     @Override
     public String getDescription() {
-        return "Export QuPath ROIs to an XML file readable by Leica's LMD7 software";
+        return "Leica LMD Support for QuPath";
     }
 
     @Override
@@ -38,7 +38,7 @@ public class QuCutExtension implements QuPathExtension {
 
         public final Action actionLMDSupportCommand;
         private LMDSupportCommands(QuPathGUI qupath) {
-            actionLMDSupportCommand = new Action("Leica LMD Support for QuPath", event -> {
+            actionLMDSupportCommand = new Action("QuCut", event -> {
                 MainCommand lmdsCommand = new MainCommand(qupath);
                 lmdsCommand.run();
             });
