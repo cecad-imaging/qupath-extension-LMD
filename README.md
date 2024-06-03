@@ -1,4 +1,4 @@
-## LMD Support for QuPath
+## QuCut - Leica LMD support extension for QuPath
 This extension aims to provide an open-source solution for automating 
 the segmentation process within Leica's laser microdissection software. It exports 
 detections from [QuPath](https://qupath.github.io/) to an XML file, which can be imported into 
@@ -55,6 +55,11 @@ having the laser's aperture in mind. To do so, select objects to expand
     processed objects at once, the better. 
 
 
+- **Laser aperture visualization**: It is possible to visualize the laser cutting area 
+by setting the shapes boundaries thickness to be equal the laser's selected aperture 
+in the Leica's LMD software.
+
+
 - **Exporting**: Each object which is not an 'annotation' will be counted
 as shape to be cut out by the LMD and exported to the output XML, the calibration 
 points are always included in the export.
@@ -84,6 +89,9 @@ NOTE:
 As for now the examples are outdated and present older version
 of the extension. In case of any doubts regarding the workflow though, they
 still can provide a valuable insight.
+
+If you have further questions or want to report 
+a problem, please [open an issue](https://github.com/cecad-imaging/qupath-extension-LMD/issues).
 
 
 

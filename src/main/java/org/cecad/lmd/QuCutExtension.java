@@ -10,8 +10,8 @@ import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.extensions.QuPathExtension;
 
-public class LMDExtension implements QuPathExtension {
-    private static final Logger logger = LoggerFactory.getLogger(LMDExtension.class);
+public class QuCutExtension implements QuPathExtension {
+    private static final Logger logger = LoggerFactory.getLogger(QuCutExtension.class);
 
     @Override
     public void installExtension(QuPathGUI qupath) {
