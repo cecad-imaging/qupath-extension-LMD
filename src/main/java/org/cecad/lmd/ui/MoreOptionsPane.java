@@ -7,6 +7,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.util.StringConverter;
 import org.cecad.lmd.commands.MoreOptionsCommand;
+
+import java.io.IOException;
+
 import static org.cecad.lmd.common.Constants.EnlargeOptions.*;
 
 
@@ -70,7 +73,7 @@ public class MoreOptionsPane extends GridPane {
         detToAnnButton.setOnAction(actionEvent -> command.convertSelectedObjects(command.getQupath().getImageData().getHierarchy(),false));
         annToDetButton.setOnAction(actionEvent -> command.convertSelectedObjects(command.getQupath().getImageData().getHierarchy(),true));
 
-        Label simplifyLabel = new Label("Simplify detections shapes:");
+        Label simplifyLabel = new Label("Simplify selected detections shapes:");
 
         HBox altitudeBox = new HBox();
         Label altitudeLabel = new Label("Altitude threshold (px):");
@@ -80,10 +83,31 @@ public class MoreOptionsPane extends GridPane {
         altitudeBox.setSpacing(10);
         altitudeBox.getChildren().addAll(altitudeLabel, altitudeSpinner);
         Label altitudeDescriptionLabel = new Label("Higher values result in simpler shapes");
+
         Button simplifyButton = new Button("Simplify shapes");
         simplifyButton.setOnAction(actionEvent -> command.simplifySelectedDetections(command.getQupath().getImageData().getHierarchy(), altitudeSpinner.getValue()));
-
         simplifyButton.setPrefWidth(270);
+
+        Label detectionsBordersLabel = new Label("Visualize the laser's aperture:");
+
+        HBox laserApertureBox = new HBox();
+        Label laserApertureLabel = new Label("Laser's aperture (microns):");
+        Spinner<Double> laserApertureSpinner = new Spinner<>(1.0, 50.0, 1.0, 0.1);
+        laserApertureSpinner.setPrefWidth(70);
+        setDecimalFormattingForSpinner(laserApertureSpinner);
+        laserApertureBox.setSpacing(10);
+        laserApertureBox.getChildren().addAll(laserApertureLabel, laserApertureSpinner);
+
+        Button repaintBordersButton = new Button("Visualize");
+        repaintBordersButton.setOnAction(actionEvent -> {
+            try {
+                command.repaintDetectionsBordersToMatchLaser(laserApertureSpinner.getValue());
+            } catch (IOException e) {
+                command.getLogger().error("Error while modifying shapes: {}", e.getMessage());
+            }
+        });
+        repaintBordersButton.setPrefWidth(270);
+
 
 
 
@@ -98,17 +122,22 @@ public class MoreOptionsPane extends GridPane {
 
         GridPane.setConstraints(enlargeButtonsBox, 0, 6);
 
-        GridPane.setConstraints(convertLabel, 0, 7);
-        GridPane.setConstraints(detToAnnButton, 0, 8);
-        GridPane.setConstraints(annToDetButton, 0, 9);
+        GridPane.setConstraints(detectionsBordersLabel, 0, 7);
+        GridPane.setConstraints(laserApertureBox, 0, 8);
+        GridPane.setConstraints(repaintBordersButton, 0, 9);
 
-        GridPane.setConstraints(simplifyLabel, 0, 10);
-        GridPane.setConstraints(altitudeBox, 0, 11);
-        GridPane.setConstraints(altitudeDescriptionLabel, 0, 12);
-        GridPane.setConstraints(simplifyButton, 0, 13);
+        GridPane.setConstraints(convertLabel, 0, 10);
+        GridPane.setConstraints(detToAnnButton, 0, 11);
+        GridPane.setConstraints(annToDetButton, 0, 12);
+
+        GridPane.setConstraints(simplifyLabel, 0, 13);
+        GridPane.setConstraints(altitudeBox, 0, 14);
+        GridPane.setConstraints(altitudeDescriptionLabel, 0, 15);
+        GridPane.setConstraints(simplifyButton, 0, 16);
 
         getChildren().addAll(enlargeSectionLabel, radiusBox, sameClassLabel, sameClassComboBox, differentClassLabel, differentClassComboBox,
                 enlargeButtonsBox,
+                detectionsBordersLabel, laserApertureBox, repaintBordersButton,
                 convertLabel, detToAnnButton, annToDetButton,
                 simplifyLabel, altitudeBox, altitudeDescriptionLabel, simplifyButton);
 

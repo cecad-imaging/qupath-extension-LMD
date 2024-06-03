@@ -15,12 +15,15 @@ import org.slf4j.LoggerFactory;
 import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.tools.GuiTools;
+import qupath.lib.gui.viewer.OverlayOptions;
+import qupath.lib.images.servers.ImageServer;
 import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.objects.PathDetectionObject;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
 import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
+import qupath.lib.objects.hierarchy.events.PathObjectSelectionModel;
 import qupath.lib.plugins.parameters.ParameterList;
 import qupath.lib.regions.ImagePlane;
 import qupath.lib.roi.GeometryTools;
@@ -30,7 +33,10 @@ import qupath.lib.roi.interfaces.ROI;
 
 import static org.cecad.lmd.common.Constants.EnlargeOptions.*;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class MoreOptionsCommand implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(SetCollectorCommand.class);
@@ -416,8 +422,30 @@ public class MoreOptionsCommand implements Runnable {
         hierarchy.fireObjectsChangedEvent(hierarchy, objects);
     }
 
+    // TODO: Set the objects added after expanding to be selected
+
+    public void repaintDetectionsBordersToMatchLaser(double customStrokeMicrons) throws IOException {
+        PathObjectSelectionModel selectionModel = this.qupath.getImageData().getHierarchy().getSelectionModel();
+        // Moving away from selected detections for now, modify all instead
+//        if (selectionModel.noSelection()){
+//            Dialogs.showWarningNotification("Selection Required", "Please select detections modify.");
+//            return;
+//        }
+//        Collection<PathObject> objects = selectionModel.getSelectedObjects();
+
+        Collection<PathObject> objects = this.qupath.getImageData().getHierarchy().getDetectionObjects();
+        ImageServer<BufferedImage> server = qupath.getViewer().getImageData().getServer();
+        OverlayOptions overlay = qupath.getOverlayOptions();
+        double downsample = qupath.getViewer().getDownsampleFactor();
+        ObjectUtils.repaintDetectionsWithCustomStroke(objects, customStrokeMicrons, server, overlay, selectionModel, downsample, logger);
+    }
+
     public QuPathGUI getQupath(){
         return qupath;
+    }
+
+    public Logger getLogger(){
+        return logger;
     }
 
 }

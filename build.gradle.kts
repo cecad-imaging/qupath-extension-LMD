@@ -1,5 +1,5 @@
 group = "org.cecad.lmd"
-version = "0.5.0-3"
+version = "0.5.1-4"
 
 plugins {
     id("java")
