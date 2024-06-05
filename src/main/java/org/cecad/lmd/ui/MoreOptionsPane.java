@@ -152,7 +152,7 @@ public class MoreOptionsPane extends GridPane {
     }
 
     private void setDecimalFormattingForSpinner(Spinner<Double> spinner) {
-        SpinnerValueFactory.DoubleSpinnerValueFactory valueFactory = new SpinnerValueFactory.DoubleSpinnerValueFactory(1.0, 10.0, 1.0, 0.1);
+        SpinnerValueFactory.DoubleSpinnerValueFactory valueFactory = (SpinnerValueFactory.DoubleSpinnerValueFactory) spinner.getValueFactory();
         spinner.setValueFactory(valueFactory);
 
         StringConverter<Double> converter = new StringConverter<>() {
