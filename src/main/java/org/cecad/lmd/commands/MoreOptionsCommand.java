@@ -86,7 +86,7 @@ public class MoreOptionsCommand implements Runnable {
     }
 
     public void makeSelectedDetectionsBigger(int radius, String sameClass, String diffClass){
-        if (!isSelection(hierarchy))
+        if (isNoSelection(hierarchy.getSelectionModel(), true))
             return;
 
         Collection<PathObject> selectedDetections = ObjectUtils.filterOutAnnotations(hierarchy.getSelectionModel().getSelectedObjects());
@@ -176,10 +176,10 @@ public class MoreOptionsCommand implements Runnable {
             long duration = endTime - startTime;
             double seconds = (double) duration / 1_000_000_000.0;
             Dialogs.showInfoNotification("Operation Successful", selectedDetectionsNumber + " objects processed in " + seconds + " seconds.\n"
-                    + objectsToAddToHierarchy.size() + " output objects.");
+                    + objectsToAddToHierarchy.size() + " remaining objects.");
         } catch (Throwable t){
             hierarchy.addObjects(selectedDetections);
-            logger.error("Error processing overlapping objects: " + t.getMessage());
+            logger.error("Error processing overlapping objects: {}", t.getMessage());
             Dialogs.showErrorNotification("Operation Failed", "Expanding objects failed. Please, try again.");
         }
     }
@@ -317,12 +317,16 @@ public class MoreOptionsCommand implements Runnable {
         return enhancedObjects;
     }
 
-    private boolean isSelection(PathObjectHierarchy hierarchy){
-        if (hierarchy.getSelectionModel().noSelection()) {
-            Dialogs.showErrorNotification("Selection Required", "Please select detection objects to perform this action.");
-            return false;
+    private boolean isNoSelection(PathObjectSelectionModel selectionModel, boolean modifyingDetections){
+        if (selectionModel.noSelection()) {
+            if (modifyingDetections)
+                Dialogs.showWarningNotification("Selection Required", "Please select detections to modify (Ctrl+Alt+D for all).");
+            else
+                Dialogs.showWarningNotification("Selection Required", "Please select annotations to modify.");
+
+            return true;
         }
-        return true;
+        return false;
     }
     private boolean wereSelectedObjectsDetections(Collection<PathObject> selected){
         if (selected.isEmpty()) {
@@ -367,10 +371,13 @@ public class MoreOptionsCommand implements Runnable {
     }
 
     public void convertSelectedObjects(PathObjectHierarchy hierarchy, boolean toDetections){
-        if (hierarchy.getSelectionModel().noSelection()){
-            Dialogs.showWarningNotification("Selection Required", "Please select objects to convert.");
+
+        if (!toDetections && isNoSelection(hierarchy.getSelectionModel(), true))
+            return;
+        else if (toDetections && isNoSelection(hierarchy.getSelectionModel(), false)) {
             return;
         }
+
         Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
         Collection<PathObject> onlyAreasObjects = new ArrayList<>(objects);
         Collection<PathObject> convertedObjects = new ArrayList<>();
@@ -405,10 +412,10 @@ public class MoreOptionsCommand implements Runnable {
     }
 
     public void simplifySelectedDetections(PathObjectHierarchy hierarchy, Double altitudeThreshold){
-        if (hierarchy.getSelectionModel().noSelection()){
-            Dialogs.showWarningNotification("Selection Required", "Please select detections to simplify.");
+
+        if (isNoSelection(hierarchy.getSelectionModel(), true))
             return;
-        }
+
         Collection<PathObject> objects = hierarchy.getSelectionModel().getSelectedObjects();
         for (PathObject object : objects){
             ROI pathROI = object.getROI();
@@ -422,22 +429,24 @@ public class MoreOptionsCommand implements Runnable {
         hierarchy.fireObjectsChangedEvent(hierarchy, objects);
     }
 
-    // TODO: Set the objects added after expanding to be selected
-
     public void repaintDetectionsBordersToMatchLaser(double customStrokeMicrons) throws IOException {
         PathObjectSelectionModel selectionModel = this.qupath.getImageData().getHierarchy().getSelectionModel();
-        // Moving away from selected detections for now, modify all instead
-//        if (selectionModel.noSelection()){
-//            Dialogs.showWarningNotification("Selection Required", "Please select detections modify.");
+
+//        if (isNoSelection(selectionModel, true)) // modify selected
 //            return;
-//        }
 //        Collection<PathObject> objects = selectionModel.getSelectedObjects();
 
-        Collection<PathObject> objects = this.qupath.getImageData().getHierarchy().getDetectionObjects();
+        /* We repaint all detections instead of selected because the way we set the new stroke thickness
+           combined with the use of PathObjectPainter.paintSpecifiedObjects triggers the change for all detections
+           regardless of what we pass as objects :/ for now it'll do tho */
+
+        Collection<PathObject> objects = this.qupath.getImageData().getHierarchy().getDetectionObjects(); // modify all
+
         ImageServer<BufferedImage> server = qupath.getViewer().getImageData().getServer();
         OverlayOptions overlay = qupath.getOverlayOptions();
         double downsample = qupath.getViewer().getDownsampleFactor();
-        ObjectUtils.repaintDetectionsWithCustomStroke(objects, customStrokeMicrons, server, overlay, selectionModel, downsample, logger);
+        ObjectUtils.repaintDetectionsWithCustomStroke(objects, customStrokeMicrons, server, overlay, selectionModel, downsample);
+        Dialogs.showInfoNotification("Action successful", objects.size() + " detections modified");
     }
 
     public QuPathGUI getQupath(){

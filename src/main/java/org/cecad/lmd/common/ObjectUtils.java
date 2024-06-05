@@ -164,52 +164,22 @@ public class ObjectUtils {
 //    }
 
     public static void repaintDetectionsWithCustomStroke(Collection<PathObject> objects,
-                                                                 double customStrokeValueMicrons,
-                                                                 ImageServer<BufferedImage> server,
-                                                                 OverlayOptions overlayOptions,
-                                                                 PathObjectSelectionModel selectionModel,
-                                                                 double downsample,
-                                                                 Logger logger) throws IOException {
+                                                         double customStrokeValueMicrons,
+                                                         ImageServer<BufferedImage> server,
+                                                         OverlayOptions overlayOptions,
+                                                         PathObjectSelectionModel selectionModel,
+                                                         double downsample) {
         PixelCalibration calibration = server.getPixelCalibration();
         double customStrokeValuePixels = micronsToPixels(customStrokeValueMicrons, calibration);
         PathPrefs.detectionStrokeThicknessProperty().setValue(customStrokeValuePixels);
 
-        for (PathObject object : objects){
-            // Since the shift away from selected we pass here only detections
-//            if (!object.isDetection()) {
-//                logger.info("Modifying annotation's stroke not allowed with this tool. Annotation skipped.");
-//                continue;
-//            }
+        BufferedImage compatibleImage = new BufferedImage(server.getWidth(), server.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = compatibleImage.createGraphics();
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            ROI roi = object.getROI();
+        PathObjectPainter.paintSpecifiedObjects(graphics, objects, overlayOptions, selectionModel, downsample);
 
-            // Load a larger region to ensure proper border repainting
-            int expandedWidth = (int)(roi.getBoundsWidth() + 2 * customStrokeValuePixels);
-            int expandedHeight = (int)(roi.getBoundsHeight() + 2 * customStrokeValuePixels);
-            BufferedImage region = server.readRegion(downsample,
-                    (int)(roi.getBoundsX() - customStrokeValuePixels), (int)(roi.getBoundsY() - customStrokeValuePixels),
-                    expandedWidth, expandedHeight
-            );
-
-            // Create a compatible image with the working color model (ARGB)
-            BufferedImage compatibleImage = new BufferedImage(region.getWidth(), region.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2dCompatible = compatibleImage.createGraphics();
-            g2dCompatible.drawImage(region, 0, 0, null);
-            g2dCompatible.dispose();
-
-            // Use the compatible image for painting
-            Graphics2D graphics = compatibleImage.createGraphics();
-            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); // Enable anti-aliasing
-
-            if (!PathObjectPainter.paintObject(object, graphics, overlayOptions, selectionModel, downsample)){
-                logger.warn("Failed repainting one of the provided detections.");
-            }
-            graphics.dispose();
-            // we just need it to run on one detection to trigger the repainting of all detections
-            // this is weird and should be performed in a more sophisticated fashion but will do for now
-            break;
-        }
-
+        graphics.dispose();
     }
 
     public static double micronsToPixels(double inputMicrons, PixelCalibration calibration){

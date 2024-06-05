@@ -7,6 +7,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.util.StringConverter;
 import org.cecad.lmd.commands.MoreOptionsCommand;
+import qupath.lib.gui.prefs.PathPrefs;
 
 import java.io.IOException;
 
@@ -20,6 +21,10 @@ public class MoreOptionsPane extends GridPane {
     public MoreOptionsPane(MoreOptionsCommand command) {
         super();
         this.command = command;
+
+        int BIG_BUTTON_WIDTH = 330;
+        int SPACING_BETWEEN_SMALL_BUTTONS = 10;
+        int SMALL_BUTTON_WIDTH = (BIG_BUTTON_WIDTH-SPACING_BETWEEN_SMALL_BUTTONS)/2;
 
         setPadding(new Insets(10));
         setHgap(20);
@@ -38,27 +43,29 @@ public class MoreOptionsPane extends GridPane {
         Label convertLabel = new Label("Convert selected objects:");
 
         Button enlargeButton = new Button("Expand");
-        enlargeButton.setPrefWidth(130);
+        enlargeButton.setPrefWidth(SMALL_BUTTON_WIDTH);
 
         Button undoButton = new Button("Undo");
-        undoButton.setPrefWidth(130);
+        undoButton.setPrefWidth(SMALL_BUTTON_WIDTH);
 
         HBox enlargeButtonsBox = new HBox();
-        enlargeButtonsBox.setSpacing(10);
+        enlargeButtonsBox.setSpacing(SPACING_BETWEEN_SMALL_BUTTONS);
         enlargeButtonsBox.getChildren().addAll(undoButton, enlargeButton);
 
         Button detToAnnButton = new Button("Detections to annotations");
-        detToAnnButton.setPrefWidth(270);
+        detToAnnButton.setPrefWidth(BIG_BUTTON_WIDTH);
         Button annToDetButton = new Button("Annotations to detections");
-        annToDetButton.setPrefWidth(270);
+        annToDetButton.setPrefWidth(BIG_BUTTON_WIDTH);
 
         Label sameClassLabel = new Label("If two objects of the same class intersect:");
         Label differentClassLabel = new Label("If two objects of different classes intersect:");
 
-        ComboBox<String> sameClassComboBox = new ComboBox<>(FXCollections.observableArrayList(MERGE, DISCARD_1));
-        ComboBox<String> differentClassComboBox = new ComboBox<>(FXCollections.observableArrayList(EXCLUDE_BOTH, SET_PRIORITY));
-        sameClassComboBox.setPrefWidth(270);
-        differentClassComboBox.setPrefWidth(270);
+        ComboBox<String> sameClassComboBox = new ComboBox<>(FXCollections.observableArrayList(DISCARD_1, MERGE));
+        ComboBox<String> differentClassComboBox = new ComboBox<>(FXCollections.observableArrayList(SET_PRIORITY, EXCLUDE_BOTH));
+        sameClassComboBox.setPrefWidth(BIG_BUTTON_WIDTH);
+        differentClassComboBox.setPrefWidth(BIG_BUTTON_WIDTH);
+        sameClassComboBox.getSelectionModel().select(DISCARD_1);
+        differentClassComboBox.getSelectionModel().select(SET_PRIORITY);
 
         enlargeButton.setOnAction(actionEvent -> {
             String sameClassChoice = sameClassComboBox.getSelectionModel().getSelectedItem();
@@ -86,13 +93,14 @@ public class MoreOptionsPane extends GridPane {
 
         Button simplifyButton = new Button("Simplify shapes");
         simplifyButton.setOnAction(actionEvent -> command.simplifySelectedDetections(command.getQupath().getImageData().getHierarchy(), altitudeSpinner.getValue()));
-        simplifyButton.setPrefWidth(270);
+        simplifyButton.setPrefWidth(BIG_BUTTON_WIDTH);
 
-        Label detectionsBordersLabel = new Label("Visualize the laser's aperture:");
+        Label detectionsBordersLabel = new Label("Visualize the laser (changes all detections border width):");
 
         HBox laserApertureBox = new HBox();
         Label laserApertureLabel = new Label("Laser's aperture (microns):");
-        Spinner<Double> laserApertureSpinner = new Spinner<>(1.0, 50.0, 1.0, 0.1);
+        double defaultAperture = PathPrefs.detectionStrokeThicknessProperty().getValue();
+        Spinner<Double> laserApertureSpinner = new Spinner<>(1.0, 50.0, defaultAperture, 0.1);
         laserApertureSpinner.setPrefWidth(70);
         setDecimalFormattingForSpinner(laserApertureSpinner);
         laserApertureBox.setSpacing(10);
@@ -103,10 +111,10 @@ public class MoreOptionsPane extends GridPane {
             try {
                 command.repaintDetectionsBordersToMatchLaser(laserApertureSpinner.getValue());
             } catch (IOException e) {
-                command.getLogger().error("Error while modifying shapes: {}", e.getMessage());
+                command.getLogger().error("Error while modifying shapes border width: {}", e.getMessage());
             }
         });
-        repaintBordersButton.setPrefWidth(270);
+        repaintBordersButton.setPrefWidth(BIG_BUTTON_WIDTH);
 
 
 
@@ -151,7 +159,7 @@ public class MoreOptionsPane extends GridPane {
             @Override
             public String toString(Double value) {
                 if (value == null) return "";
-                return String.format("%.1f", value);  // No rounding needed here
+                return String.format("%.1f", value);
             }
 
             @Override
@@ -159,11 +167,11 @@ public class MoreOptionsPane extends GridPane {
                 try {
                     return Double.parseDouble(string);
                 } catch (NumberFormatException e) {
-                    return spinner.getValueFactory().getValue(); // Use the current value from the factory on error
+                    return spinner.getValueFactory().getValue();
                 }
             }
         };
-        valueFactory.setConverter(converter); // Set the converter on the value factory
+        valueFactory.setConverter(converter);
 
         TextFormatter<Double> formatter = new TextFormatter<>(converter, valueFactory.getValue(), change -> {
             String newText = change.getControlNewText();

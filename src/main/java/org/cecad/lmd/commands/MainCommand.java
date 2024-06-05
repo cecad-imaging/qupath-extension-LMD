@@ -55,7 +55,7 @@ public class MainCommand implements Runnable {
     @Override
     public void run() {
         if (qupath.getProject() == null){
-            Dialogs.showErrorNotification("No open project detected", "Please create a project or open existing one.");
+            Dialogs.showInfoNotification("No open project detected", "Please create a project or open existing one.");
             return;
         }
         Path PROJECT_FILE_PATH = qupath.getProject().getPath();
@@ -63,7 +63,7 @@ public class MainCommand implements Runnable {
         TEMP_SUBDIRECTORY = createSubdirectory(PROJECT_FILE_PATH, "LMD data" + File.separator + ".temp", logger);
 
         if (qupath.getImageData() == null){
-            Dialogs.showErrorNotification("Image not detected", "Please open an image.");
+            Dialogs.showInfoNotification("No open image detected", "Please open an image.");
             return;
         }
         clearWellData();

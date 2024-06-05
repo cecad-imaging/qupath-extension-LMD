@@ -248,7 +248,7 @@ public class StandardCollectorsPane extends VBox {
         if (isClassification){
             boolean areCountsEqual = referenceClassesCounts.equals(actualClassesCounts);
             if (!areCountsEqual) {
-                Dialogs.showErrorMessage("Invalid Data", "The number of detections of each class can't exceed the total number of processed detections of this class.");
+                Dialogs.showErrorMessage("Invalid Data", "The number of detections of each class can't exceed the total number of processed detections for this class.");
                 return false;
             }
         }
