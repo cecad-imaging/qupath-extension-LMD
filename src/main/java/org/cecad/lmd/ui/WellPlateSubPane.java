@@ -116,7 +116,8 @@ public class WellPlateSubPane extends HBox {
         }
 
         if (wellCount != 0 && objectQty % wellCount != 0){
-            Dialogs.showErrorMessage("Invalid Data", "The number of objects (" + objectQty + ") should be divisible by the number of wells (" + wellCount + ").");
+            int closestValidObjectsQty = objectQty - (objectQty % wellCount);
+            Dialogs.showErrorMessage("Invalid Data", "The number of objects (" + objectQty + ") should be divisible by the number of wells (" + wellCount + "). Closest valid number is " + closestValidObjectsQty + " objects.");
             return false;
         }
 

@@ -145,9 +145,17 @@ public class WellPlatePane extends VBox {
                 }
 
             }
-            boolean areCountsEqual = classesCounts.equals(actualClassesCounts);
+            boolean areCountsEqual = actualClassesCounts.entrySet().stream()
+                    .allMatch(entry -> {
+                        String className = entry.getKey();
+                        Integer actualCount = entry.getValue();
+                        Integer referenceCount = classesCounts.get(className);
+                        return referenceCount.equals(actualCount);
+                    });
             if (!areCountsEqual) {
-                Dialogs.showErrorMessage("Invalid Data", "The number of detections of each class can't exceed the total number of processed detections of this class.");
+                Dialogs.showErrorMessage("Invalid Data", "Total number of entered detections is larger than the number of available detections. " +
+                        "Available detections: " + classesCounts + ". " +
+                        "Provided detections: " + actualClassesCounts + ".");
                 return false;
             }
         }

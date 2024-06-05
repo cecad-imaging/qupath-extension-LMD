@@ -246,9 +246,23 @@ public class StandardCollectorsPane extends VBox {
         }
 
         if (isClassification){
-            boolean areCountsEqual = referenceClassesCounts.equals(actualClassesCounts);
+            if (actualClassesCounts.isEmpty()){
+                Dialogs.showWarningNotification("Invalid Data", "No detections to assign.");
+                return false;
+            }
+            boolean areCountsEqual = actualClassesCounts.entrySet().stream()
+                    .allMatch(entry -> {
+                        String className = entry.getKey();
+                        Integer actualCount = entry.getValue();
+                        Integer referenceCount = referenceClassesCounts.get(className);
+                        return referenceCount.equals(actualCount);
+                    });
+            command.getLogger().warn("REF:" + referenceClassesCounts);
+            command.getLogger().warn("ACT:" + actualClassesCounts);
             if (!areCountsEqual) {
-                Dialogs.showErrorMessage("Invalid Data", "The number of detections of each class can't exceed the total number of processed detections for this class.");
+                Dialogs.showErrorMessage("Invalid Data", "Total number of entered detections is larger than the number of available detections. " +
+                        "Available detections: " + referenceClassesCounts + ". " +
+                        "Provided detections: " + actualClassesCounts + ".");
                 return false;
             }
         }
