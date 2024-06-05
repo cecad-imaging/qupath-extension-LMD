@@ -98,17 +98,17 @@ public class StandardCollectorsPane extends VBox {
         wellLabel.setPrefWidth(40);
         Label classLabel = new Label("Objects (type)");
         classLabel.setPrefWidth(85);
-        Button percentageLabel = new Button(NUMBER_TEXT);
+        Label percentageLabel = new Label(NUMBER_TEXT);
         percentageLabel.setPrefWidth(95);
-        percentageLabel.setPadding(new Insets(0));
         GridPane.setColumnSpan(percentageLabel, 2);
-        percentageLabel.setOnAction(event -> {
-            String text = percentageLabel.getText();
-            if (Objects.equals(text, AREA_TEXT))
-                percentageLabel.setText(NUMBER_TEXT);
-            else if (Objects.equals(text, NUMBER_TEXT))
-                percentageLabel.setText(AREA_TEXT);
-        });
+//        percentageLabel.setPadding(new Insets(0));
+//        percentageLabel.setOnAction(event -> {
+//            String text = percentageLabel.getText();
+//            if (Objects.equals(text, AREA_TEXT))
+//                percentageLabel.setText(NUMBER_TEXT);
+//            else if (Objects.equals(text, NUMBER_TEXT))
+//                percentageLabel.setText(AREA_TEXT);
+//        });
         if (isClassification)
             gridPane.addRow(0, wellLabel, classLabel, percentageLabel);
         else
@@ -257,8 +257,7 @@ public class StandardCollectorsPane extends VBox {
                         Integer referenceCount = referenceClassesCounts.get(className);
                         return referenceCount.equals(actualCount);
                     });
-            command.getLogger().warn("REF:" + referenceClassesCounts);
-            command.getLogger().warn("ACT:" + actualClassesCounts);
+
             if (!areCountsEqual) {
                 Dialogs.showErrorMessage("Invalid Data", "Total number of entered detections is larger than the number of available detections. " +
                         "Available detections: " + referenceClassesCounts + ". " +

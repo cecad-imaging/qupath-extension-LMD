@@ -2,11 +2,13 @@ package org.cecad.lmd.commands;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.cecad.lmd.common.ClassUtils;
+import org.cecad.lmd.common.ObjectUtils;
 import org.cecad.lmd.ui.IOUtils;
 import org.cecad.lmd.ui.MainPane;
 import org.cecad.lmd.common.Constants;
@@ -42,7 +44,7 @@ public class MainCommand implements Runnable {
     private Stage stage;
     private final QuPathGUI qupath;
     MainPane mainPane;
-    private Collection<PathObject> detectionsToExport;
+    private Collection<PathObject> detectionsToExport; // contains detections + annotations for calibration points
 
     public MainCommand(QuPathGUI qupath) {
         this.qupath = qupath;
@@ -116,11 +118,10 @@ public class MainCommand implements Runnable {
                 return;
             }
             detectionsToExport = new ArrayList<>(hierarchy.getSelectionModel().getSelectedObjects());
-            // Include Calibration even if not selected (by adding all annotations, they will be filtered out in GeojsonToXml anyway).
-            detectionsToExport.addAll(hierarchy.getAnnotationObjects());
+            ObjectUtils.filterOutAnnotations(detectionsToExport);
         }
         else {
-            detectionsToExport = hierarchy.getAllObjects(false);
+            detectionsToExport = hierarchy.getDetectionObjects();
         }
     }
 
@@ -155,7 +156,14 @@ public class MainCommand implements Runnable {
         // TODO: test if optimizeDetectionsOrder works
         updateDetectionsToExport();
         optimizeDetectionsOrder(detectionsToExport);
-        exportObjectsToGeoJson(detectionsToExport, pathGeoJSON, "FEATURE_COLLECTION");
+        Collection<PathObject> objectsToExport = ObjectUtils.getCalibrationPoints(qupath.getImageData().getHierarchy().getAnnotationObjects(), CP1, CP2, CP3);
+        if (objectsToExport.isEmpty()){
+            Dialogs.showErrorNotification("Missing Calibration Points",
+                    "Please add 3 'Point' annotations, named " + CP1 + ", " + CP2 + " and " + CP3 + ".");
+            return;
+        }
+        objectsToExport.addAll(detectionsToExport);
+        exportObjectsToGeoJson(objectsToExport, pathGeoJSON, "FEATURE_COLLECTION");
 
         String collectorType = mainPane.getCollector();
 
@@ -167,16 +175,22 @@ public class MainCommand implements Runnable {
 
         // Run BuildXmlCommand
         BuildXmlCommand xmlBuilder = new BuildXmlCommand(pathGeoJSON, pathXML, collectorType);
-        boolean successfulConversion = xmlBuilder.createLeicaXML(wellData);
+        boolean isXmlCreationSuccessful = xmlBuilder.createLeicaXML(wellData);
 
-        if (Objects.equals(collectorType, _96_WELL_PLATE) && wellData != null && wellData[0].containsKey(OBJECT_CLASS_TYPE)) {
-            final String _96_WELL_FILE_NAME = DEFAULT_NAME + IOUtils.genWellDataFileNameFromCollectorName(collectorType, logger);
-            create96WellPlateSpecificFile(wellData, DATA_SUBDIRECTORY.resolve(_96_WELL_FILE_NAME).toString());
+        if (wellData != null && wellData[0].containsKey(OBJECT_CLASS_TYPE)) {
+
+            List<Map<String, Object>> wellLabels = getWellLabelsByClass(wellData, collectorType);
+            Map<String, Integer> wellCounts = getCountsByClass(detectionsToExport);
+            Map<String, Double> wellAreas = getAreasByClass(detectionsToExport);
+
+            final String collectorName = DEFAULT_NAME + IOUtils.genWellDataFileNameFromCollectorName(collectorType, logger);
+
+            createAuxiliaryFile(wellLabels, wellCounts, wellAreas, DATA_SUBDIRECTORY.resolve(collectorName).toString());
         }
 
-        if (!successfulConversion) {
-            Dialogs.showErrorNotification("Incorrect Calibration Points",
-                    "Please add 3 'Point' annotations, named " + CP1 + ", " + CP2 + " and " + CP3 + ".");
+        if (!isXmlCreationSuccessful) {
+            Dialogs.showErrorNotification("XML Build Failed",
+                    "Failed to build XML file.");
             return;
         }
 
@@ -185,11 +199,11 @@ public class MainCommand implements Runnable {
         int exportedShapesCount = xmlBuilder.getShapeCount();
         if (exportedShapesCount == 1){
             Dialogs.showInfoNotification("Export successful",
-                    "1 shape successfully exported. Check 'LMD data' in your project's directory for the output XML file.");
+                    "1 shape successfully exported. Check 'LMD data' in your project's directory for the output Leica XML file and the JSON file with export details.");
         }
         else if (exportedShapesCount != 0) {
             Dialogs.showInfoNotification("Export successful",
-                    exportedShapesCount + " shapes successfully exported. Check 'LMD data' in your project's directory for the output XML file.");
+                    exportedShapesCount + " shapes successfully exported. Check 'LMD data' in your project's directory for the output Leica XML file and the JSON file with export details.");
         }
         else{
             Dialogs.showWarningNotification("Export completed",
@@ -233,34 +247,71 @@ public class MainCommand implements Runnable {
         return null;
     }
 
-    private void create96WellPlateSpecificFile(Map<String, Object>[] wellData, String filePath) throws IOException {
+    private void createAuxiliaryFile(List<Map<String, Object>> wellLabels,
+                                     Map<String, Integer> wellCounts,
+                                     Map<String, Double> wellAreas,
+                                     String filePath) throws IOException {
+        // Combine labels into a single map
+        Map<String, List<String>> combinedWellLabels = new HashMap<>();
+        for (Map<String, Object> labelMap : wellLabels) {
+            labelMap.forEach((className, wells) -> {
+                combinedWellLabels.computeIfAbsent(className, k -> new ArrayList<>()).addAll((List<String>) wells);
+            });
+        }
+
+        // Create a map to hold all data with headers
+        Map<String, Object> structuredData = new LinkedHashMap<>(); // LinkedHashMap preserves insertion order
+        structuredData.put("Well labels by class", combinedWellLabels);
+        structuredData.put("Shapes count by class", wellCounts);
+        structuredData.put("Shapes area by class", wellAreas);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        objectMapper.writeValue(new File(filePath), structuredData);
+    }
+
+
+    private List<Map<String, Object>> getWellLabelsByClass(Map<String, Object>[] wellData, String collectorType){
         List<Map<String, Object>> wellDataList = new ArrayList<>();
         for (Map<String, Object> assignment : wellData) {
 
             String objectClass = (String) assignment.get(OBJECT_CLASS_TYPE);
-            List<String> wellLabels = (List<String>) assignment.get("wellLabels");
 
-            Map<String, Object> wellDataEntry = new HashMap<>();
-            wellDataEntry.put(objectClass, wellLabels);
+            if (objectClass == null || objectClass.equals(NONE))
+                continue;
 
-            wellDataList.add(wellDataEntry);
+            if (Objects.equals(collectorType, _96_WELL_PLATE)) {
+                List<String> wellLabels = (List<String>) assignment.get("wellLabels");
+                Map<String, Object> wellDataEntry = new HashMap<>();
+                wellDataEntry.put(objectClass, wellLabels);
+
+                wellDataList.add(wellDataEntry);
+            }
+            else {
+                List<String> wellLabels = new ArrayList<>();
+                String wellLabel = (String) assignment.get("wellLabel");
+                wellLabels.add(wellLabel);
+                Map<String, Object> wellDataEntry = new HashMap<>();
+                wellDataEntry.put(objectClass, wellLabels);
+
+                wellDataList.add(wellDataEntry);
+            }
         }
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.writeValue(new File(filePath), wellDataList);
+        return wellDataList;
+    }
+
+    private Map<String, Integer> getCountsByClass(Collection<PathObject> objects){
+        return ClassUtils.getObjectsCountByClass(objects);
+    }
+
+    private Map<String, Double> getAreasByClass(Collection<PathObject> objects){
+        return ClassUtils.getObjectsAreaByClass(objects);
     }
 
     // Function that optimizes shapes order and thus minimizes laser's travel, only detections correspond to shapes,
     // annotations are either junk or calibration points filtered and used later on, respectively.
-    // TODO: This approach doesn't seem to work. Investigate it.
-    private void optimizeDetectionsOrder(Collection<PathObject> objects){
-        if (objects == null || objects.isEmpty()) {
-            return;
-        }
-
-        // Filter for detection objects only
-        List<PathObject> detections = objects.stream().filter(PathObject::isDetection).toList();
-
-        if (detections.isEmpty()) {
+    private void optimizeDetectionsOrder(Collection<PathObject> detections){
+        if (detections == null || detections.isEmpty()) {
             return;
         }
 
@@ -279,9 +330,9 @@ public class MainCommand implements Runnable {
             currentObject = nearestObject;
         }
 
-        // Update the original collection - replace only the detections
-        objects.removeIf(PathObject::isDetection); // Remove detections and hopefully annotations move to the beginning
-        objects.addAll(orderedDetections); // Add optimized detections
+        // Update the original collection
+        detections.clear();
+        detections.addAll(orderedDetections);
     }
 
     private PathObject findNearestObject(PathObject currentObject, List<PathObject> unvisitedObjects) {

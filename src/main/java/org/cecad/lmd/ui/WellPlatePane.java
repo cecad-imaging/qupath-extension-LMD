@@ -18,7 +18,7 @@ public class WellPlatePane extends VBox {
 
     private final WellPlateCommand command;
     private final String AREA_TEXT = "Area (%)           ";
-    private final String NUMBER_TEXT = "Objects (qty)   ";
+    private final String NUMBER_TEXT = "Objects (count) ";
     List<String> allClasses;
     Map<String, Integer> classesCounts;
 
@@ -42,16 +42,16 @@ public class WellPlatePane extends VBox {
         Label classLabel = new Label("Objects (type)");
         classLabel.setPrefWidth(100);
 
-        Button percentageLabel = new Button(NUMBER_TEXT);
-        percentageLabel.setPrefWidth(85);
-        percentageLabel.setPadding(new Insets(0));
-        percentageLabel.setOnAction(event -> {
-            String text = percentageLabel.getText();
-            if (Objects.equals(text, AREA_TEXT))
-                percentageLabel.setText(NUMBER_TEXT);
-            else if (Objects.equals(text, NUMBER_TEXT))
-                percentageLabel.setText(AREA_TEXT);
-        });
+        Label percentageLabel = new Label(NUMBER_TEXT);
+        percentageLabel.setPrefWidth(95);
+//        percentageLabel.setPadding(new Insets(0));
+//        percentageLabel.setOnAction(event -> {
+//            String text = percentageLabel.getText();
+//            if (Objects.equals(text, AREA_TEXT))
+//                percentageLabel.setText(NUMBER_TEXT);
+//            else if (Objects.equals(text, NUMBER_TEXT))
+//                percentageLabel.setText(AREA_TEXT);
+//        });
 
         Tooltip classTooltip = new Tooltip("Classes of detections obtained from segmentation step");
         classLabel.setTooltip(classTooltip);

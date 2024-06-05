@@ -27,6 +27,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 
 import static org.cecad.lmd.common.Constants.ObjectTypes.ANNOTATION;
@@ -128,13 +130,7 @@ public class ObjectUtils {
     }
 
     public static Collection<PathObject> filterOutAnnotations(Collection<PathObject> objects){
-        Collection<PathObject> detectionObjects = new ArrayList<>();
-        for (PathObject object : objects){
-            if (!object.isAnnotation()){
-                detectionObjects.add(object);
-            }
-        }
-        return detectionObjects;
+        return objects.stream().filter(PathObject::isDetection).toList();
     }
 
     public static Map<String, Integer> countObjectsByUniqueClass(JsonNode features){
@@ -149,19 +145,19 @@ public class ObjectUtils {
         return featureCounts;
     }
 
-//    static Collection<PathObject> getCalbrationPoints(Collection<PathObject> objects, String... names) {
-//        return objects.stream()
-//                .filter(p -> p.isAnnotation() && p.getROI().isPoint() && containsName(p.getDisplayedName(), names))
-//                .collect(Collectors.toList());
-//    }
-//    static boolean containsName(String targetName, String... names) {
-//        for (String name : names) {
-//            if (targetName.equals(name)) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
+    public static Collection<PathObject> getCalibrationPoints(Collection<PathObject> objects, String... names) {
+        return objects.stream()
+                .filter(p -> p.isAnnotation() && p.getROI().isPoint() && containsName(p.getDisplayedName(), names))
+                .collect(Collectors.toList());
+    }
+    static boolean containsName(String targetName, String... names) {
+        for (String name : names) {
+            if (targetName.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static void repaintDetectionsWithCustomStroke(Collection<PathObject> objects,
                                                          double customStrokeValueMicrons,

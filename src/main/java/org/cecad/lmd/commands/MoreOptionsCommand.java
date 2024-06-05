@@ -175,8 +175,7 @@ public class MoreOptionsCommand implements Runnable {
             long endTime = System.nanoTime();
             long duration = endTime - startTime;
             double seconds = (double) duration / 1_000_000_000.0;
-            Dialogs.showInfoNotification("Operation Successful", selectedDetectionsNumber + " objects processed in " + seconds + " seconds.\n"
-                    + objectsToAddToHierarchy.size() + " remaining objects.");
+            Dialogs.showInfoNotification("Operation Successful", selectedDetectionsNumber + " objects processed in " + seconds + " seconds.");
         } catch (Throwable t){
             hierarchy.addObjects(selectedDetections);
             logger.error("Error processing overlapping objects: {}", t.getMessage());
