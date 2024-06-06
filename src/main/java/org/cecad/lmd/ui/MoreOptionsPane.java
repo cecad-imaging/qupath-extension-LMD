@@ -116,8 +116,25 @@ public class MoreOptionsPane extends GridPane {
         });
         repaintBordersButton.setPrefWidth(BIG_BUTTON_WIDTH);
 
-
-
+        Label flipLabel = new Label("Flip the image (creates a copy of the current image):");
+        Button horizontalButton = new Button("Horizontal flip (left-right)");
+        Button verticalButton = new Button("Vertical flip (top-bottom)");
+        horizontalButton.setPrefWidth(BIG_BUTTON_WIDTH);
+        verticalButton.setPrefWidth(BIG_BUTTON_WIDTH);
+        horizontalButton.setOnAction(actionEvent -> {
+            try {
+                command.flipImage(command.getQupath().getImageData(), true, false);
+            } catch (IOException e) {
+                command.getLogger().error("Horizontal flip failed: {}", e.getMessage());
+            }
+        });
+        verticalButton.setOnAction(actionEvent -> {
+            try {
+                command.flipImage(command.getQupath().getImageData(), false, true);
+            } catch (IOException e) {
+                command.getLogger().error("Vertical flip failed: {}", e.getMessage());
+            }
+        });
 
         GridPane.setConstraints(enlargeSectionLabel, 0, 0);
         GridPane.setConstraints(radiusBox, 0, 1);
@@ -143,11 +160,16 @@ public class MoreOptionsPane extends GridPane {
         GridPane.setConstraints(altitudeDescriptionLabel, 0, 15);
         GridPane.setConstraints(simplifyButton, 0, 16);
 
+        GridPane.setConstraints(flipLabel, 0, 17);
+        GridPane.setConstraints(horizontalButton, 0, 18);
+        GridPane.setConstraints(verticalButton, 0, 19);
+
         getChildren().addAll(enlargeSectionLabel, radiusBox, sameClassLabel, sameClassComboBox, differentClassLabel, differentClassComboBox,
                 enlargeButtonsBox,
                 detectionsBordersLabel, laserApertureBox, repaintBordersButton,
                 convertLabel, detToAnnButton, annToDetButton,
-                simplifyLabel, altitudeBox, altitudeDescriptionLabel, simplifyButton);
+                simplifyLabel, altitudeBox, altitudeDescriptionLabel, simplifyButton,
+                flipLabel, horizontalButton, verticalButton);
 
     }
 

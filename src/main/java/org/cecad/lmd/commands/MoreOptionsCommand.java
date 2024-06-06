@@ -16,8 +16,11 @@ import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.tools.GuiTools;
 import qupath.lib.gui.viewer.OverlayOptions;
+import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
+import qupath.lib.images.servers.ImageServerMetadata;
 import qupath.lib.images.servers.PixelCalibration;
+import qupath.lib.images.servers.TransformedServerBuilder;
 import qupath.lib.objects.PathDetectionObject;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
@@ -33,6 +36,7 @@ import qupath.lib.roi.interfaces.ROI;
 
 import static org.cecad.lmd.common.Constants.EnlargeOptions.*;
 
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.*;
@@ -152,7 +156,7 @@ public class MoreOptionsCommand implements Runnable {
             // Steps for processing overlapping objects:
 
             // 1. Add 'background', i.e. already existing in hierarchy, not selected, detection objects to newObjects.
-            newObjects = addOverlappingBackroundObjects(hierarchy, newObjects, radiusPixels);
+            newObjects = addOverlappingBackgroundObjects(hierarchy, newObjects, radiusPixels);
 
                 // Just update the oldObjects for Undo action
             Collection<PathObject> overlappingBackgroundObjects = getOverlappingBackground(newObjects, enlargedWithoutBackground);
@@ -296,7 +300,7 @@ public class MoreOptionsCommand implements Runnable {
         return remainingObjects;
     }
 
-    private static Collection<PathObject> addOverlappingBackroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
+    private static Collection<PathObject> addOverlappingBackgroundObjects(PathObjectHierarchy hierarchy, final Collection<PathObject> objects, double radius){
         Collection<PathObject> enhancedObjects = new ArrayList<>(objects);
         for (PathObject object : objects){
             ROI roi = object.getROI();
@@ -446,6 +450,71 @@ public class MoreOptionsCommand implements Runnable {
         double downsample = qupath.getViewer().getDownsampleFactor();
         ObjectUtils.repaintDetectionsWithCustomStroke(objects, customStrokeMicrons, server, overlay, selectionModel, downsample);
         Dialogs.showInfoNotification("Action successful", objects.size() + " detections modified");
+    }
+
+    public void flipImage(ImageData<BufferedImage> imageData,
+                                 boolean flipX, boolean flipY) throws IOException {
+
+        ImageServer<BufferedImage> server = imageData.getServer();
+        PathObjectHierarchy hierarchy = imageData.getHierarchy();
+        ImageData.ImageType imageType = imageData.getImageType();
+        Collection<PathObject> allParentObjects = hierarchy.getRootObject().getChildObjects();
+        int imageWidth = server.getWidth();
+        int imageHeight = server.getHeight();
+
+        int scaleX = 1;
+        int scaleY = 1;
+        int translateX = 0;
+        int translateY = 0;
+
+        if (flipX){
+            scaleX = -1;
+            translateX = -imageWidth;
+        }
+        if (flipY){
+            scaleY = -1;
+            translateY = -imageHeight;
+        }
+
+        AffineTransform transform = new AffineTransform();
+        transform.scale(scaleX, scaleY);
+        transform.translate(translateX, translateY);
+
+        TransformedServerBuilder builder = new TransformedServerBuilder(server);
+        builder.transform(transform);
+        ImageServer<BufferedImage> flippedServer = builder.build();
+
+        String flippedImageName = server.getMetadata().getName();
+        if (flipX){
+            flippedImageName = flippedImageName + " (H)";
+        }
+        else if (flipY){
+            flippedImageName = flippedImageName + " (V)";
+        }
+        else{
+            logger.error("Creating a copy of an image without flipping it shouldn't be possible with this tool.");
+        }
+        ImageServerMetadata.Builder metadata = new ImageServerMetadata.Builder(flippedServer.getMetadata()).name(flippedImageName);
+        flippedServer.setMetadata(metadata.build());
+
+        ImageData<BufferedImage> flippedImageData = new ImageData<>(flippedServer);
+        flippedImageData.setImageType(imageType);
+
+        PathObjectHierarchy flippedHierarchy = flippedImageData.getHierarchy();
+
+        for (PathObject parent : allParentObjects){
+            PathObject mirroredParent = ObjectUtils.mirrorObject(parent, scaleX, scaleY, translateX, translateY);
+            ObjectUtils.addObjectAccountingForParent(flippedHierarchy, mirroredParent, null);
+            if (parent.hasChildObjects()){
+                for (PathObject child : parent.getChildObjects()){
+                    PathObject mirroredChild = ObjectUtils.mirrorObject(child, scaleX, scaleY, translateX, translateY);
+                    ObjectUtils.addObjectAccountingForParent(flippedHierarchy, mirroredChild, mirroredParent);
+                }
+            }
+        }
+
+        getQupath().getViewer().setImageData(flippedImageData);
+        getQupath().refreshProject();
     }
 
     public QuPathGUI getQupath(){
