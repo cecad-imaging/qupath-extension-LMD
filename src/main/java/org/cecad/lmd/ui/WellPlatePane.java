@@ -17,8 +17,7 @@ import static org.cecad.lmd.common.Constants.WellDataFileNames._96_WELL_PLATE_DA
 public class WellPlatePane extends VBox {
 
     private final WellPlateCommand command;
-    private final String AREA_TEXT = "Area (%)           ";
-    private final String NUMBER_TEXT = "Objects (count) ";
+    private final String NUMBER_TEXT = "Objects (count)";
     List<String> allClasses;
     Map<String, Integer> classesCounts;
 
@@ -37,9 +36,9 @@ public class WellPlatePane extends VBox {
         WellPlateSubPane wellSubPane = new WellPlateSubPane(allClasses, classesCounts, command.getAllDetectionsCount());
         wellSubPane.setPrefHeight(30);
 
-        Label wellLabel = new Label("Well");
+        Label wellLabel = new Label("Wells");
         wellLabel.setPrefWidth(85);
-        Label classLabel = new Label("Objects (type)");
+        Label classLabel = new Label("Objects (class)");
         classLabel.setPrefWidth(100);
 
         Label percentageLabel = new Label(NUMBER_TEXT);
@@ -53,13 +52,13 @@ public class WellPlatePane extends VBox {
 //                percentageLabel.setText(AREA_TEXT);
 //        });
 
-        Tooltip classTooltip = new Tooltip("Classes of detections obtained from segmentation step");
+        Tooltip classTooltip = new Tooltip("Classes of detections to export");
         classLabel.setTooltip(classTooltip);
         classTooltip.setShowDuration(new Duration(30000));
-        Tooltip wellTooltip = new Tooltip("Standard 96-Well Plate well label");
+        Tooltip wellTooltip = new Tooltip("The number of wells the detections will be equally distributed to, the labels will be generated at random");
         wellLabel.setTooltip(wellTooltip);
         wellTooltip.setShowDuration(new Duration(30000));
-        Tooltip percentageTooltip = new Tooltip("Amount of detection objects to assign to wells in this batch, \nspecify either percentage of total area of detections or a specific number of detections");
+        Tooltip percentageTooltip = new Tooltip("Amount of detection objects to assign to the specified number of wells in each batch");
         percentageLabel.setTooltip(percentageTooltip);
         percentageTooltip.setShowDuration(new Duration(30000));
         HBox headerLabelsBox = new HBox();
