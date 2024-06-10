@@ -36,7 +36,7 @@ public class ClassUtils {
         return true;
     }
 
-    public static Map<String, Integer> countObjectsOfAllClasses(Collection<PathObject> objects) {
+    public static Map<String, Integer> getObjectsCountByClass(Collection<PathObject> objects) {
         Map<String, Integer> classesCount = new HashMap<>();
         for (PathObject object : objects) {
             PathClass objectClass = object.getPathClass();
@@ -46,5 +46,17 @@ public class ClassUtils {
             }
         }
         return classesCount;
+    }
+
+    public static Map<String, Double> getObjectsAreaByClass(Collection<PathObject> objects) {
+        Map<String, Double> classesAreas = new HashMap<>();
+        for (PathObject object : objects) {
+            PathClass objectClass = object.getPathClass();
+            if (objectClass != null) {
+                String className = objectClass.getName();
+                classesAreas.put(className, classesAreas.getOrDefault(className, 0.0) + object.getROI().getArea());
+            }
+        }
+        return classesAreas;
     }
 }

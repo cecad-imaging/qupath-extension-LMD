@@ -61,7 +61,7 @@ public class StandardCollectorsCommand implements Runnable {
     }
 
     public Map<String, Integer> getAllClassesCounts(){
-        return ClassUtils.countObjectsOfAllClasses(mainPane.getDetectionsToExport());
+        return ClassUtils.getObjectsCountByClass(mainPane.getDetectionsToExport());
     }
 
     private void showStage(){

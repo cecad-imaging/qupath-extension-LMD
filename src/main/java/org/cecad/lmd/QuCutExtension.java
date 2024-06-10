@@ -10,8 +10,8 @@ import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.extensions.QuPathExtension;
 
-public class LMDExtension implements QuPathExtension {
-    private static final Logger logger = LoggerFactory.getLogger(LMDExtension.class);
+public class QuCutExtension implements QuPathExtension {
+    private static final Logger logger = LoggerFactory.getLogger(QuCutExtension.class);
 
     @Override
     public void installExtension(QuPathGUI qupath) {
@@ -20,12 +20,12 @@ public class LMDExtension implements QuPathExtension {
 
     @Override
     public String getName() {
-        return "LMD Support for QuPath";
+        return "QuCut";
     }
 
     @Override
     public String getDescription() {
-        return "Export QuPath ROIs to an XML file readable by Leica's LMD7 software";
+        return "Leica LMD support for QuPath";
     }
 
     @Override
@@ -38,7 +38,7 @@ public class LMDExtension implements QuPathExtension {
 
         public final Action actionLMDSupportCommand;
         private LMDSupportCommands(QuPathGUI qupath) {
-            actionLMDSupportCommand = new Action("Leica LMD Support for QuPath", event -> {
+            actionLMDSupportCommand = new Action("QuCut", event -> {
                 MainCommand lmdsCommand = new MainCommand(qupath);
                 lmdsCommand.run();
             });

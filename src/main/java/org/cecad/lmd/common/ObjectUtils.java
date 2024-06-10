@@ -7,14 +7,29 @@ import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import qupath.lib.geom.Point2;
 import qupath.fx.dialogs.Dialogs;
+import qupath.lib.gui.viewer.OverlayOptions;
+import qupath.lib.gui.viewer.PathObjectPainter;
+import qupath.lib.images.servers.ImageServer;
+import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
 import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.hierarchy.PathObjectHierarchy;
+import qupath.lib.objects.hierarchy.events.PathObjectSelectionModel;
+import qupath.lib.regions.ImagePlane;
+import qupath.lib.regions.RegionRequest;
 import qupath.lib.roi.RoiTools;
 import qupath.lib.roi.interfaces.ROI;
+import qupath.lib.gui.prefs.PathPrefs;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
 
 import static org.cecad.lmd.common.Constants.ObjectTypes.ANNOTATION;
 
@@ -115,13 +130,7 @@ public class ObjectUtils {
     }
 
     public static Collection<PathObject> filterOutAnnotations(Collection<PathObject> objects){
-        Collection<PathObject> detectionObjects = new ArrayList<>();
-        for (PathObject object : objects){
-            if (!object.isAnnotation()){
-                detectionObjects.add(object);
-            }
-        }
-        return detectionObjects;
+        return objects.stream().filter(PathObject::isDetection).toList();
     }
 
     public static Map<String, Integer> countObjectsByUniqueClass(JsonNode features){
@@ -136,18 +145,46 @@ public class ObjectUtils {
         return featureCounts;
     }
 
-//    static Collection<PathObject> getCalbrationPoints(Collection<PathObject> objects, String... names) {
-//        return objects.stream()
-//                .filter(p -> p.isAnnotation() && p.getROI().isPoint() && containsName(p.getDisplayedName(), names))
-//                .collect(Collectors.toList());
-//    }
-//    static boolean containsName(String targetName, String... names) {
-//        for (String name : names) {
-//            if (targetName.equals(name)) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
+    public static Collection<PathObject> getCalibrationPoints(Collection<PathObject> objects, String... names) {
+        return objects.stream()
+                .filter(p -> p.isAnnotation() && p.getROI().isPoint() && containsName(p.getDisplayedName(), names))
+                .collect(Collectors.toList());
+    }
+    static boolean containsName(String targetName, String... names) {
+        for (String name : names) {
+            if (targetName.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    public static void repaintDetectionsWithCustomStroke(Collection<PathObject> objects,
+                                                         double customStrokeValueMicrons,
+                                                         ImageServer<BufferedImage> server,
+                                                         OverlayOptions overlayOptions,
+                                                         PathObjectSelectionModel selectionModel,
+                                                         double downsample) {
+        PixelCalibration calibration = server.getPixelCalibration();
+        double customStrokeValuePixels = micronsToPixels(customStrokeValueMicrons, calibration);
+        PathPrefs.detectionStrokeThicknessProperty().setValue(customStrokeValuePixels);
+
+        BufferedImage compatibleImage = new BufferedImage(server.getWidth(), server.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = compatibleImage.createGraphics();
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        PathObjectPainter.paintSpecifiedObjects(graphics, objects, overlayOptions, selectionModel, downsample);
+
+        graphics.dispose();
+    }
+
+    public static double micronsToPixels(double inputMicrons, PixelCalibration calibration){
+        double outputPixels = 0;
+        if (calibration.hasPixelSizeMicrons())
+            outputPixels = inputMicrons / calibration.getAveragedPixelSizeMicrons();
+        else
+            outputPixels = inputMicrons;
+
+        return outputPixels;
+    }
 }

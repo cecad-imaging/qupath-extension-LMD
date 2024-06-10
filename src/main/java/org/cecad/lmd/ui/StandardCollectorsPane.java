@@ -98,17 +98,17 @@ public class StandardCollectorsPane extends VBox {
         wellLabel.setPrefWidth(40);
         Label classLabel = new Label("Objects (type)");
         classLabel.setPrefWidth(85);
-        Button percentageLabel = new Button(NUMBER_TEXT);
+        Label percentageLabel = new Label(NUMBER_TEXT);
         percentageLabel.setPrefWidth(95);
-        percentageLabel.setPadding(new Insets(0));
         GridPane.setColumnSpan(percentageLabel, 2);
-        percentageLabel.setOnAction(event -> {
-            String text = percentageLabel.getText();
-            if (Objects.equals(text, AREA_TEXT))
-                percentageLabel.setText(NUMBER_TEXT);
-            else if (Objects.equals(text, NUMBER_TEXT))
-                percentageLabel.setText(AREA_TEXT);
-        });
+//        percentageLabel.setPadding(new Insets(0));
+//        percentageLabel.setOnAction(event -> {
+//            String text = percentageLabel.getText();
+//            if (Objects.equals(text, AREA_TEXT))
+//                percentageLabel.setText(NUMBER_TEXT);
+//            else if (Objects.equals(text, NUMBER_TEXT))
+//                percentageLabel.setText(AREA_TEXT);
+//        });
         if (isClassification)
             gridPane.addRow(0, wellLabel, classLabel, percentageLabel);
         else
@@ -246,9 +246,22 @@ public class StandardCollectorsPane extends VBox {
         }
 
         if (isClassification){
-            boolean areCountsEqual = referenceClassesCounts.equals(actualClassesCounts);
+            if (actualClassesCounts.isEmpty()){
+                Dialogs.showWarningNotification("Invalid Data", "No detections to assign.");
+                return false;
+            }
+            boolean areCountsEqual = actualClassesCounts.entrySet().stream()
+                    .allMatch(entry -> {
+                        String className = entry.getKey();
+                        Integer actualCount = entry.getValue();
+                        Integer referenceCount = referenceClassesCounts.get(className);
+                        return referenceCount.equals(actualCount);
+                    });
+
             if (!areCountsEqual) {
-                Dialogs.showErrorMessage("Invalid Data", "The number of detections of each class can't exceed the total number of processed detections of this class.");
+                Dialogs.showErrorMessage("Invalid Data", "Total number of entered detections is larger than the number of available detections. " +
+                        "Available detections: " + referenceClassesCounts + ". " +
+                        "Provided detections: " + actualClassesCounts + ".");
                 return false;
             }
         }

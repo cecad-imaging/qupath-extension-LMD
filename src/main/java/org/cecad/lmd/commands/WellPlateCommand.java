@@ -75,7 +75,7 @@ public class WellPlateCommand implements Runnable {
     }
 
     public Map<String, Integer> getAllClassesCounts(){
-        return ClassUtils.countObjectsOfAllClasses(mainPane.getDetectionsToExport());
+        return ClassUtils.getObjectsCountByClass(mainPane.getDetectionsToExport());
     }
 
     public int getAllDetectionsCount(){
