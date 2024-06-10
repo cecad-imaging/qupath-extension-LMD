@@ -25,8 +25,7 @@ public class StandardCollectorsPane extends VBox {
     private final StandardCollectorsCommand command;
     private final IntegerProperty numWells;
     private final String[] wellLabels;
-    private final String AREA_TEXT = "Area (%)             ";
-    private final String NUMBER_TEXT = "Objects (count) ";
+    private final String NUMBER_TEXT = "Objects (count)";
 
     public StandardCollectorsPane(StandardCollectorsCommand command, int numWells, ControlsInterface controls) {
         super();
@@ -96,8 +95,8 @@ public class StandardCollectorsPane extends VBox {
         // Header row
         Label wellLabel = new Label("Well");
         wellLabel.setPrefWidth(40);
-        Label classLabel = new Label("Objects (type)");
-        classLabel.setPrefWidth(85);
+        Label classLabel = new Label("Objects (class)");
+        classLabel.setPrefWidth(95);
         Label percentageLabel = new Label(NUMBER_TEXT);
         percentageLabel.setPrefWidth(95);
         GridPane.setColumnSpan(percentageLabel, 2);
